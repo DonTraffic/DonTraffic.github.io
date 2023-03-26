@@ -1,5 +1,4 @@
-.cart-start {
-    position: relative;
+.card-start {
     z-index: 1;
 
     &__content{
@@ -9,7 +8,6 @@
         z-index: 1;
         
         h1, h2{
-            text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
             text-align: center;
         }
 
@@ -99,45 +97,25 @@
 
     }
 
-    &__backgroung{
-        position: absolute;
-        overflow: hidden;
-        
-        width: 100%;
-        height: 100%;
-
+    &__background{
         display: flex;
         justify-content: center;
 
         &-trajectory{
             position: absolute;
-            height: 800px;
+            height: 950px;
 
             animation: moveSun 7.5s;
-            animation-fill-mode:forwards;
+            animation-fill-mode: forwards;
 
             @include phone {
                 bottom: 0;
-                height: 725px;
+                height: 650px;
 
                 animation: moveSun-mobile 7.5s;
-                animation-fill-mode:forwards;
+                animation-fill-mode: forwards;
             }
             
-        }
-
-        &-sun{
-            width: 100px;
-            height: 100px;
-            background: #FFFFFF;
-            box-shadow: 0px 0px 6px #FFFFFF;
-            border-radius: 50%;
-
-            @include phone {
-                height: 150px;
-                width: 150px;
-            }
-
         }
 
         &-grass{
@@ -157,7 +135,7 @@
 
         @keyframes moveSun {
             0%{transform: rotate(-134deg);}
-            100%{transform: rotate(36deg);} 
+            100%{transform: rotate(32deg);} 
         }
         @keyframes moveSun-mobile {
             0%{transform: rotate(-134deg);}

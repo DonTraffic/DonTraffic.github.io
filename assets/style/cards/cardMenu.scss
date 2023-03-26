@@ -1,0 +1,191 @@
+.card-menu {
+    z-index: 2;
+    bottom: 50%;
+    transform: translate(0, 50%);
+
+    @include phone {
+        bottom: 0;
+        transform: translate(0, 0);
+    }
+
+    &__content{
+        position: absolute;
+        left: 32px;
+        top: 32px;
+
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+
+        min-width: 225px;
+
+
+        @include phone{
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        p{
+            font-weight: 400;
+            font-size: 25px;
+            text-align: center;
+            line-height: 100%;
+        }
+
+        &-btns{
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+
+            padding-top: 6px;
+
+            a {                
+                background: #000000;
+                border: 1px solid #FFFFFF;
+                border-radius: 30px;
+
+                padding: 4px 8px;
+
+                display: flex;
+                align-items: center;
+                justify-content: center;
+
+                font-weight: 500;
+                font-size: 18px;
+
+                text-decoration: none;
+                transition: .4s ease;
+
+                svg {
+                    transition: .4s ease;
+                    
+                    width: 16px;
+                    height: 16px;
+
+                    fill: #FFFFFF;
+                }
+
+                &:nth-child(1) {
+                    svg{
+                        padding-right: 2px;
+                    }
+                }
+                
+                &:hover{
+                    color: #000000;
+                    background-color: #FFFFFF;
+
+                    svg{
+                        fill: #000000;
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
+
+    &__background  {
+
+        &-lake {
+            position: absolute;
+
+            bottom: -25px;
+            left: -5px;
+
+            width: 650px;
+            height: 41%;
+
+            @include phone {
+                bottom: -15px;
+                left: -5px;
+                width: 830px;
+                height: 26%;
+            }
+
+        }
+
+        &-stone {
+            position: absolute;
+
+            height: 170px;
+            width: 270px;
+
+            bottom: -10px;
+            right: -10px;
+
+            @include phone {
+                height: 280px;
+                width: 450px;
+
+                right: -60px;
+            }
+        }
+
+        &-boat {
+            animation: moveBoat 8s infinite;
+            position: absolute;
+
+            height: 46px;
+            width: 125px;
+
+            bottom: 115px;
+            left: 20%;
+
+            @include phone {
+                height: 60px;
+                width: 150px;
+                
+                bottom: 150px;
+                left: 5%;
+            }
+        }
+
+        &-sun{
+            position: absolute;
+            top: 20px;
+            right: 50%;
+            transform: translate(50%, 0);
+
+            @include phone {
+                top: 40px;
+            }
+
+        }
+
+        &-tree {
+            animation: moveTree 10s infinite;
+            pointer-events: none;
+            position: absolute;
+
+            height: 340px;
+            width: 460px;
+
+            top: -30px;
+            right: -95px;
+
+            @include phone {
+                top: -10px;
+                right: -170px;
+            }
+
+        }
+
+        @keyframes moveTree {
+            0%{transform: skewX(2deg) translate(-2px);}
+            50%{transform: skewX(-2deg) translate(2px);}
+            100%{transform: skewX(2deg) translate(-2px);} 
+        }
+
+        @keyframes moveBoat {
+            0%{transform:translate(-3px);}
+            50%{transform: translate(3px);}
+            100%{transform: translate(-3px);} 
+        }
+
+    }
+
+}

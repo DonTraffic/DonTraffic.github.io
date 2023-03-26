@@ -1,22 +1,22 @@
 <template>
-    <div class="cart cart-start">
+    <div class="card card-start" id="cardStart">
 
-        <div class="cart-start__content">
+        <div class="card__content card-start__content">
 
-            <h1>{{ printData.value.h1 }}</h1>
-            <h2>{{ printData.value.h2 }}</h2>
-            <button>Показать больше</button>
+            <h1 class="text-shadow">{{ printData.value.h1 }}</h1>
+            <h2 class="text-shadow">{{ printData.value.h2 }}</h2>
+            <button @click="showMore">Показать больше</button>
 
         </div>
 
-        <div class="cart-start__backgroung">
+        <div class="card__background card-start__background">
             <img
-                class="cart-start__backgroung-grass"
+                class="card-start__background-grass"
                 src="~/assets/img/grass.png"
                 alt="grass"
             >
-            <div class="cart-start__backgroung-trajectory">
-                <div class="cart-start__backgroung-sun"></div>
+            <div class="card-start__background-trajectory">
+                <div class="card-start__background-sun icon-sun"></div>
             </div>
         </div>
 
@@ -25,6 +25,7 @@
 
 <script>
 export default {
+    name: 'cardStart',
     data() {
         return {
             printData: {
@@ -52,11 +53,15 @@ export default {
     },
 
     mounted() {
-        this.createdText()
+        this.printText()
     }, 
 
     methods: {
-        createdText() {
+        showMore() {
+            document.getElementById('cardMenu').classList.remove('card__position-bottom')
+        },
+
+        printText() {
             let dataText = this.printData.text
             let dataValue = this.printData.value
             for (let countLang = 0; countLang < Object.keys(dataText).length; countLang++) {

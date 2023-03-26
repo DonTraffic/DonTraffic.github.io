@@ -1,5 +1,12 @@
 <template>
-    <div class="app">
-        <cart-start />
+    <div id="DonTraffic">
+        <cards-cardStart />
+        <cards-cardMenu />
     </div>
 </template>
+
+<script>
+export default {
+    name: 'DonTraffic',
+}
+</script>
