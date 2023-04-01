@@ -37,6 +37,13 @@
 
             <img src="~/assets/svg/tree.svg" alt="tree" class="card-menu__background-tree">
         </div>
+
+        <controller
+            parentId="cardMenu"
+            :controllers="{
+                left: 'cardSkills',
+            }"
+        />
     </div>
 </template>
 

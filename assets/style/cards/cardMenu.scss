@@ -126,7 +126,7 @@
         }
 
         &-boat {
-            animation: moveBoat 8s infinite;
+            // animation: moveBoat 8s infinite;
             position: absolute;
 
             height: 46px;
@@ -157,7 +157,7 @@
         }
 
         &-tree {
-            animation: moveTree 10s infinite;
+            // animation: moveTree 10s infinite;
             pointer-events: none;
             position: absolute;
 

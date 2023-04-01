@@ -2,6 +2,7 @@
     <div id="DonTraffic">
         <cards-cardStart />
         <cards-cardMenu />
+        <cards-cardSkills />
     </div>
 </template>
 
