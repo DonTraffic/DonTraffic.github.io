@@ -12,5 +12,9 @@
 <script>
 export default {
     name: 'DonTraffic',
+
+    mounted() {
+        if (process.client) document.getElementById('DonTraffic').style.height = `${window.innerHeight}px`
+    }
 }
 </script>
