@@ -26,10 +26,23 @@
         top: 50%;
         transform: translate(0, -50%);
 
+        @include phone{
+            width: 44px;
+
+            button{
+                padding: 0 4px;
+            }
+            
+        }
+
     }
 
         &__btn-left{
             left: -19px;
+
+            @include phone{
+                left: -10px;                
+            }
 
             svg{
                 transform: rotate(-90deg);
@@ -39,6 +52,10 @@
 
         &__btn-right{
             right: -19px;
+
+            @include phone{
+                right: -10px;
+            }
 
             svg{
                 transform: rotate(90deg);
@@ -53,10 +70,23 @@
         right: 50%;
         transform: translate(50%, 0%);
 
+        @include phone{
+            height: 44px;
+
+            button{
+                padding: 4px 0;
+            }
+            
+        }
+
     }
 
         &__btn-top{
             top: -19px;
+
+            @include phone{
+                top: -10px;
+            }
 
             svg{
                 transform: rotate(0deg);
@@ -66,6 +96,10 @@
 
         &__btn-bottom{
             bottom: -19px;
+
+            @include phone{
+                bottom: -10px;
+            }
 
             svg{
                 transform: rotate(180deg);
@@ -107,8 +141,8 @@
     }
 
     &-hide{
-        width: 90%;
-        height: 90%;
+        width: 95%;
+        height: 95%;
 
         pointer-events: none;
     }

@@ -5,7 +5,8 @@
        <controller
             parentId="cardSkills"
             :controllers="{
-                right: 'cardMenu'
+                right: 'cardMenu',
+                
             }"
         />
     </div>
