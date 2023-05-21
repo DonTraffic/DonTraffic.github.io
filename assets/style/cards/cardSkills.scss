@@ -1,5 +1,127 @@
 .card-skills {
     z-index: 3;
-    left: 0px;
-    transform: translate(0, 0);
+    left: 50%;
+    transform: translate(-50%, 0);
+    
+    @include phone{
+        left: 0px;
+        transform: translate(0, 0);
+    }
+
+    &__content{
+        width: 100%;
+
+        &-quote{
+            position: absolute;
+            top: 36px;
+            left: 36px;
+
+            width: 400px;
+            font-weight: 400;
+            font-size: 20px;
+            line-height: 24px;
+
+            &-author{
+                margin-top: 16px;
+                font-style: oblique;
+                display: block;
+            }
+
+        }
+
+        &-sea{
+            position: absolute;
+            bottom: 0px;
+            border-radius: 6px;
+            overflow: hidden;
+            width: 100%;
+
+            &-wave{
+                position: relative;
+                z-index: 1;
+
+                &-1 {top: 160px; animation: moveWave-1 7s infinite;}
+                &-2 {top: 130px; animation: moveWave-2 9s infinite;}
+                &-3 {top: 100px; animation: moveWave-3 10s infinite;}
+                &-4 {top: 70px; animation: moveWave-4 8.5s infinite;}
+                &-5 {top: 40px; animation: moveWave-5 7.5s infinite;}
+                &-6 {top: 10px; animation: moveWave-6 8s infinite;}
+
+                &-item{
+                    position: absolute;
+                    pointer-events: all;
+                    z-index: 1;
+                    transition: .4s ease;
+
+                    width: 50px;
+                    height: 50px;
+
+                    background: #000000;
+                    border: 1px solid #FFFFFF;
+                    border-radius: 6px;
+
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+
+                    font-weight: 400;
+                    font-size: 15px;
+
+                    &-js{
+                        left: 160px;
+                        top: -10px;
+                        transform: rotate(-2.88deg);
+                    }
+
+                    &:hover{
+                        background: #ffffff;
+                        color: #000000;
+                        cursor: pointer;
+                    }
+
+                }
+
+                &-icon{
+                    position: relative;
+                    width: 120%;
+                    height: 64px;
+                    z-index: 2;
+                }
+
+            }
+
+            @keyframes moveWave-1 { 0%{ left: -30px; } 50% { left: -60px; } 100% { left: -30px; } }
+            @keyframes moveWave-2 { 0%{ left: -60px; } 50% { left: -30px; } 100% { left: -60px; } }
+            @keyframes moveWave-3 { 0%{ left: -10px; } 50% { left: -70px; } 100% { left: -10px; } }
+            @keyframes moveWave-4 { 0%{ left: -50px; } 50% { left: -30px; } 100% { left: -50px; } }
+            @keyframes moveWave-5 { 0%{ left: -20px; } 50% { left: -50px; } 100% { left: -20px; } }
+            @keyframes moveWave-6 { 0%{ left: -10px; } 50% { left: -20px; } 100% { left: -10px; } }
+
+        }
+
+    }
+
+    &__background{
+        &-sun{
+            position: absolute;
+            top: 36px;
+            right: 36px;
+        }
+    }
+
+    &__dialog{
+        position: absolute;
+        z-index: 10;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+
+        background-color: #000000;
+        border: none;
+        border-radius: 6px;
+
+        padding: 24px;
+    }
+    
 }

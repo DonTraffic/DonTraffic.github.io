@@ -59,6 +59,7 @@ export default {
     methods: {
         showMore() {
             document.getElementById('cardMenu').classList.remove('card__position-bottom')
+            setTimeout(() => {this.$el.parentNode.removeChild(this.$el)}, 2000)
         },
 
         printText() {
