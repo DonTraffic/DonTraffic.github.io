@@ -1,5 +1,5 @@
 <template>
-    <div class="controller" :id="`controller-${parentId}`">
+    <div class="controller" :class="{'controller-hide': controllerHide}" :id="`controller-${parentId}`">
         <div
             v-for="(controller, index) in controllers" :key="`controller-${index}`"
             :class="`controller__btn-container controller__btn-${index}`"
@@ -20,7 +20,8 @@ export default {
 
     props: {
         parentId: String,
-        controllers: Object
+        controllers: Object,
+        controllerHide: Boolean,
     },
 
     methods: {
