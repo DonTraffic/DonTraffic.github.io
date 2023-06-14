@@ -102,26 +102,11 @@ body{
     }
 }
 
-.card__position-bottom {
-    bottom: -70vh;
-    @include phone {
-        bottom: -105%;
-    }
-} .card__position-top {
-    top: -70vh;
-    @include phone {
-        top: -105%;
-    }
-} .card__position-right {
-    right: -70vh;
-    @include phone {
-        right: -105%;
-    }
-} .card__position-left {
-    left: -70vh;
-    @include phone {
-        left: -105%;
-    }
+.card__position{
+    &-bottom { transform: translate(0, calc(100vw + 55%)); }
+    &-top { transform: translate(0, calc(-100vw - 55%)); }
+    &-right { transform: translate(calc(100vw + 55%)); }
+    &-left { transform: translate(calc(-100vw - 55%)); }
 }
 
 .icon-sun{

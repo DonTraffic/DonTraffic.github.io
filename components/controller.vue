@@ -47,7 +47,7 @@ export default {
                     .classList.remove('controller-hide')
             }
 
-
+            this.$store.commit('changeActiveCard', id)
 
         },
 

@@ -1,5 +1,5 @@
 <template>
-    <div class="card card-skills card__position-left2" id="cardSkills">
+    <div class="card card-skills card__position-left" id="cardSkills">
         <div class="card__content card-skills__content">
             <p class="card-skills__content-quote text-shadow">
                 Аналогично тому, как написание картины является искусством для души, 
@@ -84,6 +84,20 @@ import Parallax from 'parallax-js'
 export default {
     name: 'cardSkills',
 
+    computed: {
+        activeCard() {
+            return this.$store.state.activeCard
+        }
+	},
+
+    watch: {
+        activeCard() {
+            window.innerWidth > 425 && this.activeCard == 'cardSkills' ? 
+                this.parallax.enable() : 
+                this.parallax.disable() ;
+        }
+    },
+
     data() {
         return{
             activeSkill: '',
@@ -118,12 +132,21 @@ export default {
                     },
 
                 },
-            }
+            },
+
+            parallax: '',
         }
     },
 
     mounted() {
-        if (window.innerWidth > 425) new Parallax(document.querySelector('#scene-sea'))
+        if (window.innerWidth > 425) setTimeout( () => { 
+            this.parallax = new Parallax(document.querySelector('#scene-sea')) 
+            this.parallax.disable()
+        }, 1000)
+    },
+
+    beforeDestroy() {
+        this.parallax.disable();
     },
 
     methods: {

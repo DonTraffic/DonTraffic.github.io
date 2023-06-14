@@ -1,5 +1,5 @@
 <template>
-    <div class="card card-menu card__position-bottom" id="cardMenu">
+    <div class="card card-menu card__position-bottom" id="cardMenu" ref="cardMenu">
         <div class="card__content card-menu__content">
             <p class="text-shadow">я Middle Frontend <br/> разработчик</p>
             <p class="text-shadow">меня зовут <br/> Уханов Дмитрий</p>

@@ -143,11 +143,13 @@
         width: 95%;
         height: 95%;
 
-        pointer-events: none;
-
         @include phone {
             width: 100%;
             height: 100%;
+        }
+
+        .controller__btn-container{
+            pointer-events: none;
         }
 
     }
