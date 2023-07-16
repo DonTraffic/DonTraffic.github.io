@@ -51,7 +51,7 @@
             background-color: rgb(0, 0, 0);
 
             transition: .4s ease;
-            animation: showButton 3s;
+            animation: showButton 2s;
             animation-delay: 8s;
             animation-fill-mode:forwards;
             overflow: hidden;
@@ -75,7 +75,7 @@
                 opacity: 0;
                 border: 1px solid #fff;
 
-                animation: showButton 3s;
+                animation: showButton 2s;
                 animation-delay: 8s;
                 animation-fill-mode:forwards;
             }
@@ -98,55 +98,59 @@
     }
 
     &__background{
-        display: flex;
-        justify-content: center;
+        canvas{
+            width: 100%;
+            height: 100%;
+        }
+        // display: flex;
+        // justify-content: center;
 
-        &-trajectory{
-            position: absolute;
-            height: 950px;
+        // &-trajectory{
+        //     position: absolute;
+        //     height: 950px;
 
-            animation: moveSun 7.5s;
-            animation-fill-mode: forwards;
+        //     animation: moveSun 7.5s;
+        //     animation-fill-mode: forwards;
 
-            @include phone {
-                bottom: 0;
-                height: 650px;
+        //     @include phone {
+        //         bottom: 0;
+        //         height: 650px;
 
-                animation: moveSun-mobile 7.5s;
-                animation-fill-mode: forwards;
-            }
+        //         animation: moveSun-mobile 7.5s;
+        //         animation-fill-mode: forwards;
+        //     }
             
-        }
+        // }
 
-        &-grass{
-            position: absolute;
-            bottom: 0px;
-            height: 195px;
-            width: 140%;
-            animation: moveGrass 10s infinite;
-            pointer-events: none;
+        // &-grass{
+        //     position: absolute;
+        //     bottom: 0px;
+        //     height: 195px;
+        //     width: 140%;
+        //     animation: moveGrass 10s infinite;
+        //     pointer-events: none;
 
-            @include phone {
-                height: 60%;
-                width: fit-content;
-            }
+        //     @include phone {
+        //         height: 60%;
+        //         width: fit-content;
+        //     }
 
-        }
+        // }
 
-        @keyframes moveSun {
-            0%{transform: rotate(-134deg);}
-            100%{transform: rotate(32deg);} 
-        }
-        @keyframes moveSun-mobile {
-            0%{transform: rotate(-134deg);}
-            100%{transform: rotate(20deg);} 
-        }
+        // @keyframes moveSun {
+        //     0%{transform: rotate(-134deg);}
+        //     100%{transform: rotate(32deg);} 
+        // }
+        // @keyframes moveSun-mobile {
+        //     0%{transform: rotate(-134deg);}
+        //     100%{transform: rotate(20deg);} 
+        // }
 
-        @keyframes moveGrass {
-            0%{transform: skewX(7deg) translate(-7px);}
-            50%{transform: skewX(-7deg) translate(7px);}
-            100%{transform: skewX(7deg) translate(-7px);} 
-        }
+        // @keyframes moveGrass {
+        //     0%{transform: skewX(7deg) translate(-7px);}
+        //     50%{transform: skewX(-7deg) translate(7px);}
+        //     100%{transform: skewX(7deg) translate(-7px);} 
+        // }
 
     }
 
