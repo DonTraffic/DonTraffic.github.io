@@ -14,7 +14,7 @@
     "sass-loader": "^13.2.0"
   },
   "dependencies": {
-    "nuxt-icon": "^0.3.2",
+    "nuxt-icon": "^0.5.0",
     "parallax-js": "^3.1.0",
     "vuex": "^4.0.2"
   }

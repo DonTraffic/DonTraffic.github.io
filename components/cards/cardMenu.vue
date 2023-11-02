@@ -35,7 +35,6 @@
 
             <div class="card-menu__background-sun icon-sun"></div>
 
-            <!-- заменить на canvas и сделать падающие цветы -->
             <img src="~/assets/img/sakura.png" alt="sakura" class="card-menu__background-tree">
         </div>
 

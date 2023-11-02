@@ -12,6 +12,7 @@ const store = createStore({
     },
 
     mutations: {
+        // переделать на значение 3х (active, pause, disable)
         changeActiveCard(state, name) {
             setTimeout( () => {
                 state.activeCard = name
