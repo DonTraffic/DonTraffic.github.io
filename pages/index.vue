@@ -5,6 +5,7 @@
         <cards-cardStart v-if="statusCards.cardStart" />
         <cards-cardMenu v-if="statusCards.cardMenu" />
         <cards-cardSkills v-if="statusCards.cardSkills" />
+        <cards-cardProjects v-if="statusCards.cardProjects" />
         
         <div id="custom-cursor"></div>
     </div>

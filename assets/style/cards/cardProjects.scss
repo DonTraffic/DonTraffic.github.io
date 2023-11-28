@@ -1,0 +1,158 @@
+.card-projects{
+    z-index: 3;
+    display: grid !important;
+    grid-template-columns: 1fr 1px 1fr;
+
+    &__preview{
+        min-height: 100%;
+        position: relative;
+        overflow: hidden;
+        pointer-events: none;
+
+        &-svg{
+            position: absolute;
+            bottom: 0;
+            right: -70px;
+
+            width: 300px;
+            object-fit: cover;
+        }
+
+        &-sun{
+            position: absolute;
+            left: 16px;
+            top: 16px;
+        }
+
+        &-container{
+            overflow: hidden;
+            position: relative;
+            height: 100%;
+        }
+
+        &-viewport{
+            height: 100%;
+            transition: 1s ease;
+
+            display: flex;
+            flex-direction: column-reverse;
+        }
+    }
+
+    &__line{
+        background-color: white;
+        height: 100%;
+    }
+
+    &__content{
+        height: 100%;
+        padding: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+
+        &-container{
+            overflow: hidden;
+            position: relative;
+            height: 100%;
+        }
+
+        &-viewport{
+            height: 100%;
+            transition: 1s ease;
+        }
+
+        &-logo{
+            display: flex;
+            align-items: center;
+            justify-content: center;
+    
+            &-icon{
+                margin: 10px 8px 0 0;
+                fill: white;
+                height: 35px;
+                width: 35px;
+            }
+    
+            &-title{
+                text-decoration: none;
+                text-transform: capitalize;
+                font-size: 31.25px;
+                font-weight: 400;
+                border-bottom: 1px solid rgb(0, 0, 0);
+                transition: .4s ease;
+    
+                &:hover{
+                    border-bottom: 1px solid white;
+                }
+            }
+        }
+    
+        &-desc{
+            text-align: center;
+            font-size: 16px;
+            font-style: normal;
+            font-weight: 400;
+            margin-bottom: 16px;
+        }
+    
+        &-btn{
+            transition: .4s ease;
+            padding: 8px 24px;
+            border: 1px solid white;
+            background-color: rgba(255, 255, 255, 0);
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 400;
+            color: white;
+    
+            &:hover{
+                background-color: rgb(255, 255, 255);
+                color: black;
+            }
+        }
+
+        &-controll{
+            transition: .4s ease;
+            width: 40px;
+            height: 40px;
+
+            background-color: black;
+            border: 1px solid white;
+            border-radius: 6px;
+
+            padding: 8px;
+
+            position: absolute;
+            top: 16px;
+
+            left: 50%;
+            translate: -50% 0;
+
+            &:hover{
+                background-color: white;
+
+                .card-projects__content-controll-svg{
+                    fill: black;
+                }
+            }
+
+            &-bottom{
+                top: auto;
+                bottom: 16px;
+
+                .card-projects__content-controll-svg{
+                    rotate: 180deg;
+                }
+            }
+
+            &-svg{
+                transition: .4s ease;
+                width: 100%;
+                height: 100%;
+                fill: white;
+            }
+        }
+    }
+}

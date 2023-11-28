@@ -21,7 +21,8 @@ const store = createStore({
                     case 'cardMenu':
                         state.statusCards = {
                             cardMenu: true,
-                            cardSkills: true
+                            cardSkills: true,
+                            cardProjects: true,
                         }
                     break;
     
@@ -31,9 +32,16 @@ const store = createStore({
                             cardSkills: true,
                         }
                     break;
+
+                    case 'cardProjects':
+                        state.statusCards = {
+                            cardMenu: true,
+                            cardProjects: true,
+                        }
+                    break;
     
                 }
-            }, 1000)
+            }, 500)
 
         },
     },

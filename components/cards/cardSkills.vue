@@ -26,7 +26,7 @@
       ></canvas>
     </div>
 
-    <modal
+    <modals-modalSkill
       :activeSkill="activeSkill"
       :info="infoSkills[activeSkill]"
       @closeModal="closeModal"
@@ -34,10 +34,10 @@
 
     <controller
       parentId="cardSkills"
+      :controllerHide="controllerHide"
       :controllers="{
         right: 'cardMenu',
       }"
-      :controllerHide="controllerHide"
     />
   </div>
 </template>

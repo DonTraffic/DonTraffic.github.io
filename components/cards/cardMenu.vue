@@ -42,6 +42,7 @@
             parentId="cardMenu"
             :controllers="{
                 left: 'cardSkills',
+                right: 'cardProjects'
             }"
         />
     </div>
