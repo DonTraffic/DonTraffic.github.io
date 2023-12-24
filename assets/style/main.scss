@@ -1,4 +1,5 @@
 @import 'media.scss';
+@import 'variable.scss';
 
 @import 'cards/cardStart.scss';
 @import 'cards/cardMenu.scss';
@@ -19,10 +20,10 @@
     padding: 0;
     box-sizing: border-box;
     user-select: none;
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Montserrat', sans-serif;
     font-style: normal;
     font-weight: 300;
-    color: #fff;
+    color: $color-white;
     cursor: none;
 }
 
@@ -32,19 +33,19 @@ html *::-webkit-scrollbar {
 }
 *::-webkit-scrollbar-track,
 html *::-webkit-scrollbar-track {
-    background: rgb(255, 255, 255);
+    background: $color-white;
     height: 100px;
 }
 *::-webkit-scrollbar-thumb,
 html *::-webkit-scrollbar-thumb {
-    background-color: rgb(0, 0, 0);
+    background-color: $color-black;
     border-radius: 5px;
-    border: 1px solid rgb(255, 255, 255);
+    border: 1px solid $color-white;
 }
 
 body{
     width: 100vw;
-    background-color: #000;
+    background-color: $color-black;
 }
 
 #DonTraffic{
@@ -65,8 +66,8 @@ body{
     width: 15px;
     height: 15px;
 
-    background-color: #fff;
-    box-shadow: 0px 0px 6px #FFFFFF;
+    background-color: $color-white;
+    box-shadow: 0px 0px 6px $color-white;
     border-radius: 50%;
 
     pointer-events: none;
@@ -87,8 +88,8 @@ body{
     width: 100%;
     height: 450px;
 
-    background: #000000;
-    border: 1px solid #FFFFFF;
+    background: $color-black;
+    border: 1px solid $color-white;
     border-radius: 6px;
 
     display: flex;
@@ -118,15 +119,15 @@ body{
     }
 
     &-shadow{
-        box-shadow: 0px 0px 6px #FFFFFF;
+        box-shadow: 0px 0px 6px $color-white;
     }
 
     @include phone {
         max-width: 100%;
         height: 100%;
 
-        border: 0px solid #FFFFFF;
-        outline: 1px solid #FFFFFF;
+        border: 0px solid $color-white;
+        outline: 1px solid $color-white;
         box-shadow: none;
         border-radius: 0px;
 
@@ -143,11 +144,11 @@ body{
 .icon-sun{
     width: 150px;
     height: 150px;
-    background: #FFFFFF;
-    box-shadow: 0px 0px 6px #FFFFFF;
+    background: $color-white;
+    box-shadow: 0px 0px 6px $color-white;
     border-radius: 50%;
 }
 
 .text-shadow {
-    text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
+    text-shadow: -1px 0 $color-black, 0 1px $color-black, 1px 0 $color-black, 0 -1px $color-black;
 }

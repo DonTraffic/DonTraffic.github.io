@@ -41,8 +41,8 @@
             padding-top: 6px;
 
             a{                
-                background: #000000;
-                border: 1px solid #FFFFFF;
+                background: $color-black;
+                border: 1px solid $color-white;
                 border-radius: 30px;
 
                 padding: 4px 8px;
@@ -63,7 +63,7 @@
                     width: 16px;
                     height: 16px;
 
-                    fill: #FFFFFF;
+                    fill: $color-white;
                 }
 
                 &:nth-child(1) {
@@ -73,11 +73,11 @@
                 }
                 
                 &:hover{
-                    color: #000000;
-                    background-color: #FFFFFF;
+                    color: $color-black;
+                    background-color: $color-white;
 
                     svg{
-                        fill: #000000;
+                        fill: $color-black;
                     }
 
                 }
@@ -126,7 +126,6 @@
         }
 
         &-boat {
-            // animation: moveBoat 8s infinite;
             position: absolute;
 
             height: 46px;
@@ -157,7 +156,6 @@
         }
 
         &-tree {
-            // animation: moveTree 10s infinite;
             pointer-events: none;
             position: absolute;
 

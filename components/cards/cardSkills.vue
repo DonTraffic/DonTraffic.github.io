@@ -124,7 +124,7 @@ export default {
             y: -150,
           },
           slide: 1,
-          color: 0,
+          color: 15,
         },
 
         CSS: {
@@ -155,7 +155,7 @@ export default {
             y: -100,
           },
           slide: 1,
-          color: 0,
+          color: 15,
         },
 
         jQuery: {
@@ -186,7 +186,7 @@ export default {
             y: 150,
           },
           slide: 1,
-          color: 0,
+          color: 15,
         },
 
         JavaScript: {
@@ -221,7 +221,7 @@ export default {
             y: 100,
           },
           slide: 1,
-          color: 0,
+          color: 15,
         },
       },
 
@@ -373,10 +373,10 @@ export default {
     this.waveOffsetHeightTop = document.querySelector('.card').offsetHeight/2
 
     // задаём общий цвет
-    this.context.fillStyle = "black";
-    this.context.strokeStyle = "white";
+    this.context.fillStyle = "rgb(15, 15, 15)";
+    this.context.strokeStyle = "rgb(235, 235, 235)";
     this.context.lineWidth = 1;
-    this.context.shadowColor = "white";
+    this.context.shadowColor = "rgb(235, 235, 235)";
 
     // запускаем анимацию
     requestAnimationFrame(this.tick)
@@ -424,7 +424,7 @@ export default {
     },
 
     printSun(){
-      this.context.fillStyle = "white";
+      this.context.fillStyle = "rgb(235, 235, 235)";
       this.context.shadowBlur = 50
 
       this.context.beginPath()
@@ -440,7 +440,7 @@ export default {
       this.context.stroke()
       this.context.fill()
 
-      this.context.fillStyle = "black";
+      this.context.fillStyle = "rgb(15, 15, 15)";
       this.context.shadowBlur = 0
     },
 
@@ -741,9 +741,9 @@ export default {
         coordX - this.blocksRadius < this.mouseMoveX && this.mouseMoveX < coordX + textWidth + this.blocksRadius && 
         coordY - this.blocksRadius < this.mouseMoveY && this.mouseMoveY < coordY + this.blocksHeight + this.blocksRadius
       ) {
-        if (item.color < 255) item.color+=5
+        if (item.color < 235) item.color+=5
       } else {
-        if (item.color > 0) item.color-=5
+        if (item.color > 15) item.color-=5
       }
       this.context.fillStyle = `rgba(${item.color}, ${item.color}, ${item.color}`
 
@@ -777,7 +777,7 @@ export default {
       this.context.fill()
 
       // пишем текст
-      this.context.fillStyle = `rgba(${255 - item.color}, ${255 - item.color}, ${255 - item.color}`;
+      this.context.fillStyle = `rgba(${235 - item.color}, ${235 - item.color}, ${235 - item.color}`;
       this.context.font = '24px Open Sans';
       this.context.textAlign = 'center';
       this.context.fillText(
@@ -786,7 +786,7 @@ export default {
         coordY + this.blocksHeight/2 + this.blocksRadius
       );
 
-      this.context.fillStyle = "black";
+      this.context.fillStyle = "rgb(15, 15, 15)";
       this.context.stroke()
     },
 

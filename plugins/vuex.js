@@ -41,7 +41,7 @@ const store = createStore({
                     break;
     
                 }
-            }, 500)
+            }, 1000)
 
         },
     },

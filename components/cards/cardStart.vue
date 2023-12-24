@@ -81,16 +81,17 @@ export default {
     this.context.scale(1, -1);
 
     // задаём общий цвет
-    this.context.fillStyle = "white";
+    this.context.fillStyle = "rgb(235, 235, 235)";
 
     // // настройки травинки
-    this.grassCount = process.client && this.globalSize ? 200 : 100
+    this.grassWidth = 8
+    this.grassCount = (this.canvas.width/this.grassWidth) + 20
     this.grassSizeMax = process.client && this.globalSize ? 180 : 225
 
     // Генерируем случайные значения
     for (let i = 0; i < this.grassCount; i++) {
       // позиция
-      this.grassRandomPosition.push(Math.round( Math.random() * this.canvas.width ))
+      this.grassRandomPosition.push((i * (this.grassWidth-1)) + (Math.floor(Math.random() * 5) + this.grassWidth) - 20)
       // отклонение 
       this.grassRandomDeviation.push([Math.round( Math.random() * (this.grassDeviationMax - 1) ), Boolean(Math.round( Math.random() * 1 ))])
       // высота
@@ -102,7 +103,7 @@ export default {
   },
 
   methods: {
-    createGrass(i) {
+    printGrass(i) {
       // получаем настройки
       let startX = this.grassRandomPosition[i]
       let grassSize = this.grassRandomSize[i]
@@ -120,7 +121,7 @@ export default {
       this.context.bezierCurveTo(
         startX, 0,
         startX + 3 - grassDeviation * 0, grassSize/1.2,
-        startX + 6 - grassDeviation * 5, grassDeviation > 0 ? (grassSize - grassDeviation * 2) : (grassSize + grassDeviation * 2),
+        startX + 6 - this.grassWidth - grassDeviation * 5, grassDeviation > 0 ? (grassSize - grassDeviation * 2) : (grassSize + grassDeviation * 2),
       );
       this.context.bezierCurveTo(
         startX + 9 - grassDeviation * 2, grassSize/1.2 + grassDeviation/3,
@@ -129,7 +130,7 @@ export default {
       );
       this.context.closePath();
       this.context.shadowBlur = 5;
-      this.context.shadowColor = "white";
+      this.context.shadowColor = "rgb(235, 235, 235)";
       this.context.fill();
     },
 
@@ -146,7 +147,7 @@ export default {
         70, 0, Math.PI * 2
       )
       this.context.shadowBlur = 15;
-      this.context.shadowColor = "white";
+      this.context.shadowColor = "rgb(235, 235, 235)";
       this.context.fill()
     },
 
@@ -155,7 +156,7 @@ export default {
       this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
       // Создаём траву
-      for (let i = 0; i < this.grassCount; i++) { this.createGrass(i) }
+      for (let i = 0; i < this.grassCount; i++) { this.printGrass(i) }
 
       // создаём солнце
       this.createSun()

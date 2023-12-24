@@ -40,7 +40,7 @@
     }
 
     &__line{
-        background-color: white;
+        background-color: $color-white;
         height: 100%;
     }
 
@@ -70,7 +70,7 @@
     
             &-icon{
                 margin: 10px 8px 0 0;
-                fill: white;
+                fill: $color-white;
                 height: 35px;
                 width: 35px;
             }
@@ -80,11 +80,11 @@
                 text-transform: capitalize;
                 font-size: 31.25px;
                 font-weight: 400;
-                border-bottom: 1px solid rgb(0, 0, 0);
+                border-bottom: 1px solid $color-black;
                 transition: .4s ease;
     
                 &:hover{
-                    border-bottom: 1px solid white;
+                    border-bottom: 1px solid $color-white;
                 }
             }
         }
@@ -100,16 +100,16 @@
         &-btn{
             transition: .4s ease;
             padding: 8px 24px;
-            border: 1px solid white;
+            border: 1px solid $color-white;
             background-color: rgba(255, 255, 255, 0);
             border-radius: 6px;
             font-size: 16px;
             font-weight: 400;
-            color: white;
+            color: $color-white;
     
             &:hover{
-                background-color: rgb(255, 255, 255);
-                color: black;
+                background-color: $color-white;
+                color: $color-black;
             }
         }
 
@@ -118,8 +118,8 @@
             width: 40px;
             height: 40px;
 
-            background-color: black;
-            border: 1px solid white;
+            background-color: $color-black;
+            border: 1px solid $color-white;
             border-radius: 6px;
 
             padding: 8px;
@@ -131,10 +131,10 @@
             translate: -50% 0;
 
             &:hover{
-                background-color: white;
+                background-color: $color-white;
 
                 .card-projects__content-controll-svg{
-                    fill: black;
+                    fill: $color-black;
                 }
             }
 
@@ -151,7 +151,7 @@
                 transition: .4s ease;
                 width: 100%;
                 height: 100%;
-                fill: white;
+                fill: $color-white;
             }
         }
     }
