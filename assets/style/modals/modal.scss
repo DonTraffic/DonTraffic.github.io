@@ -11,8 +11,8 @@
     width: calc(100% + 2px);
     height: calc(100% + 2px);
 
-    background-color: $color-black;
-    border: 1px solid $color-white;
+    background-color: color-black();
+    border: 1px solid color-white();
     border-radius: 6px;
 
     padding: 24px;
@@ -52,8 +52,8 @@
         align-items: center;
         justify-content: center;
 
-        border: 1px solid $color-white;
-        box-shadow: 0px 0px 6px $color-white;
+        border: 1px solid color-white();
+        box-shadow: 0px 0px 6px color-white();
         border-radius: 0px 0px 0px 6px;
 
         transition: .4s ease;
@@ -65,16 +65,16 @@
         }
 
         &:hover{
-            background-color: $color-white;
+            background-color: color-white();
             .modal__close-icon{
-                fill: $color-black;
+                fill: color-black();
             }
         }
 
         &-icon{
             height: 12px;
             width: 12px;
-            fill: $color-white;
+            fill: color-white();
             transition: .4s ease;
 
             @include phone {

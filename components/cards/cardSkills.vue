@@ -32,7 +32,7 @@
       @closeModal="closeModal"
     />
 
-    <controller
+    <modules-controller
       parentId="cardSkills"
       :controllerHide="controllerHide"
       :controllers="{

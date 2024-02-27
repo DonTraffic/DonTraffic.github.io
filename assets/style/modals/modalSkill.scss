@@ -30,12 +30,12 @@
                 a{
                     font-size: 16px;
                     text-decoration: none;
-                    border-bottom: 1px solid $color-black;
+                    border-bottom: 1px solid color-black();
 
                     transition: .4s ease;
 
                     &:hover{
-                        border-bottom: 1px solid $color-white;
+                        border-bottom: 1px solid color-white();
                     }
                 }
 
@@ -91,15 +91,15 @@
     &__example{
         width: fit-content;
         text-decoration: none;
-        border: 1px solid $color-white;
+        border: 1px solid color-white();
         border-radius: 6px;
         padding: 8px 16px;
 
         transition: .4s ease;
 
         &:hover{
-            background-color: $color-white;
-            color: $color-black;
+            background-color: color-white();
+            color: color-black();
         }
 
     }

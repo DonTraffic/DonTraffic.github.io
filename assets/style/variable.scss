@@ -1,2 +1,8 @@
-$color-white: rgb(235, 235, 235);
-$color-black: rgb(15, 15, 15);
+@function color-white($alpha: 1) { @return rgba(235, 235, 235, $alpha) }
+@function color-black($alpha: 1) { @return rgba(15, 15, 15, $alpha) }
+
+$max-width: 1440px;
+
+$font-size-big: 47.78px;
+$font-size-medium: 33.18px;
+$font-size-small: 23.04px;

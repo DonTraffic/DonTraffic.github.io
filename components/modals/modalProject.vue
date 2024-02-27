@@ -216,7 +216,7 @@ export default {
             const epoch = Date.parse("1970-01-01T00:00:00.000Z");
             let count = Math.ceil((Date.parse(dateActual ? dateActual : date2) - epoch - Date.parse(date1) - epoch) / (30 * 24 * 60 * 60 * 1000));
 
-            return `${Math.floor(count/12)} год ${count%12} месяцев`
+            return `${count/12 >= 1 ? Math.floor(count/12) + ' год' : ''} ${count%12} месяцев`
         },
 
         formatMonthName(date) {

@@ -1,0 +1,26 @@
+@import '../media.scss';
+@import '../variable.scss';
+
+@import '../modules/header.scss';
+
+.wrapper{
+    max-width: $max-width;
+    margin: 0 auto;
+}
+
+.block{
+    margin: 16px 0;
+    box-shadow: 0px 0px 6px color-white();
+    padding: 16px;
+    border: 1px solid color-white();
+    border-radius: 6px;
+    overflow: hidden;
+
+    &-title{
+        font-size: $font-size-medium;
+        text-align: center;
+        margin-bottom: 16px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid color-white();
+    }
+}

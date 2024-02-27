@@ -11,12 +11,12 @@
     a{
         text-decoration: none;
         text-decoration: none;
-        border-bottom: 1px solid $color-black;
+        border-bottom: 1px solid color-black();
 
         transition: .4s ease;
 
         &:hover{
-            border-bottom: 1px solid $color-white;
+            border-bottom: 1px solid color-white();
         }
     }
 
@@ -33,7 +33,7 @@
 
             &-icon{
                 margin: 5px 8px 0 0;
-                fill: $color-white;
+                fill: color-white();
                 height: 35px;
                 width: 35px;
             }
@@ -85,20 +85,20 @@
         top: 50%;
         translate: 0 -50%;
 
-        background-color: $color-black;
+        background-color: color-black();
         border: 1px solid rgba(255, 255, 255, 0);
         border-radius: 6px;
         transition: .4s ease;
 
         &:hover{
-            border: 1px solid $color-white;
+            border: 1px solid color-white();
         }
 
         &-thumb{
             position: absolute;
 
             width: 100%;
-            background-color: $color-white;
+            background-color: color-white();
             border-radius: 6px;
         }
     }

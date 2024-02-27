@@ -93,7 +93,7 @@
             @closeModal="closeModal"
         />
 
-        <controller
+        <modules-controller
             parentId="cardProjects"
             :controllerHide="controllerHide"
             :controllers="{

@@ -38,7 +38,7 @@
             <img src="~/assets/img/sakura.png" alt="sakura" class="card-menu__background-tree">
         </div>
 
-        <controller
+        <modules-controller
             parentId="cardMenu"
             :controllers="{
                 left: 'cardSkills',

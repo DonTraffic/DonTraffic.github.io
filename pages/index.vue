@@ -6,8 +6,6 @@
         <cards-cardMenu v-if="statusCards.cardMenu" />
         <cards-cardSkills v-if="statusCards.cardSkills" />
         <cards-cardProjects v-if="statusCards.cardProjects" />
-        
-        <div id="custom-cursor"></div>
     </div>
 </template>
 
@@ -23,12 +21,10 @@ export default {
 
     mounted() {
         if (process.client) document.getElementById('DonTraffic').style.height = `${window.innerHeight}px`
-
-        let cursor = document.querySelector('#custom-cursor')
-        document.addEventListener('mousemove', (e) => {
-            cursor.style.left = `${e.pageX}px`
-            cursor.style.top = `${e.pageY}px`
-        })
     }
 }
 </script>
+
+<style lang="scss">
+    @use "~/assets/style/pages/DonTraffic.scss";
+</style>

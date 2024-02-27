@@ -14,8 +14,9 @@
     "sass-loader": "^13.2.0"
   },
   "dependencies": {
+    "fabric": "^5.3.0",
     "nuxt-icon": "^0.5.0",
-    "parallax-js": "^3.1.0",
+    "stylus": "^0.62.0",
     "vuex": "^4.0.2"
   }
 }
