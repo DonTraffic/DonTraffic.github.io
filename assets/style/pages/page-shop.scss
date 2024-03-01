@@ -109,6 +109,36 @@
         position: relative;
         z-index: 1;
 
+        &--fullscreen{
+            position: absolute;
+
+            width: 100vw;
+            height: 100vh;
+
+            background-color: rgb(15, 15, 15);
+
+
+            .custom__redactor{
+                &-canvas{
+                    height: 100%;
+
+                    &-container{
+                        height: 100%;
+                    }
+                }
+
+                &-layers{
+                    bottom: 16px;
+                    left: 16px;
+                }
+    
+                &-fullscreen{
+                    top: 16px;
+                    right: 16px;
+                }
+            }
+        }
+
         &-layers{
             position: absolute;
             bottom: 0;

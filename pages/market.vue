@@ -53,13 +53,13 @@
                             </div>
                         </div>
 
-                        <label class="custom__menu-label" v-if="catalogItems[activeCatalogItem].setting.product">
+                        <label class="custom__menu-label" v-if="catalogItems[activeCatalogItem]">
                             Ссылку на свой продукт -
                             <input 
                                 class="custom__menu-label-input" 
                                 type="text"
                                 placeholder="ссылка или название"
-                                v-model="catalogItems[activeCatalogItem].setting.product.url"
+                                v-model="catalogItems[activeCatalogItem].productUrl"
                             >
                         </label>
 
@@ -69,7 +69,7 @@
                                 class="custom__menu-label-input" 
                                 type="text"
                                 placeholder="выложи душу"
-                                v-model="catalogItems[activeCatalogItem].setting.message"
+                                v-model="catalogItems[activeCatalogItem].message"
                             >
                         </label>
                     </div>
@@ -86,9 +86,9 @@
                             <div class="custom__redactor-layers-items">
                                 <div 
                                     class="custom__redactor-layers-item"
-                                    v-for="(item, index) in this.canvas.layers.canvasList" 
+                                    v-for="(item, index) in canvas.layers.canvasList" 
                                     :key="`${item}-${index}`"
-                                    :class="{'custom__redactor-layers-item--active': this.canvas.layers.canvasActive == index}"
+                                    :class="{'custom__redactor-layers-item--active': canvas.layers.canvasActive == index}"
                                 >
                                     <input
                                         class="custom__redactor-layers-item-text"
@@ -127,9 +127,9 @@
                             <canvas class="custom__redactor-canvas" id="custom-redactor-canvas-0"></canvas>
                         </div>
                         
-                        <!-- <svg class="custom__redactor-fullscreen">
+                        <svg class="custom__redactor-fullscreen" @click="changeFullscreen">
                             <use xlink:href="~/assets/svg/sprite.svg#icon-fullscreen"></use>
-                        </svg> -->
+                        </svg>
                     </div>
                 </div>
             </section>
@@ -175,15 +175,9 @@ export default {
                     title: 'Нож с травлением',
                     desc: 'Путём травления метала, лезвию ножа придаётся нужный принт. Есть возможность добавить слои, что придаст принту красоты и объёма',
                     price: 5000,
-
-                    setting: {
-                        product: {
-                            image: '/_nuxt/assets/img/shop/knife-custom.png',
-                            url: '',
-                        },
-                        prints: {},
-                        message: '',
-                    }
+                    productImage: '/_nuxt/assets/img/shop/knife-custom.png',
+                    productUrl: '',
+                    message: '',
                 },
 
                 picture: {
@@ -199,6 +193,7 @@ export default {
 
                 drag: false,
                 action: '',
+                fullscreen: false,
 
                 offsetY: 0,
                 offsetX: 0,
@@ -213,6 +208,17 @@ export default {
                     canvasActive: null,
                     canvasList: [],
                     show: false,
+                },
+
+                globalItemsPositions: {
+                    max: {
+                        x: 0,
+                        y: 0,
+                    },
+                    min: {
+                        x: 999999999,
+                        y: 999999999,
+                    }
                 },
 
                 methods: {
@@ -238,7 +244,6 @@ export default {
                     },
 
                     move: (e) => {
-                        console.log(this.canvas.linkCanvasActive.image);
                         if (!this.canvas.offsetX) this.canvas.offsetX = e.offsetX - this.canvas.linkCanvasActive.image.position.x
                         if (!this.canvas.offsetY) this.canvas.offsetY = e.offsetY - this.canvas.linkCanvasActive.image.position.y
 
@@ -247,6 +252,29 @@ export default {
                             y: e.offsetY - this.canvas.offsetY
                         }
                     },
+
+                    globalItemsPosition: () => {
+                        this.canvas.globalItemsPositions = {
+                            max: {
+                                x: 0,
+                                y: 0,
+                            },
+                            min: {
+                                x: 999999999,
+                                y: 999999999,
+                            }
+                        },
+
+                        this.canvas.layers.canvasList.forEach(canvas => {
+                            let globalPos = this.canvas.globalItemsPositions
+                            let localPos = canvas.image.points['min-max']
+
+                            if(localPos.max.y > globalPos.max.y) globalPos.max.y = localPos.max.y
+                            if(localPos.min.y < globalPos.min.y) globalPos.min.y = localPos.min.y
+                            if(localPos.max.x > globalPos.max.x) globalPos.max.x = localPos.max.x
+                            if(localPos.min.x < globalPos.min.x) globalPos.min.x = localPos.min.x
+                        })
+                    }
                 },
             },
         }
@@ -289,6 +317,8 @@ export default {
 
                 let img = new Image()
                 img.onload = () => {
+                    let imgWidth = 200*img.width/img.height
+
                     this.canvas.layers.canvasList[index] = {
                         name: 'image ' + index,
                         html: htmlCanvas,
@@ -298,20 +328,21 @@ export default {
                         image: {
                             canvasImage: img,
                             size: {
-                                width: 200*img.width/img.height,
+                                width: imgWidth,
                                 height: 200,
                             },
                             center: {
-                                x: 0 + (200*img.width/img.height) / 2,
-                                y: 0 + 200 / 2,
+                                x: htmlCanvas.offsetWidth/2,
+                                y: htmlCanvas.offsetHeight/2,
                             },
                             position: {
-                                x: 0,
-                                y: 0,
+                                x: htmlCanvas.offsetWidth/2 - imgWidth/2,
+                                y: htmlCanvas.offsetHeight/2 - 100,
                             },
                             rotate: 0,
                         }
                     }
+
                     this.canvas.layers.canvasList[index].html.width = this.canvas.layers.canvasList[index].width
                     this.canvas.layers.canvasList[index].html.height = this.canvas.layers.canvasList[index].height
 
@@ -346,19 +377,21 @@ export default {
 
             let img = new Image()
             img.onload = () => {
+                let imgWidth = 200*img.width/img.height
+
                 item.image = {
                     canvasImage: img,
                     size: {
-                        width: 200*img.width/img.height,
+                        width: imgWidth,
                         height: 200,
                     },
                     center: {
-                        x: 0 + (200*img.width/img.height) / 2,
-                        y: 0 + 200 / 2,
+                        x: item.width/2,
+                        y: item.height/2,
                     },
                     position: {
-                        x: 0,
-                        y: 0,
+                        x: item.width/2 - imgWidth/2,
+                        y: item.height/2 - 100,
                     },
                     rotate: 0,
                 }
@@ -367,11 +400,12 @@ export default {
                 this.setItemPosition()
                 this.updateCanvas()
             }
-            img.src = this.catalogItems[this.activeCatalogItem].setting.product.image
+            img.src = this.catalogItems[this.activeCatalogItem].productImage
+
         },
 
-        updateCanvas() {
-            let canvasActive = this.canvas.linkCanvasActive
+        updateCanvas(canvas) {
+            let canvasActive = canvas ? canvas : this.canvas.linkCanvasActive
             canvasActive.ctx.clearRect(0, 0, canvasActive.html.width, canvasActive.html.height)
 
             // Сохраняем текущее состояние контекста
@@ -393,14 +427,14 @@ export default {
             // Восстанавливаем состояние контекста
             canvasActive.ctx.restore();
             
-            this.printImageSetting()
+            this.printBorderImage()
         },
 
-        printImageSetting(){
+        printBorderImage(){
             let canvasActive = this.canvas.layers.canvasList[this.canvas.layers.canvasActive]
             let canvasBorder = this.canvas.canvasBorder
 
-            canvasBorder.ctx.clearRect(0, 0, canvasActive.html.width, canvasActive.html.height)
+            canvasBorder.ctx.clearRect(0, 0, canvasActive.width, canvasActive.height)
 
             canvasBorder.ctx.strokeStyle = "rgb(235, 235, 235)";
             canvasBorder.ctx.lineWidth = 1;
@@ -543,8 +577,8 @@ export default {
             this.updateCanvas()
         },
 
-        setItemPosition() {
-            let item = this.canvas.linkCanvasActive.image
+        setItemPosition(canvas) {
+            let item = canvas ? canvas.image : this.canvas.linkCanvasActive.image
 
             item.points = {
                 'left-top': {
@@ -682,6 +716,52 @@ export default {
             this.canvas.offsetY = 0
         },
 
+        changeFullscreen() {
+            let customRedactor = document.querySelector('.custom__redactor')
+            let customMenu = document.querySelector('.custom__menu')
+                let customMenuX = customMenu.getBoundingClientRect().left
+                let customMenuY = customMenu.getBoundingClientRect().top
+
+            this.canvas.fullscreen = !this.canvas.fullscreen
+
+            if (this.canvas.fullscreen) {
+                customRedactor.classList.add('custom__redactor--fullscreen')
+                customRedactor.style.cssText = `
+                    top: -${customMenuY}px;
+                    left: -${customMenuX}px;
+                `
+            } else {
+                customRedactor.classList.remove('custom__redactor--fullscreen')
+                customRedactor.style.cssText = `
+                    top: auto;
+                    left: auto;
+                `
+            }
+
+            let customRedactorWidth = customRedactor.offsetWidth
+            let customRedactorHeight = customRedactor.offsetHeight
+
+            this.canvas.canvasBorder.height = customRedactorHeight
+            this.canvas.canvasBorder.html.height = customRedactorHeight
+            this.canvas.canvasBorder.width = customRedactorWidth
+            this.canvas.canvasBorder.html.width = this.canvas.canvasBorder.width       
+
+            this.canvas.layers.canvasList.forEach(canvas => {
+                canvas.height = customRedactorHeight
+                canvas.html.height = customRedactorHeight
+                canvas.width = customRedactorWidth
+                canvas.html.width = canvas.width
+            })
+
+            this.canvas.methods.globalItemsPosition()
+            this.canvas.layers.canvasList.forEach(canvas => {
+                canvas.image.position.x = (canvas.width/2) - (this.canvas.globalItemsPositions.max.x - this.canvas.globalItemsPositions.min.x)/2 + (canvas.image.position.x - this.canvas.globalItemsPositions.min.x)
+                canvas.image.position.y = (canvas.height/2) - (this.canvas.globalItemsPositions.max.y - this.canvas.globalItemsPositions.min.y)/2 + (canvas.image.position.y - this.canvas.globalItemsPositions.min.y)
+
+                this.setItemPosition(canvas)
+                this.updateCanvas(canvas)
+            });
+        }
     }
 }
 </script>
