@@ -39,7 +39,7 @@
                                     <div class="custom__menu-slider-item slider__line-item">
                                         <label class="custom__menu-slider-item-label">
                                             <svg class="custom__menu-slider-item-svg">
-                                                <use xlink:href="~/assets/svg/sprite.svg#image-default"></use>
+                                                <use xlink:href="@/assets/svg/sprite.svg#image-default"></use>
                                             </svg>
 
                                             <input
@@ -104,7 +104,7 @@
                                             @click="moveLayers(Number(index), Number(index)-1)"
                                         >
                                             <svg class="custom__redactor-layers-item-arrow-svg">
-                                                <use xlink:href="~/assets/svg/sprite.svg#arrow"></use>
+                                                <use xlink:href="@/assets/svg/sprite.svg#arrow"></use>
                                             </svg>
                                         </button>
 
@@ -114,7 +114,7 @@
                                             @click="moveLayers(Number(index), Number(index)+1)"
                                         >
                                             <svg class="custom__redactor-layers-item-arrow-svg">
-                                                <use xlink:href="~/assets/svg/sprite.svg#arrow"></use>
+                                                <use xlink:href="@/assets/svg/sprite.svg#arrow"></use>
                                             </svg>
                                         </button>
                                     </div>
@@ -175,7 +175,7 @@
                                             "
                                             :class="{'custom__redactor-tools-item-btn--active': canvas.toolsChain}"
                                         >
-                                            <use xlink:href="~/assets/svg/sprite.svg#icon-chain"></use>
+                                            <use xlink:href="@/assets/svg/sprite.svg#icon-chain"></use>
                                         </svg>
                                     </div>
                                </div>
@@ -209,7 +209,7 @@
                         </div>
                         
                         <svg class="custom__redactor-fullscreen" @click="changeFullscreen">
-                            <use xlink:href="~/assets/svg/sprite.svg#icon-fullscreen"></use>
+                            <use xlink:href="@/assets/svg/sprite.svg#icon-fullscreen"></use>
                         </svg>
                     </div>
                 </div>
@@ -226,7 +226,7 @@
                     >
                         <img 
                             class="catalog__item-image"
-                            :src="`_nuxt/assets/img/shop/${key}.png`" 
+                            :src="`/images/shop/${key}.png`" 
                             :alt="`shop-img-${key}`"
                         >
 
@@ -879,6 +879,6 @@ export default {
 </script>
 
 <style lang="scss">
-    @use "~/assets/style/pages/pages.scss";
-    @use "~/assets/style/pages/page-shop.scss";
+    @use "@/assets/style/pages/pages.scss";
+    @use "@/assets/style/pages/page-shop.scss";
 </style>

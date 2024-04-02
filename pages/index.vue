@@ -26,5 +26,5 @@ export default {
 </script>
 
 <style lang="scss">
-    @use "~/assets/style/pages/DonTraffic.scss";
+    @use "@/assets/style/pages/DonTraffic.scss";
 </style>

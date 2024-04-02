@@ -6,7 +6,7 @@
             <div class="card-menu__content-btns">
                 <a href="https://t.me/DonTraffic" target="_blank">
                     <svg>
-                        <use xlink:href="~/assets/svg/sprite.svg#telegram"></use>
+                        <use xlink:href="@/assets/svg/sprite.svg#telegram"></use>
                     </svg>
                 </a>
 
@@ -16,7 +16,7 @@
 
                 <a href="tel:+79210638647" target="_blank">
                     <svg>
-                        <use xlink:href="~/assets/svg/sprite.svg#phone"></use>
+                        <use xlink:href="@/assets/svg/sprite.svg#phone"></use>
                     </svg>
                 </a>
             </div>
@@ -24,18 +24,18 @@
 
         <div class="card__background card-menu__background">
             <svg class="card-menu__background-lake">
-                <use xlink:href="~/assets/svg/sprite.svg#lake"></use>
+                <use xlink:href="@/assets/svg/sprite.svg#lake"></use>
             </svg>
             <svg class="card-menu__background-stone">
-                <use xlink:href="~/assets/svg/sprite.svg#stone"></use>
+                <use xlink:href="@/assets/svg/sprite.svg#stone"></use>
             </svg>
             <svg class="card-menu__background-boat">
-                <use xlink:href="~/assets/svg/sprite.svg#boat"></use>
+                <use xlink:href="@/assets/svg/sprite.svg#boat"></use>
             </svg>
 
             <div class="card-menu__background-sun icon-sun"></div>
 
-            <img src="~/assets/img/sakura.png" alt="sakura" class="card-menu__background-tree">
+            <img src="@/assets/img/sakura.png" alt="sakura" class="card-menu__background-tree">
         </div>
 
         <modules-controller

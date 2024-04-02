@@ -115,7 +115,7 @@ export default {
           recommendations: {
             0: {
               title: 'Компания «xseven»',
-              url: '_nuxt/assets/files/xseven.pdf'
+              url: '/files/xseven.pdf'
             }
           },
 
@@ -146,7 +146,7 @@ export default {
           recommendations: {
             0: {
               title: 'Компания «xseven»',
-              url: '_nuxt/assets/files/xseven.pdf'
+              url: '/files/xseven.pdf'
             }
           },
 
@@ -177,7 +177,7 @@ export default {
           recommendations: {
             0: {
               title: 'Компания «xseven»',
-              url: '_nuxt/assets/files/xseven.pdf'
+              url: '/files/xseven.pdf'
             }
           },
 
@@ -191,7 +191,7 @@ export default {
 
         JavaScript: {
           experience: 'Больше 2х лет',
-          example: '',
+          example: 'https://dontraffic.ru/market',
 
           courses: {
             0: {
@@ -212,7 +212,7 @@ export default {
           recommendations: {
             0: {
               title: 'Компания «xseven»',
-              url: '_nuxt/assets/files/xseven.pdf'
+              url: '/files/xseven.pdf'
             }
           },
 

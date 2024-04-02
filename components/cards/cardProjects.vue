@@ -10,13 +10,13 @@
                     <img 
                         v-if="project.project"
                         class="card-projects__preview-svg" 
-                        :src="`_nuxt/assets/svg/projects/preview-${project.project.name}.svg`" 
+                        :src="`/svg/projects/preview-${project.project.name}.svg`" 
                         :alt="`preview-${project.project.name}`"
                     >
                     <img 
                         v-else
                         class="card-projects__preview-svg" 
-                        :src="`_nuxt/assets/svg/projects/preview-${project.company.name}.svg`" 
+                        :src="`/svg/projects/preview-${project.company.name}.svg`" 
                         :alt="`preview-${project.company.name}`"
                     >
                 </div>
@@ -37,7 +37,7 @@
                     <div class="card-projects__content-logo" v-if="project.project">
                         <img 
                             class="card-projects__content-logo-icon" 
-                            :src="`_nuxt/assets/svg/projects/${project.project.name}-logo.svg`"
+                            :src="`/svg/projects/${project.project.name}-logo.svg`"
                             :alt="`${project.project.name}-logo.svg`"
                         >
 
@@ -49,7 +49,7 @@
                     <div class="card-projects__content-logo" v-else>
                         <img 
                             class="card-projects__content-logo-icon" 
-                            :src="`_nuxt/assets/svg/projects/${project.company.name}-logo.svg`"
+                            :src="`/svg/projects/${project.company.name}-logo.svg`"
                             :alt="`${project.company.name}-logo.svg`"
                         >
 
@@ -74,7 +74,7 @@
                 @click="updateSliderStatus(false)"
             >
                 <svg class="card-projects__content-controll-svg">
-                    <use xlink:href="~/assets/svg/sprite.svg#arrow"></use>
+                    <use xlink:href="@/assets/svg/sprite.svg#arrow"></use>
                 </svg>
             </button>
 
@@ -83,7 +83,7 @@
                 @click="updateSliderStatus(true)"
             >
                 <svg class="card-projects__content-controll-svg">
-                    <use xlink:href="~/assets/svg/sprite.svg#arrow"></use>
+                    <use xlink:href="@/assets/svg/sprite.svg#arrow"></use>
                 </svg>
             </button>
         </div>

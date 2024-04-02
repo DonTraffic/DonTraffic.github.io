@@ -7,7 +7,7 @@
         >
             <button class="controller__btn">
                 <svg class="controller__btn-svg">
-                    <use xlink:href="~/assets/svg/sprite.svg#arrow"></use>
+                    <use xlink:href="@/assets/svg/sprite.svg#arrow"></use>
                 </svg>
             </button>
         </div>

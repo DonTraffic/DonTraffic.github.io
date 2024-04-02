@@ -6,7 +6,7 @@
     >
         <div class="modal__close" @click="$emit('closeModal')">
             <svg class="modal__close-icon">
-                <use xlink:href="~/assets/svg/sprite.svg#close"></use>
+                <use xlink:href="@/assets/svg/sprite.svg#close"></use>
             </svg>
         </div>
 
@@ -25,7 +25,7 @@
                         <a class="modal-project__header-logo" :href="info.project.link">
                             <img 
                                 class="modal-project__header-logo-icon" 
-                                :src="`_nuxt/assets/svg/projects/${info.project.name}-logo.svg`"
+                                :src="`/svg/projects/${info.project.name}-logo.svg`"
                                 :alt="`${info.project.name}-logo.svg`"
                             >
 
@@ -39,7 +39,7 @@
                     <a class="modal-project__header-logo" :href="info.company.link" v-else>
                         <img 
                             class="modal-project__header-logo-icon" 
-                            :src="`_nuxt/assets/svg/projects/${info.company.name}-logo.svg`"
+                            :src="`/svg/projects/${info.company.name}-logo.svg`"
                             :alt="`${info.company.name}-logo.svg`"
                         >
 
@@ -58,7 +58,7 @@
                     </div>
 
                     <svg class="modal-project__date-bracket">
-                        <use xlink:href="~/assets/svg/sprite.svg#bracket"></use>
+                        <use xlink:href="@/assets/svg/sprite.svg#bracket"></use>
                     </svg>
 
                     <p class="modal-project__date-sum">{{ getMonthDiff(info.experience.from, info.experience.before) }}</p>

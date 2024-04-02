@@ -2,7 +2,7 @@
     <div class="modal modal-skill" :class="{'modal--show': activeSkill}">
         <div class="modal__close" @click="$emit('closeModal')">
             <svg class="modal__close-icon">
-                <use xlink:href="~/assets/svg/sprite.svg#close"></use>
+                <use xlink:href="@/assets/svg/sprite.svg#close"></use>
             </svg>
         </div>
 
@@ -49,7 +49,7 @@
                 <div class="modal-skill__info">
                     <img
                         class="modal-skill__info-img"
-                        :src="'_nuxt/assets/svg/' + activeSkill + '.svg'"
+                        :src="'/svg/skills/' + activeSkill + '.svg'"
                         :alt="activeSkill + '.svg'"
                     >
                     <p class="modal-skill__info-text">Опыт <br/> {{ info['experience'] }} </p>
