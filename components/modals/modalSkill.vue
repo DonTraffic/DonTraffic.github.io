@@ -16,7 +16,7 @@
                         <ul class="modal-skill__lists-list">
                             <li
                                 class="modal-skill__lists-list-item"
-                                v-for="item in info['courses']" 
+                                v-for="item in info[activeSkill]['courses']" 
                                 :key="item.title"
                             ><a :href="item.url">{{ item.title }}</a></li>
                         </ul>
@@ -28,7 +28,7 @@
                         <ul class="modal-skill__lists-list">
                             <li
                                 class="modal-skill__lists-list-item"
-                                v-for="item in info['tests']" 
+                                v-for="item in info[activeSkill]['tests']" 
                                 :key="item.title"
                             ><a :href="item.url">{{ item.title }}</a></li>
                         </ul>
@@ -39,7 +39,7 @@
                         <ul class="modal-skill__lists-list">
                             <li
                                 class="modal-skill__lists-list-item"
-                                v-for="item in info['recommendations']" 
+                                v-for="item in info[activeSkill]['recommendations']" 
                                 :key="item.title"
                             ><a :href="item.url">{{ item.title }}</a></li>
                         </ul>
@@ -52,11 +52,11 @@
                         :src="'/svg/skills/' + activeSkill + '.svg'"
                         :alt="activeSkill + '.svg'"
                     >
-                    <p class="modal-skill__info-text">Опыт <br/> {{ info['experience'] }} </p>
+                    <p class="modal-skill__info-text">Опыт <br/> {{ info[activeSkill]['experience'] }} </p>
                 </div>
             </div>
 
-            <a class="modal-skill__example" :href="info['example']">Пример</a>
+            <a class="modal-skill__example" :href="info[activeSkill]['example']">Пример</a>
         </template>
     </div>
 </template>

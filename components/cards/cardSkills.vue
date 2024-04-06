@@ -1,6 +1,9 @@
 <template>
   <div class="card card-skills card__position-left" id="cardSkills" >
-    <div class="card__content card-skills__content">
+    <div 
+      class="card__content card-skills__content"
+      v-if="scrollStatus[0] == true || scrollStatus[0] == true && scrollStatus[1] == true"
+    >
       <p class="card-skills__content-quote text-shadow">
         Аналогично тому, как написание картины является искусством для души, 
         так и написание программы является искусством для разума.
@@ -28,7 +31,7 @@
 
     <modals-modalSkill
       :activeSkill="activeSkill"
-      :info="infoSkills[activeSkill]"
+      :info="infoSkills[-scrollActive]"
       @closeModal="closeModal"
     />
 
@@ -50,7 +53,7 @@ export default {
       // значения canvas
       canvas: null,
         canvasHeight: 0,
-        canvasHeight: 0,
+        canvasWidth: 0,
       context: null,
       globalSize: 0,
 
@@ -59,10 +62,12 @@ export default {
       wheelMove: 1,
 
       // значения анимации slider move
-      scrollStatus: 0,
-      scrollStatusMax: -1,
+      scrollActive: 0,
+      scrollStatus: {
+        0: true,
+      },
+      scrollCountMax: 3,
       handleScrollStatus: true,
-      startPositionTouch: 0,
       animationMoveY: 0, // -450
       animationMoveDirection: 0,
       animationMoveSpeed: 4,
@@ -96,138 +101,234 @@ export default {
       activeSkill: '',
       controllerHide: false,
       infoSkills: {
-        HTML: {
-          experience: 'Больше 3х лет',
-          example: '',
+        1: {
+          HTML: {
+            experience: 'Больше 3х лет',
+            example: '',
 
-          courses: {
-            0: {
-              title: '«Профессиональная вёрстка»',
-              url: 'https://gb.ru/certificates/1093227'
-            }
-          },
-          tests: {
-            0: {
-              title: '«HTML&CSS. Сложный уровень»',
-              url: 'https://gb.ru/go/VNNXB05'
+            courses: {
+              0: {
+                title: '«Профессиональная вёрстка»',
+                url: 'https://gb.ru/certificates/1093227'
+              }
             },
-          },
-          recommendations: {
-            0: {
-              title: 'Компания «xseven»',
-              url: '/files/xseven.pdf'
-            }
+            tests: {
+              0: {
+                title: '«HTML&CSS. Сложный уровень»',
+                url: 'https://gb.ru/go/VNNXB05'
+              },
+            },
+            recommendations: {
+              0: {
+                title: 'Компания «xseven»',
+                url: '/files/xseven.pdf'
+              }
+            },
+
+            position: {
+              x: -150,
+              y: -150,
+            },
+            color: 15,
           },
 
-          position: {
-            x: -150,
-            y: -150,
+          CSS: {
+            experience: 'Больше 3х лет',
+            example: '',
+
+            // courses: {
+            //   0: {
+            //     title: '«Профессиональная вёрстка»',
+            //     url: 'https://gb.ru/certificates/1093227'
+            //   }
+            // },
+            // tests: {
+            //   0: {
+            //     title: '«HTML&CSS. Сложный уровень»',
+            //     url: 'https://gb.ru/go/VNNXB05'
+            //   },
+            // },
+            recommendations: {
+              0: {
+                title: 'Компания «xseven»',
+                url: '/files/xseven.pdf'
+              }
+            },
+
+            position: {
+              x: 150,
+              y: -100,
+            },
+            color: 15,
           },
-          slide: 1,
-          color: 15,
+
+          jQuery: {
+            experience: 'Больше 1 года',
+            example: '',
+
+            // courses: {
+            //   0: {
+            //     title: '«Профессиональная вёрстка»',
+            //     url: 'https://gb.ru/certificates/1093227'
+            //   }
+            // },
+            // tests: {
+            //   0: {
+            //     title: '«HTML&CSS. Сложный уровень»',
+            //     url: 'https://gb.ru/go/VNNXB05'
+            //   },
+            // },
+            recommendations: {
+              0: {
+                title: 'Компания «xseven»',
+                url: '/files/xseven.pdf'
+              }
+            },
+
+            position: {
+              x: -250,
+              y: 150,
+            },
+            color: 15,
+          },
+
+          JavaScript: {
+            experience: 'Больше 2х лет',
+            example: 'https://dontraffic.ru/market',
+
+            courses: {
+              0: {
+                title: '«Продвинутый курс JavaScript»',
+                url: 'https://gb.ru/certificates/2183847?7d5959fd53c11adb9fc8ab88269d3ea3'
+              },
+              1: {
+                title: '«Профессиональная вёрстка»',
+                url: 'https://gb.ru/certificates/1093227?26800bfbac76f0865cff8b768767d415'
+              },
+            },
+            tests: {
+              0: {
+                title: '«JavaScript. Сложный уровень»',
+                url: 'https://gb.ru/certificates/2185392?13da3644a25fd7f9af1bbe9255e31af5'
+              },
+            },
+            recommendations: {
+              0: {
+                title: 'Компания «xseven»',
+                url: '/files/xseven.pdf'
+              }
+            },
+
+            position: {
+              x: 100,
+              y: 100,
+            },
+            color: 15,
+          },
         },
 
-        CSS: {
-          experience: 'Больше 3х лет',
-          example: '',
+        2: {
+          Canvas: {
+            experience: 'Больше 3х лет',
+            example: '',
 
-          // courses: {
-          //   0: {
-          //     title: '«Профессиональная вёрстка»',
-          //     url: 'https://gb.ru/certificates/1093227'
-          //   }
-          // },
-          // tests: {
-          //   0: {
-          //     title: '«HTML&CSS. Сложный уровень»',
-          //     url: 'https://gb.ru/go/VNNXB05'
-          //   },
-          // },
-          recommendations: {
-            0: {
-              title: 'Компания «xseven»',
-              url: '/files/xseven.pdf'
-            }
-          },
-
-          position: {
-            x: 150,
-            y: -100,
-          },
-          slide: 1,
-          color: 15,
-        },
-
-        jQuery: {
-          experience: 'Больше 1 года',
-          example: '',
-
-          // courses: {
-          //   0: {
-          //     title: '«Профессиональная вёрстка»',
-          //     url: 'https://gb.ru/certificates/1093227'
-          //   }
-          // },
-          // tests: {
-          //   0: {
-          //     title: '«HTML&CSS. Сложный уровень»',
-          //     url: 'https://gb.ru/go/VNNXB05'
-          //   },
-          // },
-          recommendations: {
-            0: {
-              title: 'Компания «xseven»',
-              url: '/files/xseven.pdf'
-            }
-          },
-
-          position: {
-            x: -250,
-            y: 150,
-          },
-          slide: 1,
-          color: 15,
-        },
-
-        JavaScript: {
-          experience: 'Больше 2х лет',
-          example: 'https://dontraffic.ru/market',
-
-          courses: {
-            0: {
-              title: '«Продвинутый курс JavaScript»',
-              url: 'https://gb.ru/certificates/2183847?7d5959fd53c11adb9fc8ab88269d3ea3'
+            // courses: {
+            //   0: {
+            //     title: '«Профессиональная вёрстка»',
+            //     url: 'https://gb.ru/certificates/1093227'
+            //   }
+            // },
+            // tests: {
+            //   0: {
+            //     title: '«HTML&CSS. Сложный уровень»',
+            //     url: 'https://gb.ru/go/VNNXB05'
+            //   },
+            // },
+            recommendations: {
+              0: {
+                title: 'Компания «xseven»',
+                url: '/files/xseven.pdf'
+              }
             },
-            1: {
-              title: '«Профессиональная вёрстка»',
-              url: 'https://gb.ru/certificates/1093227?26800bfbac76f0865cff8b768767d415'
+
+            position: {
+              x: 150,
+              y: -100,
             },
-          },
-          tests: {
-            0: {
-              title: '«JavaScript. Сложный уровень»',
-              url: 'https://gb.ru/certificates/2185392?13da3644a25fd7f9af1bbe9255e31af5'
-            },
-          },
-          recommendations: {
-            0: {
-              title: 'Компания «xseven»',
-              url: '/files/xseven.pdf'
-            }
+            color: 15,
           },
 
-          position: {
-            x: 100,
-            y: 100,
+          VUE: {
+            experience: 'Больше 1 года',
+            example: '',
+
+            // courses: {
+            //   0: {
+            //     title: '«Профессиональная вёрстка»',
+            //     url: 'https://gb.ru/certificates/1093227'
+            //   }
+            // },
+            // tests: {
+            //   0: {
+            //     title: '«HTML&CSS. Сложный уровень»',
+            //     url: 'https://gb.ru/go/VNNXB05'
+            //   },
+            // },
+            recommendations: {
+              0: {
+                title: 'Компания «xseven»',
+                url: '/files/xseven.pdf'
+              }
+            },
+
+            position: {
+              x: -150,
+              y: 175,
+            },
+            color: 15,
           },
-          slide: 1,
-          color: 15,
-        },
+
+          NUXT: {
+            experience: 'Больше 2х лет',
+            example: 'https://dontraffic.ru/market',
+
+            courses: {
+              0: {
+                title: '«Продвинутый курс JavaScript»',
+                url: 'https://gb.ru/certificates/2183847?7d5959fd53c11adb9fc8ab88269d3ea3'
+              },
+              1: {
+                title: '«Профессиональная вёрстка»',
+                url: 'https://gb.ru/certificates/1093227?26800bfbac76f0865cff8b768767d415'
+              },
+            },
+            tests: {
+              0: {
+                title: '«JavaScript. Сложный уровень»',
+                url: 'https://gb.ru/certificates/2185392?13da3644a25fd7f9af1bbe9255e31af5'
+              },
+            },
+            recommendations: {
+              0: {
+                title: 'Компания «xseven»',
+                url: '/files/xseven.pdf'
+              }
+            },
+
+            position: {
+              x: 200,
+              y: 100,
+            },
+            color: 15,
+          },
+        }
       },
 
       // значения для скалы
       rockSeaweeds: {
         0: {
+          slide: 1,
+
           position: {
             x: 60,
             y: 65
@@ -318,38 +419,218 @@ export default {
               rotateDirection: false,
             },
           }
+        },
+
+        1: {
+          slide: 2,
+
+          position: {
+            x: 103,
+            y: 235
+          },
+
+          seaweeds: {
+            0: {
+              height: 43,
+            
+              deviation: 1,
+              deviationMax: 4,
+              deviationDirection: false,
+
+              rotate: 4,
+              rotateMax: 10,
+              rotateDirection: true,
+            },
+
+            1: {
+              height: 48,
+            
+              deviation: 0,
+              deviationMax: 4,
+              deviationDirection: true,
+
+              rotate: 3,
+              rotateMax: 10,
+              rotateDirection: false,
+            },
+
+            2: {
+              height: 53,
+            
+              deviation: 1,
+              deviationMax: 4,
+              deviationDirection: true,
+
+              rotate: 1,
+              rotateMax: 10,
+              rotateDirection: false,
+            },
+
+            3: {
+              height: 55,
+            
+              deviation: 3,
+              deviationMax: 4,
+              deviationDirection: false,
+
+              rotate: 2,
+              rotateMax: 10,
+              rotateDirection: true,
+            },
+
+            4: {
+              height: 64,
+            
+              deviation: 1,
+              deviationMax: 4,
+              deviationDirection: false,
+
+              rotate: 5,
+              rotateMax: 10,
+              rotateDirection: false,
+            },
+
+            5: {
+              height: 58,
+            
+              deviation: 3,
+              deviationMax: 4,
+              deviationDirection: false,
+
+              rotate: 7,
+              rotateMax: 10,
+              rotateDirection: false,
+            },
+
+            6: {
+              height: 48,
+            
+              deviation: 2,
+              deviationMax: 4,
+              deviationDirection: false,
+
+              rotate: 1,
+              rotateMax: 10,
+              rotateDirection: false,
+            },
+          }
         }
+      },
+
+      rockSeaweedsInside: {
+        0: {
+          slide: 2,
+
+          position: {
+            x: 30,
+            y: 500
+          },
+
+          seaweeds: {
+            0: {
+              height: 43,
+            
+              deviation: 1,
+              deviationMax: 4,
+              deviationDirection: false,
+
+              rotate: 7,
+              rotateMax: 10,
+              rotateDirection: true,
+            },
+
+            1: {
+              height: 48,
+            
+              deviation: 3,
+              deviationMax: 4,
+              deviationDirection: true,
+
+              rotate: 0,
+              rotateMax: 10,
+              rotateDirection: false,
+            },
+
+            2: {
+              height: 53,
+            
+              deviation: 0,
+              deviationMax: 4,
+              deviationDirection: true,
+
+              rotate: 0,
+              rotateMax: 10,
+              rotateDirection: false,
+            },
+
+            3: {
+              height: 55,
+            
+              deviation: 3,
+              deviationMax: 4,
+              deviationDirection: false,
+
+              rotate: 2,
+              rotateMax: 10,
+              rotateDirection: true,
+            },
+
+            4: {
+              height: 64,
+            
+              deviation: 1,
+              deviationMax: 4,
+              deviationDirection: false,
+
+              rotate: 2,
+              rotateMax: 10,
+              rotateDirection: false,
+            },
+
+            5: {
+              height: 58,
+            
+              deviation: 2,
+              deviationMax: 4,
+              deviationDirection: false,
+
+              rotate: 7,
+              rotateMax: 10,
+              rotateDirection: false,
+            },
+
+            6: {
+              height: 48,
+            
+              deviation: 1,
+              deviationMax: 4,
+              deviationDirection: false,
+
+              rotate: 9,
+              rotateMax: 10,
+              rotateDirection: false,
+            },
+          }
+        },
       },
 
       // значения для рыб
       infoFishs: {
-        0: {
-          position: {
-            x: 0,
-            y: 500
-          },
-          fishSize: 7,
-          fishSpeed: 0.6
-        },
-
         1: {
-          position: {
-            x: 200,
-            y: 300
-          },
-          fishSize: 2,
-          fishSpeed: 0.8
+          0: {},
+          1: {},
+          2: {},
+          3: {},
+          4: {},
         },
-
         2: {
-          position: {
-            x: 100,
-            y: 350
-          },
-          fishSize: 1,
-          fishSpeed: 0.4
+          0: {},
+          1: {},
+          2: {},
+          3: {},
+          4: {},
         }
-      }
+      },
     };
   },
 
@@ -378,12 +659,17 @@ export default {
     this.context.lineWidth = 1;
     this.context.shadowColor = "rgb(235, 235, 235)";
 
+    // создаём значения для рыбы
+    for (const slide in this.infoFishs) {
+      for (const fish in this.infoFishs[slide]) { this.generateFish(slide, fish, true) }
+    }
+
     // запускаем анимацию
     requestAnimationFrame(this.tick)
   },
 
   watch: {
-    // следим за активным слайдом и возобнавляем рабьоту анимации
+    // следим за активным слайдом и возобнавляем работу анимации
     '$store.state.activeCard' (activeCard) {
       if (activeCard == 'cardSkills') requestAnimationFrame(this.tick)
     }
@@ -392,33 +678,50 @@ export default {
   methods: {
     handlerClick(e) {
       // блоки навыков
-      for (const key in this.infoSkills) {
-        let item = this.infoSkills[key]
+      for (const key in this.infoSkills[-this.scrollActive]) {
+        let item = this.infoSkills[-this.scrollActive][key]
 
         let coordX = (item.position.x < 0 ? this.canvasWidth + item.position.x : item.position.x) + 
           -this.parallaxMoveX/4
         let coordY = (item.position.y < 0 ? this.canvasHeight + item.position.y : item.position.y) + 
-          -this.parallaxMoveY/4 + (this.canvasHeight * item.slide) + this.animationMoveY
+          -this.parallaxMoveY/4 + (this.canvasHeight * (-this.scrollActive)) + this.animationMoveY
         let textWidth = this.context.measureText(item.skill).width + 10
 
         if(
           coordX - this.blocksRadius < e.offsetX && e.offsetX < coordX + textWidth + this.blocksRadius && 
           coordY - this.blocksRadius < e.offsetY && e.offsetY < coordY + this.blocksHeight + this.blocksRadius
-        )  this.openDialog(key)
+        ) this.openDialog(key)
       }
+    },
+
+    randomInteger(min, max) {
+      return Math.floor(min + Math.random() * (max + 1 - min))
     },
 
     changeScrollPosition(direction) {
       if (!this.handleScrollStatus) return
         this.handleScrollStatus = false
-        setTimeout(() => { this.handleScrollStatus = true }, 1500);
+        setTimeout(() => { 
+          this.handleScrollStatus = true;
 
-        if (!direction && this.scrollStatus == 0) return
-          !direction ? this.scrollStatus++ : this.scrollStatus-- 
-          !direction ? this.animationMoveDirection++ : this.animationMoveDirection-- 
+          for (const key in this.scrollStatus) {
+            this.scrollStatus[key] = false
+          }
+          this.scrollStatus[-this.scrollActive] = true
+        }, 1000);
 
-        if (this.scrollStatus < this.scrollStatusMax) {
-          this.scrollStatus++
+        if (!direction && this.scrollActive == 0) return
+          if (!direction) {
+            this.scrollActive++
+            this.animationMoveDirection++
+          } else {
+            this.scrollActive--
+            this.animationMoveDirection--
+          }
+          this.scrollStatus[-this.scrollActive] = true
+
+        if (this.scrollActive <= -this.scrollCountMax) {
+          this.scrollActive++
           this.animationMoveDirection++
         }
     },
@@ -494,172 +797,313 @@ export default {
       this.context.shadowBlur = 0;
     },
 
-    printFish(fish) {
-      let positionY = this.infoFishs[fish].position.y + this.animationMoveY - this.parallaxMoveY/2
-      let positionX = this.infoFishs[fish].position.x - this.parallaxMoveX/2
-      let fishSize = this.infoFishs[fish].fishSize
-      let fishSpeed = this.infoFishs[fish].fishSpeed
+    generateFish(slide, fish, first) {
+      this.infoFishs[slide][fish] = {
+        speed:  this.randomInteger(50, 100),
+        size:  this.randomInteger(0, 8),
+        direction: Boolean(this.randomInteger(0, 1)),
+      }
+      this.infoFishs[slide][fish].position = {
+        x: first ? 
+          this.randomInteger(0, this.canvasWidth) : 
+          this.infoFishs[slide][fish].direction ? -100 : this.canvasWidth,
+        y: (this.canvasHeight * slide) + this.randomInteger(50, this.canvasHeight-50),
+      }
+    },
 
-      this.infoFishs[fish].position.x < -100 ? 
-        this.infoFishs[fish].position.x = this.canvasWidth : 
-        this.infoFishs[fish].position.x-= fishSpeed
+    printFish(slide, key) {
+      let fish = this.infoFishs[slide][key]
+      let positionY = this.animationMoveY + fish.position.y - this.parallaxMoveY/2
+      let positionX = fish.position.x - this.parallaxMoveX/2
+      let size = fish.size
+      let speed = fish.speed/100
+      let direction = fish.direction
 
-      this.context.beginPath();
-        // туловище
-        this.context.moveTo(
-          positionX + fishSize, 
-          positionY + 300
-        );
-          this.context.bezierCurveTo(
-            positionX + 5 + fishSize, 
-            positionY + 300 - 15 + fishSize,
+      if (direction) {
+        fish.position.x > this.canvasWidth + 50 ? this.generateFish(slide, key, false) : fish.position.x+= speed
 
-            positionX + 35 - fishSize, 
-            positionY + 300 - 15 + fishSize,
+        this.context.beginPath();
+          // туловище
+          this.context.moveTo(
+            positionX - size, 
+            positionY
+          );
+            this.context.bezierCurveTo(
+              positionX - 5 - size, 
+              positionY - 15 + size,
 
-            positionX + 50 - fishSize, 
-            positionY + 300,
+              positionX - 35 + size, 
+              positionY - 15 + size,
+
+              positionX - 50 + size, 
+              positionY,
+            );
+            this.context.bezierCurveTo(
+              positionX - 35 + size, 
+              positionY + 15 - size,
+
+              positionX - 5, 
+              positionY + 15 - size,
+
+              positionX - size, 
+              positionY,
+            );
+          this.context.fill()
+
+          // хвост
+          this.context.moveTo(
+            positionX - 50 + size, 
+            positionY
+          );
+            this.context.bezierCurveTo(
+              positionX - 65 + size, 
+              positionY - 15 + size,
+
+              positionX - 70 + size, 
+              positionY - 15 + size,
+
+              positionX - 60 + size, 
+              positionY,
+            );
+            this.context.bezierCurveTo(
+              positionX - 70 + size, 
+              positionY + 15 - size,
+
+              positionX - 65 + size, 
+              positionY + 15 - size,
+
+              positionX - 50 + size, 
+              positionY,
+            );
+          this.context.fill()
+
+          // глаз
+          this.context.moveTo(
+            positionX - 13 + 3 - size/4, 
+            positionY - 3 + size/4
+          );
+          this.context.arc(
+            positionX - 13 - size/4, 
+            positionY - 3 + size/4,
+
+            3 - Number('0.' + size), 0, Math.PI*2,
+
+            true
+          );
+
+          // жабры
+          this.context.moveTo(
+            positionX - 22, 
+            positionY - 6 + size/3
           );
           this.context.bezierCurveTo(
-            positionX + 35 - fishSize, 
-            positionY + 300 + 15 - fishSize,
+            positionX - 25, 
+            positionY - 2,
 
-            positionX + 5, 
-            positionY + 300 + 15 - fishSize,
+            positionX - 25, 
+            positionY + 2,
 
-            positionX + fishSize, 
-            positionY + 300,
+            positionX - 22, 
+            positionY + 6 - size/3,
           );
-        this.context.fill()
 
-        // хвост
-        this.context.moveTo(
-          positionX + 50 - fishSize, 
-          positionY + 300
-        );
-          this.context.bezierCurveTo(
-            positionX + 65 - fishSize, 
-            positionY + 300 - 15 + fishSize,
-
-            positionX + 70 - fishSize, 
-            positionY + 300 - 15 + fishSize,
-
-            positionX + 60 - fishSize, 
-            positionY + 300,
+          // плавник (верхний)
+          this.context.moveTo(
+            positionX - 18, 
+            positionY - 12 + size
           );
           this.context.bezierCurveTo(
-            positionX + 70 - fishSize, 
-            positionY + 300 + 15 - fishSize,
+            positionX - 24, 
+            positionY - 20 + size,
 
-            positionX + 65 - fishSize, 
-            positionY + 300 + 15 - fishSize,
+            positionX - 24, 
+            positionY - 20 + size,
 
-            positionX + 50 - fishSize, 
-            positionY + 300,
+            positionX - 25, 
+            positionY - 12 + size,
           );
-        this.context.fill()
 
-        // глаз
-        this.context.moveTo(
-          positionX + 13 + 3 + fishSize/4, 
-          positionY + 300 - 3 + fishSize/4
-        );
-        this.context.arc(
-          positionX + 13 + fishSize/4, 
-          positionY + 300 - 3 + fishSize/4,
+          // плавник (нижний)
+          this.context.moveTo(
+            positionX - 28, 
+            positionY + 10 - size/1.5
+          );
+          this.context.bezierCurveTo(
+            positionX - 36, 
+            positionY + 18 - size/1.5,
 
-          3 - Number('0.' + fishSize), 0, Math.PI*2,
+            positionX - 36, 
+            positionY + 18 - size/1.5,
 
-          true
-        );
+            positionX - 35, 
+            positionY + 8 - size/1.5,
+          );
 
-        // жабры
-        this.context.moveTo(
-          positionX + 22, 
-          positionY + 300 - 6 + fishSize/3
-        );
-        this.context.bezierCurveTo(
-          positionX + 25, 
-          positionY + 300 - 2,
+        this.context.stroke()
+      } else {
+        fish.position.x < -50 ? this.generateFish(slide, key, false) : fish.position.x-= speed
 
-          positionX + 25, 
-          positionY + 300 + 2,
+        this.context.beginPath();
+          // туловище
+          this.context.moveTo(
+            positionX + size, 
+            positionY
+          );
+            this.context.bezierCurveTo(
+              positionX + 5 + size, 
+              positionY - 15 + size,
 
-          positionX + 22, 
-          positionY + 300 + 6 - fishSize/3,
-        );
+              positionX + 35 - size, 
+              positionY - 15 + size,
 
-        // плавник (верхний)
-        this.context.moveTo(
-          positionX + 18, 
-          positionY + 300 - 12 + fishSize
-        );
-        this.context.bezierCurveTo(
-          positionX + 24, 
-          positionY + 300 - 20 + fishSize,
+              positionX + 50 - size, 
+              positionY,
+            );
+            this.context.bezierCurveTo(
+              positionX + 35 - size, 
+              positionY + 15 - size,
 
-          positionX + 24, 
-          positionY + 300 - 20 + fishSize,
+              positionX + 5, 
+              positionY + 15 - size,
 
-          positionX + 25, 
-          positionY + 300 - 12 + fishSize,
-        );
+              positionX + size, 
+              positionY,
+            );
+          this.context.fill()
 
-        // плавник (нижний)
-        this.context.moveTo(
-          positionX + 28, 
-          positionY + 300 + 10 - fishSize/1.5
-        );
-        this.context.bezierCurveTo(
-          positionX + 36, 
-          positionY + 300 + 18 - fishSize/1.5,
+          // хвост
+          this.context.moveTo(
+            positionX + 50 - size, 
+            positionY
+          );
+            this.context.bezierCurveTo(
+              positionX + 65 - size, 
+              positionY - 15 + size,
 
-          positionX + 36, 
-          positionY + 300 + 18 - fishSize/1.5,
+              positionX + 70 - size, 
+              positionY - 15 + size,
 
-          positionX + 35, 
-          positionY + 300 + 8 - fishSize/1.5,
-        );
+              positionX + 60 - size, 
+              positionY,
+            );
+            this.context.bezierCurveTo(
+              positionX + 70 - size, 
+              positionY + 15 - size,
 
-      this.context.stroke()
+              positionX + 65 - size, 
+              positionY + 15 - size,
+
+              positionX + 50 - size, 
+              positionY,
+            );
+          this.context.fill()
+
+          // глаз
+          this.context.moveTo(
+            positionX + 13 + 3 + size/4, 
+            positionY - 3 + size/4
+          );
+          this.context.arc(
+            positionX + 13 + size/4, 
+            positionY - 3 + size/4,
+
+            3 - Number('0.' + size), 0, Math.PI*2,
+
+            true
+          );
+
+          // жабры
+          this.context.moveTo(
+            positionX + 22, 
+            positionY - 6 + size/3
+          );
+          this.context.bezierCurveTo(
+            positionX + 25, 
+            positionY - 2,
+
+            positionX + 25, 
+            positionY + 2,
+
+            positionX + 22, 
+            positionY + 6 - size/3,
+          );
+
+          // плавник (верхний)
+          this.context.moveTo(
+            positionX + 18, 
+            positionY - 12 + size
+          );
+          this.context.bezierCurveTo(
+            positionX + 24, 
+            positionY - 20 + size,
+
+            positionX + 24, 
+            positionY - 20 + size,
+
+            positionX + 25, 
+            positionY - 12 + size,
+          );
+
+          // плавник (нижний)
+          this.context.moveTo(
+            positionX + 28, 
+            positionY + 10 - size/1.5
+          );
+          this.context.bezierCurveTo(
+            positionX + 36, 
+            positionY + 18 - size/1.5,
+
+            positionX + 36, 
+            positionY + 18 - size/1.5,
+
+            positionX + 35, 
+            positionY + 8 - size/1.5,
+          );
+
+        this.context.stroke()
+      }
+    },
+
+    blickCreate(slide, key, blickStart) {
+      let blick = this.blicksInfo[slide]
+
+      blick[key] = {}
+      blick[key].width = this.randomInteger(0, this.canvasWidth)
+      blick[key].height = slide == 0 ? 
+        this.randomInteger(blickStart, this.canvasHeight) : 
+        this.randomInteger(blickStart, blickStart + this.canvasHeight)
+      blick[key].offset = this.randomInteger(0, 40)
+      blick[key].anim = 0
     },
 
     printBlick(slide) {
       let blickStart = slide == 0 ? (this.canvasHeight/4.8)*3 : this.canvasHeight*slide ;
 
-      function blickCreate(context, blick) {
-        context.blicksInfo[slide][blick] = {}
-        context.blicksInfo[slide][blick].width = Math.floor(Math.random() * (context.canvasWidth))
-        context.blicksInfo[slide][blick].height = blickStart + Math.floor(Math.random() * blickStart)
-        context.blicksInfo[slide][blick].offset = Math.floor(Math.random() * context.blickCount*2)
-        context.blicksInfo[slide][blick].anim = 0
-      }
-
       for (let blick = 0; blick < this.blickCount; blick++) {
         if (!this.blicksInfo[slide]) this.blicksInfo[slide] = {}
-        if (!this.blicksInfo[slide][blick]) blickCreate(this, blick)
+        if (!this.blicksInfo[slide][blick]) this.blickCreate(slide, blick, blickStart)
 
         let infoBlick = this.blicksInfo[slide][blick]
 
         if (infoBlick.offset !=0) {
-          this.blicksInfo[slide][blick].offset--
+          infoBlick.offset--
           continue
         }
 
         infoBlick.anim += .3
-          if (infoBlick.anim > this.blickLimit*2) blickCreate(this, blick)
+          if (infoBlick.anim > this.blickLimit*2) this.blickCreate(slide, blick, blickStart)
+        let blickHeight = infoBlick.height - this.parallaxMoveY + this.animationMoveY
+        let blickWidth = infoBlick.width - this.parallaxMoveX
 
         this.context.beginPath();
-
-        this.context.moveTo(
-          infoBlick.width - this.parallaxMoveX + (infoBlick.anim >= this.blickLimit ? infoBlick.anim - this.blickLimit : 0), 
-          infoBlick.height - this.parallaxMoveY + this.animationMoveY
-        );
-        this.context.lineTo(
-          infoBlick.width - this.parallaxMoveX + (infoBlick.anim >= this.blickLimit ? this.blickLimit : infoBlick.anim), 
-          infoBlick.height - this.parallaxMoveY + this.animationMoveY
-        )
-
+          this.context.moveTo(
+            blickWidth + (infoBlick.anim >= this.blickLimit ? infoBlick.anim - this.blickLimit : 0), 
+            blickHeight
+          );
+          this.context.lineTo(
+            blickWidth + (infoBlick.anim >= this.blickLimit ? this.blickLimit : infoBlick.anim), 
+            blickHeight
+          )
         this.context.stroke()
       }
     },
@@ -724,8 +1168,8 @@ export default {
       this.context.stroke()
     },
 
-    printBlock(data, key) {
-      let item = data[key]
+    printBlock(slide, key) {
+      let item = this.infoSkills[slide][key]
       let parallaxX = -this.parallaxMoveX/4
       let parallaxY = -this.parallaxMoveY/4
 
@@ -733,7 +1177,7 @@ export default {
       let coordX = (item.position.x < 0 ? this.canvasWidth + item.position.x : item.position.x) + 
         parallaxX
       let coordY = (item.position.y < 0 ? this.canvasHeight + item.position.y : item.position.y) + 
-        parallaxY + (this.canvasHeight*item.slide) + this.animationMoveY
+        parallaxY + (this.canvasHeight*slide) + this.animationMoveY
       let textWidth = this.context.measureText(key).width + this.blocksRadius
 
       // следим когда курсор будет над блоком текста
@@ -790,49 +1234,51 @@ export default {
       this.context.stroke()
     },
 
+    printRockSeaweed(context, movePositionX, movePositionY, data) {
+      if ( !this.scrollStatus[data.slide] ) return
+
+      let positionX = movePositionX + data.position.x
+      let positionY = movePositionY + data.position.y
+
+      for (const key in data.seaweeds) {
+        let seaweed = data.seaweeds[key]
+        let deviation = seaweed.deviation
+        let rotate = seaweed.rotate
+        let heightSeaweed = seaweed.height/6
+
+        positionX+= Number(key)/2
+
+        if (deviation <= -seaweed.deviationMax || deviation >= seaweed.deviationMax) 
+          seaweed.deviationDirection = !seaweed.deviationDirection
+        seaweed.deviationDirection ? seaweed.deviation+=.02 : seaweed.deviation-=.02
+
+        if (rotate <= -seaweed.rotateMax || rotate >= seaweed.rotateMax) 
+          seaweed.rotateDirection = !seaweed.rotateDirection
+        seaweed.rotateDirection ? seaweed.rotate+=.02 : seaweed.rotate-=.02
+
+        context.beginPath()
+          context.moveTo(positionX, positionY)
+          context.bezierCurveTo(
+            positionX+rotate/6, positionY-heightSeaweed*1, 
+            positionX+deviation+rotate/5, positionY-heightSeaweed*2, 
+            positionX+rotate/4, positionY-heightSeaweed*3
+          )
+          context.bezierCurveTo(
+            positionX-deviation+rotate/3, positionY-heightSeaweed*4, 
+            positionX-deviation+rotate/2, positionY-heightSeaweed*5, 
+            positionX+rotate/1, positionY-heightSeaweed*6
+          )
+        context.stroke();
+        context.closePath()
+      }
+    },
+
     printRock() {
       let movePositionX = -10 + (-this.parallaxMoveX/8)
       let movePositionY = this.canvasHeight - 50 + this.animationMoveY + (this.canvasHeight/4)*3 + (-this.parallaxMoveY/8)
 
-      function printRockSeaweed(context, data) {
-        let positionX = movePositionX + data.position.x
-        let positionY = movePositionY + data.position.y
-
-        for (const key in data.seaweeds) {
-          let seaweed = data.seaweeds[key]          
-          let deviation = seaweed.deviation
-          let rotate = seaweed.rotate
-          let heightSeaweed = seaweed.height/6
-
-          positionX+= Number(key)/2
-
-          if (deviation <= -seaweed.deviationMax || deviation >= seaweed.deviationMax) 
-            seaweed.deviationDirection = !seaweed.deviationDirection
-          seaweed.deviationDirection ? seaweed.deviation+=.02 : seaweed.deviation-=.02
-
-          if (rotate <= -seaweed.rotateMax || rotate >= seaweed.rotateMax) 
-            seaweed.rotateDirection = !seaweed.rotateDirection
-          seaweed.rotateDirection ? seaweed.rotate+=.02 : seaweed.rotate-=.02
-
-          context.beginPath()
-            context.moveTo(positionX, positionY)
-            context.bezierCurveTo(
-              positionX+rotate/6, positionY-heightSeaweed*1, 
-              positionX+deviation+rotate/5, positionY-heightSeaweed*2, 
-              positionX+rotate/4, positionY-heightSeaweed*3
-            )
-            context.bezierCurveTo(
-              positionX-deviation+rotate/3, positionY-heightSeaweed*4, 
-              positionX-deviation+rotate/2, positionY-heightSeaweed*5, 
-              positionX+rotate/1, positionY-heightSeaweed*6
-            )
-          context.stroke();
-          context.closePath()
-        }
-      }
-
       // водоросли
-      for (const key in this.rockSeaweeds) { printRockSeaweed(this.context, this.rockSeaweeds[key]) }
+      for (const key in this.rockSeaweeds) { this.printRockSeaweed(this.context, movePositionX, movePositionY, this.rockSeaweeds[key]) }
 
       // контур скалы
       this.context.beginPath()
@@ -902,6 +1348,72 @@ export default {
       this.context.lineTo(movePositionX+55, movePositionY+115)
       this.context.lineTo(movePositionX+60, movePositionY+135)
       this.context.stroke();
+
+      this.context.moveTo(movePositionX+25, movePositionY+150)
+      this.context.lineTo(movePositionX+40, movePositionY+170)
+      this.context.lineTo(movePositionX+30, movePositionY+195)
+      this.context.stroke();
+
+      if (this.scrollStatus[2] != true || this.scrollStatus[1] != true && this.scrollStatus[2] != true) return
+
+      this.context.moveTo(movePositionX+65, movePositionY+230)
+      this.context.lineTo(movePositionX+75, movePositionY+250)
+      this.context.lineTo(movePositionX+90, movePositionY+255)
+      this.context.stroke();
+
+      this.context.moveTo(movePositionX+30, movePositionY+310)
+      this.context.lineTo(movePositionX+50, movePositionY+360)
+      this.context.lineTo(movePositionX+70, movePositionY+370)
+      this.context.stroke();
+
+      // цветочек
+      this.context.moveTo(movePositionX+50, movePositionY+360)
+      this.context.bezierCurveTo(
+        movePositionX+60, movePositionY+340, 
+        movePositionX+40, movePositionY+340, 
+        movePositionX+50, movePositionY+360
+      )
+      this.context.bezierCurveTo(
+        movePositionX+50, movePositionY+340, 
+        movePositionX+75, movePositionY+345, 
+        movePositionX+50, movePositionY+360
+      )
+      this.context.bezierCurveTo(
+        movePositionX+60, movePositionY+345, 
+        movePositionX+80, movePositionY+355, 
+        movePositionX+50, movePositionY+360
+      )
+      this.context.bezierCurveTo(
+        movePositionX+70, movePositionY+370, 
+        movePositionX+80, movePositionY+350, 
+        movePositionX+50, movePositionY+360
+      )
+      this.context.stroke();
+
+      this.context.moveTo(movePositionX+82, movePositionY+430)
+      this.context.bezierCurveTo(
+        movePositionX+80, movePositionY+435, 
+        movePositionX+70, movePositionY+445, 
+        movePositionX+70, movePositionY+450
+      )
+      this.context.stroke();
+
+      this.context.moveTo(movePositionX+65, movePositionY+230)
+      this.context.lineTo(movePositionX+75, movePositionY+250)
+      this.context.lineTo(movePositionX+90, movePositionY+255)
+      this.context.stroke();
+
+      this.context.moveTo(movePositionX+0, movePositionY+470)
+      this.context.lineTo(movePositionX+30, movePositionY+500)
+      this.context.lineTo(movePositionX+50, movePositionY+500)
+      this.context.stroke();
+
+      this.context.moveTo(movePositionX+60, movePositionY+560)
+      this.context.lineTo(movePositionX+50, movePositionY+580)
+      this.context.stroke();
+
+      // водоросли внутри
+      for (const key in this.rockSeaweedsInside) { this.printRockSeaweed(this.context, movePositionX, movePositionY, this.rockSeaweedsInside[key]) }
     },
 
     tick() {
@@ -911,24 +1423,37 @@ export default {
       this.parallaxMoveX = ( this.mouseMoveX - this.canvas.offsetWidth/2 ) /this.parralaxSpeed
       this.parallaxMoveY = ( this.mouseMoveY - this.canvasHeight/2 ) /this.parralaxSpeed
 
-      // вычисляем куда прокручивать (переделать на плавную прокрутки)
+      // вычисляем куда прокручивать
       if (this.animationMoveDirection != 0) {
         this.animationMoveDirection > 0 ? 
           this.animationMoveY+=this.animationMoveSpeed : 
           this.animationMoveY-=this.animationMoveSpeed
 
-        if (this.animationMoveDirection < 0 && this.animationMoveY <= this.scrollStatus*this.canvasHeight) this.animationMoveDirection = 0
-        if (this.animationMoveDirection > 0 && this.animationMoveY >= this.scrollStatus*this.canvasHeight) this.animationMoveDirection = 0
+        if (this.animationMoveDirection < 0 && this.animationMoveY <= this.scrollActive*this.canvasHeight) this.animationMoveDirection = 0
+        if (this.animationMoveDirection > 0 && this.animationMoveY >= this.scrollActive*this.canvasHeight) this.animationMoveDirection = 0
       }
 
       // вызываем функции рисования
-      this.printSun()
-      this.printWave()
-      for (const fish in this.infoFishs) { this.printFish(fish) }
+      if (this.scrollStatus[0]) {
+        this.printSun()
+        this.printWave()
+        this.printBlick(0)
+        this.printMouse()
+      }
+
+      if (this.scrollStatus[1]) {
+        for (const fish in this.infoFishs[1]) { this.printFish(1, fish) }
+        this.printBlick(1)
+        for (const skill in this.infoSkills[1]) { this.printBlock(1, skill) }
+      }
+
+      if (this.scrollStatus[2]) {
+        for (const fish in this.infoFishs[2]) { this.printFish(2, fish) }
+        this.printBlick(2)
+        for (const skill in this.infoSkills[2]) { this.printBlock(2, skill) }
+      }
+
       this.printRock()
-      for (let i = 0; i < 2; i++) { this.printBlick(i) }
-      for (const skill in this.infoSkills) { this.printBlock(this.infoSkills, skill) }
-      this.printMouse()
 
       // перезапускаем каждый тик
       if (this.$store.state.activeCard == 'cardSkills') requestAnimationFrame(this.tick)
