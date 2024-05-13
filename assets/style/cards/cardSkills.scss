@@ -11,6 +11,10 @@
     &__content{
         width: 100%;
 
+        @include phone {
+            z-index: 2;
+        }
+
         &-quote{
             position: absolute;
             top: 36px;
@@ -22,14 +26,14 @@
             line-height: 24px;
 
             @include phone {
-                max-width: 70%;
-                top: 25%;
-                left: 50%;
+                max-width: 100%;
+                width: 100%;
+                top: 0;
+                left: 0%;
 
-                font-size: 16px;
-                text-align: center;
+                padding: 24px;
 
-                transform: translate(-50%);
+                // font-size: 16px;
             }
 
             &-author{
@@ -38,24 +42,143 @@
                 display: block;
             }
         }
-
-        &-sun{
-            position: absolute;
-            top: 36px;
-            right: 36px;
-
-            @include phone {
-                top: 16px;
-                right: 16px;
-            }
-        }
     }
 
     &__background{
+        @include phone {
+            z-index: 1 !important;
+        }
+
+        @mixin layerSeaWave($count, $time) {
+            z-index: calc(100 - #{$count});
+            bottom: calc((#{$count} - 1) * 30px);
+            animation: moveWave $time infinite;
+
+            .sea__wave-block{
+                animation: moveWaveBlock $time infinite;
+            }
+        }
+
         &-sea{
             position: relative;
             top: 0;
+
+            &--mobile{
+                display: none;
+
+                @include phone{
+                    display: flex;
+
+                    height: 100%;
+                    width: 100%;
+                }
+            }
+
+            .sea{
+                &__sun{
+                    position: absolute;
+                    right: 24px;
+                    top: 24px;
+                }
+
+                &__wave{
+                    width: 100%;
+                    position: absolute;
+                    left: 50%;
+                    bottom: -20px;
+
+                    height: 80px;
+
+                    &-block{
+                        top: -15%;
+                        position: absolute;
+                        left: 50%;
+
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+
+                        width: 70px;
+                        height: 70px;
+
+                        background-color: color-black();
+                        border: 1px solid color-white();
+                        border-radius: 6px;
+
+                        padding: 4px;
+
+                        transition: .4s ease;
+
+                        &-svg{
+                            width: 100%;
+                            height: 100%;
+                            object-fit: contain;
+                        }
+
+                        &:hover{
+                            background-color: color-white();
+                            color: color-black();
+                        }
+
+                        &--45{
+                            left: 45%;
+                        }
+
+                        &--50{
+                            left: 50%;
+                        }
+
+                        &--65{
+                            left: 65%;
+                        }
+
+                        &--70{
+                            left: 70%;
+                        }
+
+                        &--85{
+                            left: 85%;
+                        }
+
+                        &--95{
+                            left: 95%;
+                        }
+                    }
+
+                    &-1{ @include layerSeaWave(1, 13s); }
+                    &-2{ @include layerSeaWave(2, 9s); }
+                    &-3{ @include layerSeaWave(3, 12s); }
+                    &-4{ @include layerSeaWave(4, 14s); }
+                    &-5{ @include layerSeaWave(5, 10s); }
+                    &-6{ @include layerSeaWave(6, 12s); }
+                    &-7{ @include layerSeaWave(7, 15s); }
+                    &-8{ @include layerSeaWave(8, 11s); }
+                    &-9{ @include layerSeaWave(9, 12s); }
+                    &-10{ @include layerSeaWave(10, 9s); }
+                    &-11{ @include layerSeaWave(11, 14s); }
+                    &-12{ @include layerSeaWave(12, 12s); }
+                    &-13{ @include layerSeaWave(13, 9s); }
+                    &-14{ @include layerSeaWave(14, 15s); }
+                    &-15{ @include layerSeaWave(15, 11s); }
+                    &-16{ @include layerSeaWave(16, 14s); }
+                }
+
+                @keyframes moveWave { 0%{ translate: -60% 40%; } 50% { translate: -80% 40%; } 100% { translate: -60% 40%; } }
+                @keyframes moveWaveBlock { 
+                    0%{ 
+                        translate: -50% 0;
+                        rotate: 10deg;
+                    } 
+                    50% { 
+                        translate: -80% 0;
+                        rotate: -10deg;
+                    } 
+                    100% { 
+                        translate: -50% 0;
+                        rotate: 10deg;
+                    } 
+                }
+            }
         }
     }
-    
 }

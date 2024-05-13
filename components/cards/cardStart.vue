@@ -9,6 +9,13 @@
     <div class="card__background card-start__background">
       <canvas id="canvasGrass" width="698" height="448"></canvas>
     </div>
+
+    <img 
+      class="card__background card-start__background--mobile"
+      v-if="!globalSize" 
+      src="@/assets/img/grass.png" 
+      alt="grass-mobile"
+    >
   </div>
 </template>
 
@@ -118,16 +125,16 @@ export default {
 
       // рисуем травинку
       this.context.beginPath()
-      this.context.bezierCurveTo(
-        startX, 0,
-        startX + 3 - grassDeviation * 0, grassSize/1.2,
-        startX + 6 - this.grassWidth - grassDeviation * 5, grassDeviation > 0 ? (grassSize - grassDeviation * 2) : (grassSize + grassDeviation * 2),
-      );
-      this.context.bezierCurveTo(
-        startX + 9 - grassDeviation * 2, grassSize/1.2 + grassDeviation/3,
-        startX + 12, grassSize/2 + grassDeviation,
-        startX + 12, 0
-      );
+        this.context.bezierCurveTo(
+          startX, 0,
+          startX + 3, grassSize/1.2,
+          startX + 6 - this.grassWidth - grassDeviation * 5, grassSize + (grassDeviation > 0 ? -grassDeviation : grassDeviation)*2,
+        );
+        this.context.bezierCurveTo(
+          startX + 9 - grassDeviation * 2, grassSize/1.2 + grassDeviation/3,
+          startX + 12, grassSize/2 + grassDeviation,
+          startX + 12, 0
+        );
       this.context.closePath();
       this.context.shadowBlur = 5;
       this.context.shadowColor = "rgb(235, 235, 235)";
@@ -156,7 +163,7 @@ export default {
       this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
       // Создаём траву
-      for (let i = 0; i < this.grassCount; i++) { this.printGrass(i) }
+      if(this.globalSize) for (let i = 0; i < this.grassCount; i++) { this.printGrass(i) }
 
       // создаём солнце
       this.createSun()

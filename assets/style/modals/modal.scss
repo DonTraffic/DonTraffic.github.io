@@ -57,6 +57,7 @@
         border-radius: 0px 0px 0px 6px;
 
         transition: .4s ease;
+        z-index: 2;
 
         @include phone {
             box-shadow: none;

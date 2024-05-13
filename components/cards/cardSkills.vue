@@ -2,7 +2,7 @@
   <div class="card card-skills card__position-left" id="cardSkills" >
     <div 
       class="card__content card-skills__content"
-      v-if="scrollStatus[0] == true || scrollStatus[0] == true && scrollStatus[1] == true"
+      v-if="scrollStatus[0] == true"
     >
       <p class="card-skills__content-quote text-shadow">
         Аналогично тому, как написание картины является искусством для души, 
@@ -27,6 +27,83 @@
 
         @click="(e) => this.handlerClick(e)"
       ></canvas>
+
+      <div class="card-skills__background-sea card-skills__background-sea--mobile">
+        <div class="sea__sun icon-sun"></div>
+
+        <div class="sea">
+          <div class="sea__wave sea__wave-16">
+            <img src="@/assets/svg/wave.svg" alt="sea-wave">
+          </div>
+
+          <div class="sea__wave sea__wave-15">
+            <img src="@/assets/svg/wave.svg" alt="sea-wave">
+          </div>
+
+          <div class="sea__wave sea__wave-14">
+            <img src="@/assets/svg/wave.svg" alt="sea-wave">
+          </div>
+
+          <div class="sea__wave sea__wave-13">
+            <div class="sea__wave-block sea__wave-block--95" @click="scrollActive=-2, openDialog('NUXT')">NUXT</div>
+            <img src="@/assets/svg/wave.svg" alt="sea-wave">
+          </div>
+
+          <div class="sea__wave sea__wave-12">
+            <img src="@/assets/svg/wave.svg" alt="sea-wave">
+          </div>
+
+          <div class="sea__wave sea__wave-11">
+            <div class="sea__wave-block sea__wave-block--70" @click="scrollActive=-2, openDialog('VUE')">VUE</div>
+            <img src="@/assets/svg/wave.svg" alt="sea-wave">
+          </div>
+
+          <div class="sea__wave sea__wave-10">
+            <div class="sea__wave-block sea__wave-block--45" @click="scrollActive=-2, openDialog('Canvas')">Canvas</div>
+            <img src="@/assets/svg/wave.svg" alt="sea-wave">
+          </div>
+
+          <div class="sea__wave sea__wave-9">
+            <img src="@/assets/svg/wave.svg" alt="sea-wave">
+          </div>
+
+          <div class="sea__wave sea__wave-8">
+            <img src="@/assets/svg/wave.svg" alt="sea-wave">
+          </div>
+
+          <div class="sea__wave sea__wave-7">
+            <div class="sea__wave-block sea__wave-block--85" @click="scrollActive=-1, openDialog('jQuery')">jQuery</div>
+            <img src="@/assets/svg/wave.svg" alt="sea-wave">
+          </div>
+
+          <div class="sea__wave sea__wave-6">
+            <img src="@/assets/svg/wave.svg" alt="sea-wave">
+          </div>
+
+          <div class="sea__wave sea__wave-5">
+            <div class="sea__wave-block sea__wave-block--65" @click="scrollActive=-1, openDialog('JavaScript')">JS</div>
+            <img src="@/assets/svg/wave.svg" alt="sea-wave">
+          </div>
+
+          <div class="sea__wave sea__wave-4">
+            <img src="@/assets/svg/wave.svg" alt="sea-wave">
+          </div>
+
+          <div class="sea__wave sea__wave-3">
+            <div class="sea__wave-block sea__wave-block--95" @click="scrollActive=-1, openDialog('CSS')">CSS</div>
+            <img src="@/assets/svg/wave.svg" alt="sea-wave">
+          </div>
+
+          <div class="sea__wave sea__wave-2">
+            <div class="sea__wave-block sea__wave-block--50" @click="scrollActive=-1, openDialog('HTML')">HTML</div>
+            <img src="@/assets/svg/wave.svg" alt="sea-wave">
+          </div>
+
+          <div class="sea__wave sea__wave-1">
+            <img src="@/assets/svg/wave.svg" alt="sea-wave">
+          </div>
+        </div>
+      </div>
     </div>
 
     <modals-modalSkill
@@ -187,7 +264,7 @@ export default {
 
             position: {
               x: -250,
-              y: 150,
+              y: 175,
             },
             color: 15,
           },
@@ -635,43 +712,48 @@ export default {
   },
 
   mounted() {
-    // обьявляем канвас
-    this.canvas = document.getElementById('canvas-sea');
-    this.context = this.canvas.getContext('2d');
-
-    // настраиваем размеры canvas относительно глобальных размеров
     this.globalSize = window.innerWidth > 425
-    this.canvasWidth = this.globalSize ? 
-      document.querySelector('.card').offsetWidth : 
-      window.innerWidth ;
-      this.canvas.width = this.canvasWidth
-    this.canvasHeight = this.globalSize ? 
-      document.querySelector('.card').offsetHeight : 
-      window.innerHeight ;
-      this.canvas.height = this.canvasHeight
+    this.canvas = document.getElementById('canvas-sea');
 
-    // задаём динамический отступ волн от верха
-    this.waveOffsetHeightTop = document.querySelector('.card').offsetHeight/2
+    if(this.globalSize) {
+      // обьявляем канвас
+      this.context = this.canvas.getContext('2d');
 
-    // задаём общий цвет
-    this.context.fillStyle = "rgb(15, 15, 15)";
-    this.context.strokeStyle = "rgb(235, 235, 235)";
-    this.context.lineWidth = 1;
-    this.context.shadowColor = "rgb(235, 235, 235)";
+      // настраиваем размеры canvas относительно глобальных размеров
+      this.canvasWidth = this.globalSize ? 
+        document.querySelector('.card').offsetWidth : 
+        window.innerWidth ;
+        this.canvas.width = this.canvasWidth
+      this.canvasHeight = this.globalSize ? 
+        document.querySelector('.card').offsetHeight : 
+        window.innerHeight ;
+        this.canvas.height = this.canvasHeight
 
-    // создаём значения для рыбы
-    for (const slide in this.infoFishs) {
-      for (const fish in this.infoFishs[slide]) { this.generateFish(slide, fish, true) }
+      // задаём динамический отступ волн от верха
+      this.waveOffsetHeightTop = document.querySelector('.card').offsetHeight/2
+
+      // задаём общий цвет
+      this.context.fillStyle = "rgb(15, 15, 15)";
+      this.context.strokeStyle = "rgb(235, 235, 235)";
+      this.context.lineWidth = 1;
+      this.context.shadowColor = "rgb(235, 235, 235)";
+
+      // создаём значения для рыбы
+      for (const slide in this.infoFishs) {
+        for (const fish in this.infoFishs[slide]) { this.generateFish(slide, fish, true) }
+      }
+
+      // запускаем анимацию
+      requestAnimationFrame(this.tick)
+    } else {
+      this.canvas.remove()
     }
-
-    // запускаем анимацию
-    requestAnimationFrame(this.tick)
   },
 
   watch: {
     // следим за активным слайдом и возобнавляем работу анимации
     '$store.state.activeCard' (activeCard) {
-      if (activeCard == 'cardSkills') requestAnimationFrame(this.tick)
+      if (activeCard == 'cardSkills' && this.globalSize) requestAnimationFrame(this.tick)
     }
   },
 

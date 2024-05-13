@@ -1,4 +1,5 @@
 <template>
+    <!-- @touchstart="(event) => moveSlideTouch(event)" -->
     <div id="DonTraffic">
         <div class="card card-shadow"></div>
 
@@ -21,7 +22,21 @@ export default {
 
     mounted() {
         if (process.client) document.getElementById('DonTraffic').style.height = `${window.innerHeight}px`
-    }
+    },
+
+    methods: {
+        moveSlideTouch(event) {
+            let startX = event.touches[0].pageX
+            let startY = event.touches[0].pageY
+            
+            window.ontouchmove = (event) => {
+                if(startX + 125 < event.touches[0].pageX) console.log('left');
+                if(startX - 125 > event.touches[0].pageX) console.log('right');
+                if(startY + 125 < event.touches[0].pageY) console.log('top');
+                if(startY - 125 > event.touches[0].pageY) console.log('bottom');
+            }; window.ontouchend = () => { window.ontouchmove = null }
+        },
+    },
 }
 </script>
 

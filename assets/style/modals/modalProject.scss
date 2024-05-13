@@ -8,6 +8,11 @@
         padding-right: 20px;
     }
 
+    &__slider{
+        max-width: 100%;
+        max-height: 100%;
+    }
+
     a{
         text-decoration: none;
         text-decoration: none;
@@ -23,6 +28,7 @@
     &__header{
         display: flex;
         flex-direction: column;
+        margin-bottom: 16px;
 
         gap: 4px;
 
@@ -51,6 +57,7 @@
     &__date{
         display: flex;
         align-items: center;
+        margin-bottom: 16px;
 
         &-point{
             display: flex;
@@ -59,12 +66,21 @@
         }
 
         &-bracket{
-            height: 60px;
-            width: 60px;
+            height: 50px;
+            width: 20px;
+            margin: 0px 16px;
+        }
+
+        &-sum{
+            @include tablet{
+                max-width: 100px;
+            }
         }
     }
 
     &__list{
+        margin-bottom: 16px;
+        
         &-title{
             margin-bottom: 4px;
         }
@@ -79,9 +95,9 @@
         position: absolute;
         height: 70%;
         // height: 100%;
-        width: 12px;
+        width: 14px;
 
-        right: 8px;
+        right: 10px;
         top: 50%;
         translate: 0 -50%;
 
@@ -89,6 +105,8 @@
         border: 1px solid rgba(255, 255, 255, 0);
         border-radius: 6px;
         transition: .4s ease;
+
+        overflow: hidden;
 
         &:hover{
             border: 1px solid color-white();

@@ -30,6 +30,10 @@ const store = createStore({
                 cardStart: true,
                 cardMenu: true,
             }
+            // activeCard: 'cardProjects',
+            // statusCards: {
+            //     cardProjects: true,
+            // }
         };
     },
 
