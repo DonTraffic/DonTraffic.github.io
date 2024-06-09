@@ -79,6 +79,10 @@
                     position: absolute;
                     right: 24px;
                     top: 24px;
+
+                    @include tablet{
+                        top: 100px;
+                    }
                 }
 
                 &__wave{

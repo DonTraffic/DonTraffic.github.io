@@ -1,15 +1,9 @@
 <template>
     <div class="card card-projects card__position-right" id="cardProjects">
-        <div 
-            id="projects" 
-            class="card-projects__preview-container DTScroll projects-slider projects-slider--0"
-            points='{"0":1}'
-            anchor="true"
-            revert="true"
-        >
-            <div class="card-projects__preview-line projects-line">
+        <div class="card-projects__preview-container">
+            <div class="card-projects__preview-viewport" :style="`translate: 0 ${sliderStatus}00%`">
                 <div 
-                    class="card-projects__preview projects-item" 
+                    class="card-projects__preview" 
                     v-for="(project, index) in projectsData" 
                     :key="'project-preview-' + index"
                 >
@@ -27,24 +21,16 @@
                     >
                 </div>
             </div>
+            
+            <div class="card-projects__preview-sun icon-sun"></div>
         </div>
 
-        <div class="card-projects__center">
-            <div class="card-projects__center-line card-shadow"></div>
+        <div class="card-projects__line card-shadow"></div>
 
-            <div class="card-projects__center-scroll projects-scroll card-shadow" direction="vertical" anchor="0">
-                <div class="card-projects__center-scroll-thumb projects-thumb"></div>
-            </div>
-        </div>
-
-        <div 
-            class="card-projects__content-container projects-slider projects-slider--1"
-            points='{"0":1}'
-            anchor="true"
-        >
-            <div class="card-projects__content-line projects-line">
+        <div class="card-projects__content-container">
+            <div class="card-projects__content-viewport" :style="`translate: 0 -${sliderStatus}00%`">
                 <div
-                    class="card-projects__content projects-item" 
+                    class="card-projects__content" 
                     v-for="(project, index) in projectsData" 
                     :key="'project-content-' + index"
                 >
@@ -83,25 +69,23 @@
                 </div>
             </div>
 
-            <div class="
-                card-projects__content-controll 
-                card-projects__content-controll-top
-                projects-btn-prev
-            ">
+            <button
+                class="card-projects__content-controll card-projects__content-controll-top"
+                @click="updateSliderStatus(false)"
+            >
                 <svg class="card-projects__content-controll-svg">
                     <use xlink:href="@/assets/svg/sprite.svg#arrow"></use>
                 </svg>
-            </div>
+            </button>
 
-            <div class="
-                card-projects__content-controll 
-                card-projects__content-controll-bottom 
-                projects-btn-next
-            ">
+            <button
+                class="card-projects__content-controll card-projects__content-controll-bottom"
+                @click="updateSliderStatus(true)"
+            >
                 <svg class="card-projects__content-controll-svg">
                     <use xlink:href="@/assets/svg/sprite.svg#arrow"></use>
                 </svg>
-            </div>
+            </button>
         </div>
 
         <modals-modalProject
@@ -120,8 +104,6 @@
 </template>
 
 <script>
-import { DTScroll } from '~/scripts/DTScroll.min'
-
 export default {
     name: 'cardProjects',
 
@@ -202,48 +184,49 @@ export default {
             activeProject: null,
             controllerHide: false,
 
-            windowSize: 1000,
+            // slider
+            sliderStatus: 0
         }
     },
 
-    mounted() {
-        let card = document.querySelector('#cardProjects')
-        let cardShadow = document.querySelector('.card-shadow')
-        this.windowSize = window.innerWidth
+    // mounted() {
+    //     let card = document.querySelector('#cardProjects')
+    //     let cardShadow = document.querySelector('.card-shadow')
+    //     this.windowSize = window.innerWidth
 
-        this.changeDirection()
+    //     this.changeDirection()
 
-        DTScroll.initScroll('projects')
+    //     DTScroll.initScroll('projects')
 
-        window.addEventListener('resize', () => {
-            this.windowSize = window.innerWidth
+    //     window.addEventListener('resize', () => {
+    //         this.windowSize = window.innerWidth
 
-            this.changeDirection()
+    //         // this.changeDirection()
 
-            card.style.transition = 'none'
-            cardShadow.style.transition = 'none'
-            DTScroll.sliderUpdateDeep('projects')
+    //         card.style.transition = 'none'
+    //         cardShadow.style.transition = 'none'
+    //         // DTScroll.sliderUpdateDeep('projects')
 
-            setTimeout(() => {
-                card.style.transition = '1s ease'
-                cardShadow.style.transition = '1s ease'
-            }, 1000);
-        })
-    },
+    //         setTimeout(() => {
+    //             card.style.transition = '1s ease'
+    //             cardShadow.style.transition = '1s ease'
+    //         }, 1000);
+    //     })
+    // },
 
-    watch: {
-        // следим за активным слайдом и возобнавляем работу анимации
-        '$store.state.activeCard' (activeCard) {
-            if (activeCard == 'cardProject') DTScroll.sliderUpdateDeep('projects')
-        }
-  },
+    // watch: {
+    //     // следим за активным слайдом и возобнавляем работу анимации
+    //     '$store.state.activeCard' (activeCard) {
+    //         if (activeCard == 'cardProject') DTScroll.sliderUpdateDeep('projects')
+    //     }
+    // },
 
     methods: {
-        changeDirection(){
-            document.querySelectorAll('.projects-slider').forEach(slider => {
-                slider.setAttribute('direction', this.windowSize > 768 ? 'vertical' : 'horizontal') 
-            });
-            document.querySelector('.projects-scroll').setAttribute('direction', this.windowSize > 768 ? 'vertical' : 'horizontal') 
+        updateSliderStatus(direction) {
+            direction ? this.sliderStatus++ : this.sliderStatus--
+
+            if (this.sliderStatus > Object.keys(this.projectsData).length-1) this.sliderStatus = 0
+            if (this.sliderStatus < 0) this.sliderStatus = Object.keys(this.projectsData).length-1
         },
 
         openDialog(index) {
