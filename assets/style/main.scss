@@ -11,7 +11,7 @@
     font-style: normal;
     font-weight: 300;
     color: color-white();
-    // cursor: none;
+    cursor: none;
 }
 
 *::-webkit-scrollbar,
@@ -40,23 +40,23 @@ img{
     pointer-events: none;
 }
 
-// #custom-cursor{
-//     position: fixed;
+#custom-cursor{
+    position: absolute;
 
-//     width: 15px;
-//     height: 15px;
+    width: 15px;
+    height: 15px;
 
-//     background-color: color-white();
-//     box-shadow: 0px 0px 6px color-white();
-//     border-radius: 50%;
+    background-color: color-white();
+    box-shadow: 0px 0px 6px color-white();
+    border-radius: 50%;
 
-//     pointer-events: none;
-//     mix-blend-mode: difference;
-//     transform: translate(-50%, -50%);
+    pointer-events: none;
+    mix-blend-mode: difference;
+    transform: translate(-50%, -50%);
 
-//     z-index: 100;
+    z-index: 100;
 
-//     @include phone{
-//         display: none;
-//     }
-// }
+    @include phone{
+        display: none;
+    }
+}

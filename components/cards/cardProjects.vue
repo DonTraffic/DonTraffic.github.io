@@ -232,10 +232,10 @@ export default {
     },
 
     watch: {
-    // следим за активным слайдом и возобнавляем работу анимации
-    '$store.state.activeCard' (activeCard) {
-      if (activeCard == 'cardProject') DTScroll.sliderUpdateDeep('projects')
-    }
+        // следим за активным слайдом и возобнавляем работу анимации
+        '$store.state.activeCard' (activeCard) {
+            if (activeCard == 'cardProject') DTScroll.sliderUpdateDeep('projects')
+        }
   },
 
     methods: {

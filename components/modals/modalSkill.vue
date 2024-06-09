@@ -11,7 +11,7 @@
 
             <div class="modal-skill__content">
                 <div class="modal-skill__lists">
-                    <div class="modal-skill__lists-item">
+                    <div class="modal-skill__lists-item" v-if="info[activeSkill]['courses']">
                         <h3 class="modal-skill__lists-title">Курсы:</h3>
                         <ul class="modal-skill__lists-list">
                             <li
@@ -23,7 +23,7 @@
 
                     </div>
 
-                    <div class="modal-skill__lists-item">
+                    <div class="modal-skill__lists-item" v-if="info[activeSkill]['tests']">
                         <h3 class="modal-skill__lists-title">Пройденные тесты:</h3>
                         <ul class="modal-skill__lists-list">
                             <li
@@ -34,7 +34,7 @@
                         </ul>
                     </div>
 
-                    <div class="modal-skill__lists-item">
+                    <div class="modal-skill__lists-item" v-if="info[activeSkill]['recommendations']">
                         <h3 class="modal-skill__lists-title">Рекомендации:</h3>
                         <ul class="modal-skill__lists-list">
                             <li

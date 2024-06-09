@@ -5,7 +5,7 @@ const store = createStore({
         return {
             pageData: {
                 index: {
-                    title: 'DonTraffic',
+                    title: 'Middle frontend разработчик DonTraffic',
                     description: 'Визитная карточка middle frontend разработчика DonTraffic',
                     keywords: 'Визитка, визитная карточка, сайт визитка, frontend, middle, разработчик, DonTraffic, заказать сайт, вёрстка',
 
