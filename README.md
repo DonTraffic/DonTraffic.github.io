@@ -1,7 +1,9 @@
-Уханов Дмитрий Юрьевич
-Frontend-разработчик | Вологда, Россия
-Телефон: +7 (921) 063-8647 | Telegram: [@DonTraffic](https://t.me/DonTraffic) | Email: [DonTraffic@yandex.ru](mailto:DonTraffic@yandex.ru)
-Вебсайт: [DonTraffic.ru](https://DonTraffic.ru)
+Уханов Дмитрий Юрьевич  
+Frontend-разработчик | Вологда, Россия  
+- Телефон: +7 (921) 063-8647
+- Telegram: [@DonTraffic](https://t.me/DonTraffic)
+- Email: [DonTraffic@yandex.ru](mailto:DonTraffic@yandex.ru)
+- Вебсайт: [DonTraffic.ru](https://DonTraffic.ru)
 
 ### Обо мне
 Я опытный Frontend-разработчик с более чем 3х-летним опытом работы в создании высокопроизводительных и адаптивных веб-приложений. Мои основные компетенции включают работу с Git, SCSS (БЭМ), JavaScript, TypeScript, Vue.js и Nuxt.js. Я занимаюсь разработкой интерфейсов, улучшением производительности веб-сайтов, оптимизацией запросов к API и внедрением новых функциональностей. У меня есть опыт работы по методологиям Scrum, что помогает достигать высоких результатов.
