@@ -6,13 +6,13 @@
 .custom{
     max-width: 100%;
 
-    &-separator{
+    &__separator{
         width: 1px;
         height: 100%;
         background-color: color-white();
     }
 
-    &-container{
+    &__container{
         position: relative;
         gap: 16px;
         display: grid;
@@ -24,7 +24,9 @@
         width: 100%;
         overflow: hidden;
 
-        &-slider{ 
+        &-slider{
+            margin-bottom: 16px;
+
             &-item{
                 height: 200px;
                 border: 1px solid color-white();
@@ -88,7 +90,7 @@
             display: block;
             width: 100%;
             font-size: 23.04px;
-            margin-top: 16px;
+            margin-bottom: 16px;
     
             &-input{
                 background-color: color-white(0);
@@ -101,6 +103,21 @@
                 &::placeholder {
                     color: color-white(1);
                 }
+            }
+        }
+
+        &-btn{
+            color: color-white();
+            background-color: color-white(0);
+            border: 1px solid color-white();
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-size: 23.04px;
+            transition: .4s ease;
+
+            &:hover{
+                background-color: color-white(1);
+                color: color-black();
             }
         }
     }
@@ -335,7 +352,6 @@
             right: 0;
 
             overflow: hidden;
-            overflow-y: scroll;
 
             height: 45px;
             transition: .4s ease;
@@ -349,7 +365,7 @@
 
             &--show{
                 height: calc(100% - 32px);
-                // height: 100%;
+                overflow-y: scroll;
             }
 
             &-item, &-button{

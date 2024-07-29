@@ -16,7 +16,6 @@ export default {
     mounted() {
         let cursor = this.$refs['custom-cursor']
         document.addEventListener('mousemove', (e) => {
-            console.log(e);
             cursor.style.left = `${e.pageX}px`
             cursor.style.top = `${e.pageY}px`
         })

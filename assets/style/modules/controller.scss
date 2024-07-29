@@ -21,7 +21,7 @@
     }
 
     &__btn{
-        &-left, &-right{
+        &--left, &--right{
             width: 46px;
             height: 115px;
     
@@ -37,7 +37,7 @@
             }
     
         }
-        &-left{
+        &--left{
             left: -23px;
 
             @include tablet{
@@ -52,7 +52,7 @@
                 transform: rotate(-90deg);
             }
         }
-        &-right{
+        &--right{
             right: -23px;
 
             @include tablet{
@@ -70,7 +70,7 @@
 
 
 
-        &-top, &-bottom{
+        &--top, &--bottom{
             width: 105px;
             height: 36px;
     
@@ -86,7 +86,7 @@
             }
     
         }
-        &-top{
+        &--top{
             top: -23px;
             @include tablet{
                 top: -10px;
@@ -95,7 +95,7 @@
                 transform: rotate(0deg);
             }
         }
-        &-bottom{
+        &--bottom{
             bottom: -23px;
             @include tablet{
                 bottom: -10px;
@@ -138,7 +138,7 @@
 
     }
 
-    &-hide{
+    &--hide{
         width: 95%;
         height: 95%;
 

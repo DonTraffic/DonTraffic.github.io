@@ -1,5 +1,5 @@
 <template>
-    <div class="card card-projects card__position-right" id="cardProjects">
+    <div class="card card-projects card--position-right" id="cardProjects">
         <div class="card-projects__preview-container">
             <div class="card-projects__preview-viewport" :style="`translate: 0 ${sliderStatus}00%`">
                 <div 
@@ -70,7 +70,7 @@
             </div>
 
             <button
-                class="card-projects__content-controll card-projects__content-controll-top"
+                class="card-projects__content-controll card-projects__content-controll--top"
                 @click="updateSliderStatus(false)"
             >
                 <svg class="card-projects__content-controll-svg">
@@ -79,7 +79,7 @@
             </button>
 
             <button
-                class="card-projects__content-controll card-projects__content-controll-bottom"
+                class="card-projects__content-controll card-projects__content-controll--bottom"
                 @click="updateSliderStatus(true)"
             >
                 <svg class="card-projects__content-controll-svg">

@@ -1,5 +1,5 @@
 <template>
-  <div class="card card-skills card__position-left" id="cardSkills" >
+  <div class="card card--position-left card-skills" id="cardSkills">
     <div 
       class="card__content card-skills__content"
       v-if="scrollStatus[0] == true"
