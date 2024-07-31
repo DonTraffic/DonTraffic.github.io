@@ -1,5 +1,9 @@
 <template>
-    <div class="controller" :class="{'controller--hide': controllerHide}" :id="`controller-${parentId}`">
+    <div 
+        class="controller" 
+        :class="{'controller--hide': controllerHide}" 
+        :id="`controller-${parentId}`"
+    >
         <div
             v-for="(controller, index) in controllers" :key="`controller--${index}`"
             :class="`controller__btn-container controller__btn--${index}`"
@@ -14,49 +18,44 @@
     </div>
 </template>
 
-<script>
-export default {
-    name: 'controller',
+<script setup>
+import { useStore } from 'vuex'
 
-    props: {
-        parentId: String,
-        controllers: Object,
-        controllerHide: Boolean,
-    },
+const props = defineProps({
+    parentId: String,
+    controllers: Object,
+    controllerHide: Boolean,
+})
 
-    methods: {
-        moveSlide(type, id) {
-            let status = false
+const store = useStore()
 
-            let card = document.querySelector(`#${id}`)
-            let parent = document.querySelector(`#${this.parentId}`)
+const moveSlide = (type, id) => {
+    const card = document.querySelector(`#${id}`)
+    let status = false
 
-            for (let i = 0; i < card.classList.length; i++) {
-                if (card.classList[i] == `card--position-${type}`) {
-                    card.classList.remove(`card--position-${type}`)
-                    document.querySelector(`#controller-${this.parentId}`)
-                        .classList.add('controller--hide')
-                    status = true
-                }
-                
-            }
-
-            if (!status) {
-                parent.classList.add(`card--position-${this.reverseType(type)}`)
-                document.querySelector(`#controller-${id}`)
-                    .classList.remove('controller--hide')
-            }
-
-            this.$store.commit('changeActiveCard', id)
-
-        },
-
-        reverseType(type) {
-            if (type == 'left') return 'right'
-            if (type == 'right') return 'left'
-            if (type == 'top') return 'bottom'
-            if (type == 'bottom') return 'top'
-        },
+    for (let i = 0; i < card.classList.length; i++) {
+        if (card.classList[i] == `card--position-${type}`) {
+            card.classList.remove(`card--position-${type}`)
+            document.querySelector(`#controller-${props.parentId}`)
+                .classList.add('controller--hide')
+            status = true
+        }
     }
-}
+
+    if (!status) {
+        document.querySelector(`#${props.parentId}`)
+            .classList.add(`card--position-${reverseType(type)}`)
+        document.querySelector(`#controller-${id}`)
+            .classList.remove('controller--hide')
+    }
+
+    store.commit('changeActiveCard', id)
+};
+
+const reverseType = (type) => {
+    if (type == 'left') return 'right'
+    if (type == 'right') return 'left'
+    if (type == 'top') return 'bottom'
+    if (type == 'bottom') return 'top'
+};
 </script>
