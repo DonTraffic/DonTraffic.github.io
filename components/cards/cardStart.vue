@@ -12,207 +12,236 @@
 
     <img 
       class="card__background card-start__background--mobile"
-      v-if="!globalSize" 
       src="@/assets/img/grass.png" 
       alt="grass-mobile"
+      v-if="!globalSize" 
     >
   </div>
 </template>
 
-<script>
-export default {
-  name: "cardStart",
-  data() {
-    return {
-      printData: {
-        text: {
-          china: {
-            h1: "唐特拉菲克",
-            h2: "如果你编程，那么用爱",
-          },
-          rus: {
-            h1: "DonTraffic",
-            h2: "Если программировать, то с любовью",
-          },
-        },
-        value: {
-          h1: "",
-          h2: "",
-        },
-        setting: {
-          interval: 100,
-          intervalSet: 0,
-        },
-      },
+<script setup>
+import { useStore } from 'vuex';
 
-      canvas: null,
-      context: null,
-      globalSize: null,
 
-      // Настройки солнца
-      angleSun: 2.6,
-      speedSun: 0.0015,
+// Глобальные или общие переменные
+const store = useStore();
 
-      // Зададим значение отклонения влево
-      grassDeviationMax: 10,
-      grassDeviationSpeed: 0.025,
 
-      // настройки травинки
-      grassCount: 0,
-      grassSizeMax: 0,
-
-      // Генерируем случайные значения
-      grassRandomSize: [],
-      grassRandomDeviation: [],
-      grassRandomPosition: [],
-    };
+// Печатание текста
+const printData = ref({
+  text: {
+    china: {
+      h1: "唐特拉菲克",
+      h2: "如果你编程，那么用爱",
+    },
+    rus: {
+      h1: "DonTraffic",
+      h2: "Если программировать, то с любовью",
+    },
   },
-
-  mounted() {
-    this.printText(); 
-
-    this.canvas = document.getElementById('canvasGrass');
-    this.context = this.canvas.getContext('2d');
-
-    // настраиваем размеры canvas относительно глобальных размеров
-    this.globalSize = window.innerWidth > 425
-    if (process.client) this.canvas.width = this.globalSize ? 
-      document.querySelector('.card-start').offsetWidth : 
-      window.innerWidth
-    if (process.client) this.canvas.height = this.globalSize ? 
-      document.querySelector('.card-start').offsetHeight : 
-      window.innerHeight
-
-    // Переводём точку отсчета в левый нижний угол
-    this.context.translate(0, this.canvas.height);
-    this.context.scale(1, -1);
-
-    // задаём общий цвет
-    this.context.fillStyle = "rgb(235, 235, 235)";
-
-    // // настройки травинки
-    this.grassWidth = 8
-    this.grassCount = (this.canvas.width/this.grassWidth) + 20
-    this.grassSizeMax = process.client && this.globalSize ? 180 : 225
-
-    // Генерируем случайные значения
-    for (let i = 0; i < this.grassCount; i++) {
-      // позиция
-      this.grassRandomPosition.push((i * (this.grassWidth-1)) + (Math.floor(Math.random() * 5) + this.grassWidth) - 20)
-      // отклонение 
-      this.grassRandomDeviation.push([Math.round( Math.random() * (this.grassDeviationMax - 1) ), Boolean(Math.round( Math.random() * 1 ))])
-      // высота
-      this.grassRandomSize.push( (Math.random() * (this.grassSizeMax - (this.grassSizeMax - 20)) + this.grassSizeMax - 20) )
-    }
-
-    requestAnimationFrame(this.tick)
-
+  value: {
+    h1: "",
+    h2: "",
   },
+  setting: {
+    interval: 100,
+    intervalSet: 0,
+  },
+});
 
-  methods: {
-    printGrass(i) {
-      // получаем настройки
-      let startX = this.grassRandomPosition[i]
-      let grassSize = this.grassRandomSize[i]
-      let grassDeviation = this.grassRandomDeviation[i][0]
+const printText = () => {
+  let dataText = printData.value.text;
+  let dataValue = printData.value.value;
 
-      // проверяем, в какую сторону наклоняется травинка
-      if (grassDeviation >= this.grassDeviationMax || grassDeviation <= -this.grassDeviationMax) this.grassRandomDeviation[i][1] = !this.grassRandomDeviation[i][1]
+  for (let countLang = 0; countLang < Object.keys(dataText).length; countLang++) {
+    let langKey = Object.keys(dataText)[countLang];
 
-      this.grassRandomDeviation[i][1] ? 
-        this.grassRandomDeviation[i][0] += this.grassDeviationSpeed : 
-        this.grassRandomDeviation[i][0] -= this.grassDeviationSpeed;
+    setTimeout(() => {
+      for (let countText = 0; countText < Object.keys(dataText[langKey]).length; countText++) {
+        let textKey = Object.keys(dataText[langKey])[countText];
 
-      // рисуем травинку
-      this.context.beginPath()
-        this.context.bezierCurveTo(
-          startX, 0,
-          startX + 3, grassSize/1.2,
-          startX + 6 - this.grassWidth - grassDeviation * 5, grassSize + (grassDeviation > 0 ? -grassDeviation : grassDeviation)*2,
-        );
-        this.context.bezierCurveTo(
-          startX + 9 - grassDeviation * 2, grassSize/1.2 + grassDeviation/3,
-          startX + 12, grassSize/2 + grassDeviation,
-          startX + 12, 0
-        );
-      this.context.closePath();
-      this.context.shadowBlur = 5;
-      this.context.shadowColor = "rgb(235, 235, 235)";
-      this.context.fill();
-    },
-
-    createSun() {
-      // Заставляем солнце сбавлять скорость в конце пути
-      if (this.speedSun > 0.000001 && this.angleSun > 4.5) this.speedSun -= 0.00002
-      if (this.angleSun < 4.7) this.angleSun += Math.PI * this.speedSun
-
-      // Рисуем солнце
-      this.context.beginPath()
-      this.context.arc(
-        this.canvas.width / 1.3 + (this.globalSize ? 400 : window.innerWidth / 1.3 ) * Math.cos(-this.angleSun), 
-        this.canvas.height / 12 + (this.globalSize ? 300 : window.innerHeight / 1.5 ) * Math.sin(-this.angleSun), 
-        70, 0, Math.PI * 2
-      )
-      this.context.shadowBlur = 15;
-      this.context.shadowColor = "rgb(235, 235, 235)";
-      this.context.fill()
-    },
-
-    tick() {
-      // чистим canvas
-      this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-      // Создаём траву
-      if(this.globalSize) for (let i = 0; i < this.grassCount; i++) { this.printGrass(i) }
-
-      // создаём солнце
-      this.createSun()
-
-      // отрисовываем каждый тик
-      if (this.$store.state.activeCard == 'cardStart') requestAnimationFrame(this.tick)
-    },
-
-    showMore() {
-      document.getElementById("cardMenu").classList.remove("card__position-bottom");
-      this.$store.commit("changeActiveCard", "cardMenu");
-    },
-
-    printText() {
-      let dataText = this.printData.text;
-      let dataValue = this.printData.value;
-      for (
-        let countLang = 0;
-        countLang < Object.keys(dataText).length;
-        countLang++
-      ) {
-        let langKey = Object.keys(dataText)[countLang];
-        setTimeout(() => {
-          for (
-            let countText = 0;
-            countText < Object.keys(dataText[langKey]).length;
-            countText++
-          ) {
-            let textKey = Object.keys(dataText[langKey])[countText];
-            for (
-              let countLetter = 0;
-              countLetter < dataText[langKey][textKey].length;
-              countLetter++
-            ) {
-              setTimeout(() => {
-                dataValue[textKey].length > countLetter
-                  ? (dataValue[textKey] = dataValue[textKey].replace(
-                      dataValue[textKey][countLetter],
-                      dataText[langKey][textKey][countLetter]
-                    ))
-                  : (dataValue[textKey] +=
-                      dataText[langKey][textKey][countLetter]);
-              }, (this.printData.setting.interval += 100));
-            }
-          }
-        }, (this.printData.setting.interval += this.printData.setting.intervalSet));
-        this.printData.setting.intervalSet = 500;
+        for (let countLetter = 0; countLetter < dataText[langKey][textKey].length; countLetter++) {
+          setTimeout(() => {
+            dataValue[textKey].length > countLetter
+              ? (dataValue[textKey] = dataValue[textKey].replace(
+                  dataValue[textKey][countLetter],
+                  dataText[langKey][textKey][countLetter]
+                ))
+              : (dataValue[textKey] += dataText[langKey][textKey][countLetter]);
+          }, (printData.value.setting.interval += 100));
+        }
       }
-    },
-  },
+    }, (printData.value.setting.interval += printData.value.setting.intervalSet));
+    printData.value.setting.intervalSet = 500;
+  }
 };
+
+
+// Определение размеров
+const globalSize = ref(false);
+
+const updateSize = () => {
+  if (process.client) globalSize.value = window.innerWidth > 425;
+}
+
+
+// Функция смены стартового слайда
+const showMore = () => {
+  document.getElementById("cardMenu").classList.remove("card--position-bottom");
+  store.commit('changeActiveCard', 'cardMenu');
+}
+
+
+// Объявление canvas
+const canvas = ref(null)
+const context = ref(null)
+
+// Настройки солнца
+let angleSun = 2.6
+let speedSun = 0.0015
+
+// Зададим значение отклонения влево
+let grassDeviationMax = 10
+let grassDeviationSpeed = 0.025
+
+// настройки травинки
+let grassCount = 0
+let grassWidth = 8
+let grassSizeMax = 0
+
+// Генерируем случайные значения
+let grassRandomSize = []
+let grassRandomDeviation = []
+let grassRandomPosition = []
+
+
+// отрисовка анимации каждый тик
+const canvasTick = () => {
+  // чистим canvas
+  context.value.clearRect(0, 0, canvas.value.width, canvas.value.height);
+
+  // рисуем траву
+  if(globalSize.value) for (let i = 0; i < grassCount; i++) { printGrass(i) }
+
+  // рисуем солнце
+  printSun()
+
+  // отрисовываем каждый тик
+  if (store.state.activeCard == 'cardStart') requestAnimationFrame(canvasTick)
+}
+
+// инициализация травинок
+const initGrass = () => {
+  const elemCard = document.querySelector('.card-start')
+
+  // Отпределяем и настраиваем область canvas
+  canvas.value = document.getElementById('canvasGrass')
+    canvas.value.width = elemCard.offsetWidth
+    canvas.value.height = elemCard.offsetHeight
+  context.value = canvas.value.getContext('2d')
+
+  // Переводим точку отсчета в левый нижний угол
+  context.value.translate(0, canvas.value.height)
+  context.value.scale(1, -1)
+
+  // Задаём общий цвет
+  context.value.fillStyle = "rgb(235, 235, 235)"
+
+  // Настройки травинки
+  grassCount = Math.round((canvas.value.width / grassWidth) + 20)
+  grassSizeMax = globalSize.value ? 180 : 225 ;
+
+  // Генерируем случайные значения
+  for (let i = 0; i < grassCount; i++) {
+    // Позиция
+    grassRandomPosition.push(
+      (i * (grassWidth - 1)) + 
+      (Math.floor(Math.random() * 5) + grassWidth) - 20
+    )
+
+    // Отклонение 
+    grassRandomDeviation.push([
+      Math.round(Math.random() * (grassDeviationMax - 1)), 
+      Boolean(Math.round(Math.random() * 1))
+    ])
+
+    // Высота
+    grassRandomSize.push(
+      Math.random() * 
+      (grassSizeMax - (grassSizeMax - 20)) + 
+      grassSizeMax - 20
+    )
+  }
+
+  requestAnimationFrame(canvasTick)
+}
+
+// рисуем солнце
+const printSun = () => {
+  // Заставляем солнце сбавлять скорость в конце пути
+  if (speedSun > 0.000001 && angleSun > 4.5) speedSun -= 0.00002;
+  if (angleSun < 4.7) angleSun += Math.PI * speedSun;
+
+  // Рисуем солнце
+  context.value.beginPath();
+  context.value.arc(
+    canvas.value.width / 1.3 + (globalSize.value ? 400 : window.innerWidth / 1.3) * Math.cos(-angleSun),
+    canvas.value.height / 12 + (globalSize.value ? 300 : window.innerHeight / 1.5) * Math.sin(-angleSun),
+    70, 0, Math.PI * 2
+  );
+  context.value.shadowBlur = 15;
+  context.value.shadowColor = "rgb(235, 235, 235)";
+  context.value.fill();
+}
+
+// рисуем траву
+const printGrass = (i) => {
+  // получаем настройки
+  let startX = grassRandomPosition[i]
+  let grassSize = grassRandomSize[i]
+  let grassDeviation = grassRandomDeviation[i][0]
+
+  // проверяем, в какую сторону наклоняется травинка
+  if (
+    grassDeviation >= grassDeviationMax || 
+    grassDeviation <= -grassDeviationMax
+  ) grassRandomDeviation[i][1] = !grassRandomDeviation[i][1]
+
+  grassRandomDeviation[i][1] ? 
+    grassRandomDeviation[i][0] += grassDeviationSpeed : 
+    grassRandomDeviation[i][0] -= grassDeviationSpeed;
+
+  // рисуем травинку
+  context.value.beginPath()
+    context.value.bezierCurveTo(
+      startX, 0,
+      startX + 3, grassSize/1.2,
+      startX + 6 - grassWidth - grassDeviation * 5, grassSize + (grassDeviation > 0 ? -grassDeviation : grassDeviation)*2,
+    );
+    context.value.bezierCurveTo(
+      startX + 9 - grassDeviation * 2, grassSize/1.2 + grassDeviation/3,
+      startX + 12, grassSize/2 + grassDeviation,
+      startX + 12, 0
+    );
+  context.value.closePath();
+  context.value.shadowBlur = 5;
+  context.value.shadowColor = "rgb(235, 235, 235)";
+  context.value.fill();
+}
+
+
+// Старт приложения
+onBeforeMount(() => {
+  if (process.client) {
+    window.addEventListener('resize', updateSize)
+    updateSize()
+  }
+})
+
+onMounted(() => {
+  if (process.client) {
+    printText()
+    if (globalSize.value) initGrass()
+  }
+})
 </script>
