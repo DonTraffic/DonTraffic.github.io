@@ -30,9 +30,11 @@ const store = createStore({
                 cardStart: true,
                 cardMenu: true,
             }
-            // activeCard: 'cardProjects',
+            // activeCard: 'cardMenu',
             // statusCards: {
+            //     cardMenu: true,
             //     cardProjects: true,
+            //     cardSkills: true,
             // }
         };
     },

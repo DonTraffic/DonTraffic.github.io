@@ -2,12 +2,11 @@
   <div class="card card--position-left card-skills" id="cardSkills">
     <div 
       class="card__content card-skills__content"
-      v-if="scrollStatus[0] == true"
+      v-if="scrollStatus[0]"
     >
       <p class="card-skills__content-quote text-shadow">
         Аналогично тому, как написание картины является искусством для души, 
         так и написание программы является искусством для разума.
-        
         <i class="card-skills__content-quote-author">- Volnik -</i>
       </p>
     </div>
@@ -17,15 +16,9 @@
         class="card-skills__background-sea" 
         id="canvas-sea"
 
-        @mousemove="(e) => {
-          const rect = this.canvas.getBoundingClientRect()
-          this.mouseMoveX = e.clientX - rect.left
-          this.mouseMoveY = e.clientY - rect.top
-        }"
-
-        @wheel="(e) => this.changeScrollPosition(e.deltaY > 0 ? true : false)"
-
-        @click="(e) => this.handlerClick(e)"
+        @mousemove="handleMouseMove"
+        @wheel="(e) => changeScrollPosition(e.deltaY > 0 ? true : false)"
+        @click="(e) => handlerClick(e)"
       ></canvas>
 
       <div class="card-skills__background-sea card-skills__background-sea--mobile">
@@ -115,1441 +108,1474 @@
     <modules-controller
       parentId="cardSkills"
       :controllerHide="controllerHide"
-      :controllers="{
-        right: 'cardMenu',
+      :controllers="{ 
+        right: 'cardMenu' 
       }"
     />
   </div>
 </template>
 
-<script>
-export default {
-  name: "cardSkills",
-  data() {
-    return {
-      // значения canvas
-      canvas: null,
-        canvasHeight: 0,
-        canvasWidth: 0,
-      context: null,
-      globalSize: 0,
+<script setup>
+import { useStore } from 'vuex'
 
-      // значения для print mouse
-      wheelStatus: 1,
-      wheelMove: 1,
+// глобальные переменные и функции
+const store = useStore()
 
-      // значения анимации slider move
-      scrollActive: 0,
-      scrollStatus: {
-        0: true,
-      },
-      scrollCountMax: 3,
-      handleScrollStatus: true,
-      animationMoveY: 0, // -450
-      animationMoveDirection: 0,
-      animationMoveSpeed: 4,
+// определение размеров
+const globalSize = ref(false)
+const updateSize = () => {
+  if (process.client) globalSize.value = window.innerWidth > 425
+}
 
-      // глобальное положение курсора
-      mouseMoveX: 0,
-      mouseMoveY: 0,
+// блоки навыков
+const handlerClick = (e) => {
+  for (const key in infoSkills[-scrollActive]) {
+    let item = infoSkills[-scrollActive][key]
 
-      // значения параллакса
-      parallaxMoveX: 0,
-      parallaxMoveY: 0,
-      parralaxSpeed: 15,
+    let coordX = (item.position.x < 0 ? canvasWidth + item.position.x : item.position.x) + 
+      -parallaxMoveX/4
+    let coordY = (item.position.y < 0 ? canvasHeight + item.position.y : item.position.y) + 
+      -parallaxMoveY/4 + (canvasHeight * (-scrollActive)) + animationMoveY
+    let textWidth = context.value.measureText(item.skill).width + 10
 
-      // значения волн
-      waveLenght: 150,
-      offsetLeft: 300,
-      waveMaxHeight: 4,
-      waveOffsetHeightTop: 0,
-      offsetHeight: 10,
-      waveCount: 13,
-      wavePossition: [0, 0, 51, 154, 0],
+    if(
+      coordX - blocksRadius < e.offsetX && e.offsetX < coordX + textWidth + blocksRadius && 
+      coordY - blocksRadius < e.offsetY && e.offsetY < coordY + blocksHeight + blocksRadius
+    ) openDialog(key)
+  }
+}
 
-      // значения блик
-      blickCount: 20,
-      blickLimit: 20,
-      blicksInfo: {},
+const handleMouseMove = (e) => {
+  const rect = canvas.value.getBoundingClientRect();
+  mouseMoveX = e.clientX - rect.left;
+  mouseMoveY = e.clientY - rect.top;
+};
 
-      // значения для блоков скиллов
-      blocksHeight: 30,
-      blocksRadius: 10,
-      activeSkill: '',
-      controllerHide: false,
-      infoSkills: {
-        1: {
-          HTML: {
-            experience: 'Больше 3х лет',
-            example: '',
+// создание рандом. числа
+const randomInteger = (min, max) => {
+  return Math.floor(min + Math.random() * (max + 1 - min))
+}
 
-            courses: {
-              0: {
-                title: '«Профессиональная вёрстка»',
-                url: 'https://gb.ru/certificates/1093227'
-              }
-            },
-            tests: {
-              0: {
-                title: '«HTML&CSS. Сложный уровень»',
-                url: 'https://gb.ru/go/VNNXB05'
-              },
-            },
-            recommendations: {
-              0: {
-                title: 'Компания «xseven»',
-                url: '/files/xseven.pdf'
-              }
-            },
+// модальное окно
+const openDialog = (language) => {
+  activeSkill.value = language
+  controllerHide.value = true
+}
 
-            position: {
-              x: -150,
-              y: -150,
-            },
-            color: 15,
-          },
+const closeModal = () => {
+  activeSkill.value = ''
+  controllerHide.value = false
+}
 
-          CSS: {
-            experience: 'Больше 3х лет',
-            example: '',
 
-            // courses: {
-            //   0: {
-            //     title: '«Профессиональная вёрстка»',
-            //     url: 'https://gb.ru/certificates/1093227'
-            //   }
-            // },
-            // tests: {
-            //   0: {
-            //     title: '«HTML&CSS. Сложный уровень»',
-            //     url: 'https://gb.ru/go/VNNXB05'
-            //   },
-            // },
-            recommendations: {
-              0: {
-                title: 'Компания «xseven»',
-                url: '/files/xseven.pdf'
-              }
-            },
 
-            position: {
-              x: 150,
-              y: -100,
-            },
-            color: 15,
-          },
+// настройки и хранилища
+// канвас
+const canvas = ref(null)
+  let canvasHeight = 0
+  let canvasWidth = 0
+const context = ref(null)
 
-          jQuery: {
-            experience: 'Больше 1 года',
-            example: '',
+// значения для print mouse
+let wheelStatus = 1
+let wheelMove = 1
 
-            // courses: {
-            //   0: {
-            //     title: '«Профессиональная вёрстка»',
-            //     url: 'https://gb.ru/certificates/1093227'
-            //   }
-            // },
-            // tests: {
-            //   0: {
-            //     title: '«HTML&CSS. Сложный уровень»',
-            //     url: 'https://gb.ru/go/VNNXB05'
-            //   },
-            // },
-            recommendations: {
-              0: {
-                title: 'Компания «xseven»',
-                url: '/files/xseven.pdf'
-              }
-            },
+// значения анимации slider move
+const scrollCountMax = 3
+  let scrollActive = 0
+const scrollStatus = reactive({ 0: true })
+const animationMoveSpeed = 8
+  let handleScrollStatus = true
+  let animationMoveY = 0 // -450
+  let animationMoveDirection = 0
 
-            position: {
-              x: -250,
-              y: 175,
-            },
-            color: 15,
-          },
+// глобальное положение курсора
+let mouseMoveX = 0
+let mouseMoveY = 0
 
-          JavaScript: {
-            experience: 'Больше 2х лет',
-            example: 'https://dontraffic.ru/market',
+// значения параллакса
+const parralaxSpeed = 15
+  let parallaxMoveX = 0
+  let parallaxMoveY = 0
 
-            courses: {
-              0: {
-                title: '«Продвинутый курс JavaScript»',
-                url: 'https://gb.ru/certificates/2183847?7d5959fd53c11adb9fc8ab88269d3ea3'
-              },
-              1: {
-                title: '«Профессиональная вёрстка»',
-                url: 'https://gb.ru/certificates/1093227?26800bfbac76f0865cff8b768767d415'
-              },
-            },
-            tests: {
-              0: {
-                title: '«JavaScript. Сложный уровень»',
-                url: 'https://gb.ru/certificates/2185392?13da3644a25fd7f9af1bbe9255e31af5'
-              },
-            },
-            recommendations: {
-              0: {
-                title: 'Компания «xseven»',
-                url: '/files/xseven.pdf'
-              }
-            },
+// значения волн
+const waveLenght = 150
+const offsetLeft = 300
+const waveMaxHeight = 4
+  let waveOffsetHeightTop = 0
+const offsetHeight = 10
+const waveCount = 13
+const wavePossition = [0, 0, 51, 154, 0]
 
-            position: {
-              x: 100,
-              y: 100,
-            },
-            color: 15,
-          },
-        },
+// значения блик
+const blickCount = 20
+const blickLimit = 20
+const blicksInfo = {}
 
-        2: {
-          Canvas: {
-            experience: 'Больше 3х лет',
-            example: '',
+// значения для блоков скиллов
+const blocksHeight = 30
+const blocksRadius = 10
+  let activeSkill = ref('')
+  let controllerHide = ref(false)
+const infoSkills = {
+  1: {
+    HTML: {
+      experience: 'Больше 3х лет',
+      example: '',
 
-            // courses: {
-            //   0: {
-            //     title: '«Профессиональная вёрстка»',
-            //     url: 'https://gb.ru/certificates/1093227'
-            //   }
-            // },
-            // tests: {
-            //   0: {
-            //     title: '«HTML&CSS. Сложный уровень»',
-            //     url: 'https://gb.ru/go/VNNXB05'
-            //   },
-            // },
-            recommendations: {
-              0: {
-                title: 'Компания «xseven»',
-                url: '/files/xseven.pdf'
-              }
-            },
-
-            position: {
-              x: 150,
-              y: -100,
-            },
-            color: 15,
-          },
-
-          VUE: {
-            experience: 'Больше 1 года',
-            example: '',
-
-            // courses: {
-            //   0: {
-            //     title: '«Профессиональная вёрстка»',
-            //     url: 'https://gb.ru/certificates/1093227'
-            //   }
-            // },
-            // tests: {
-            //   0: {
-            //     title: '«HTML&CSS. Сложный уровень»',
-            //     url: 'https://gb.ru/go/VNNXB05'
-            //   },
-            // },
-            recommendations: {
-              0: {
-                title: 'Компания «xseven»',
-                url: '/files/xseven.pdf'
-              }
-            },
-
-            position: {
-              x: -150,
-              y: 175,
-            },
-            color: 15,
-          },
-
-          NUXT: {
-            experience: 'Больше 2х лет',
-            example: 'https://dontraffic.ru/market',
-
-            courses: {
-              0: {
-                title: '«Продвинутый курс JavaScript»',
-                url: 'https://gb.ru/certificates/2183847?7d5959fd53c11adb9fc8ab88269d3ea3'
-              },
-              1: {
-                title: '«Профессиональная вёрстка»',
-                url: 'https://gb.ru/certificates/1093227?26800bfbac76f0865cff8b768767d415'
-              },
-            },
-            tests: {
-              0: {
-                title: '«JavaScript. Сложный уровень»',
-                url: 'https://gb.ru/certificates/2185392?13da3644a25fd7f9af1bbe9255e31af5'
-              },
-            },
-            recommendations: {
-              0: {
-                title: 'Компания «xseven»',
-                url: '/files/xseven.pdf'
-              }
-            },
-
-            position: {
-              x: 200,
-              y: 100,
-            },
-            color: 15,
-          },
-        }
-      },
-
-      // значения для скалы
-      rockSeaweeds: {
+      courses: {
         0: {
-          slide: 1,
-
-          position: {
-            x: 60,
-            y: 65
-          },
-
-          seaweeds: {
-            0: {
-              height: 43,
-            
-              deviation: 1,
-              deviationMax: 4,
-              deviationDirection: false,
-
-              rotate: 7,
-              rotateMax: 10,
-              rotateDirection: true,
-            },
-
-            1: {
-              height: 48,
-            
-              deviation: 3,
-              deviationMax: 4,
-              deviationDirection: true,
-
-              rotate: 0,
-              rotateMax: 10,
-              rotateDirection: false,
-            },
-
-            2: {
-              height: 53,
-            
-              deviation: 0,
-              deviationMax: 4,
-              deviationDirection: true,
-
-              rotate: 0,
-              rotateMax: 10,
-              rotateDirection: false,
-            },
-
-            3: {
-              height: 55,
-            
-              deviation: 3,
-              deviationMax: 4,
-              deviationDirection: false,
-
-              rotate: 2,
-              rotateMax: 10,
-              rotateDirection: true,
-            },
-
-            4: {
-              height: 64,
-            
-              deviation: 1,
-              deviationMax: 4,
-              deviationDirection: false,
-
-              rotate: 2,
-              rotateMax: 10,
-              rotateDirection: false,
-            },
-
-            5: {
-              height: 58,
-            
-              deviation: 2,
-              deviationMax: 4,
-              deviationDirection: false,
-
-              rotate: 7,
-              rotateMax: 10,
-              rotateDirection: false,
-            },
-
-            6: {
-              height: 48,
-            
-              deviation: 1,
-              deviationMax: 4,
-              deviationDirection: false,
-
-              rotate: 9,
-              rotateMax: 10,
-              rotateDirection: false,
-            },
-          }
-        },
-
-        1: {
-          slide: 2,
-
-          position: {
-            x: 103,
-            y: 235
-          },
-
-          seaweeds: {
-            0: {
-              height: 43,
-            
-              deviation: 1,
-              deviationMax: 4,
-              deviationDirection: false,
-
-              rotate: 4,
-              rotateMax: 10,
-              rotateDirection: true,
-            },
-
-            1: {
-              height: 48,
-            
-              deviation: 0,
-              deviationMax: 4,
-              deviationDirection: true,
-
-              rotate: 3,
-              rotateMax: 10,
-              rotateDirection: false,
-            },
-
-            2: {
-              height: 53,
-            
-              deviation: 1,
-              deviationMax: 4,
-              deviationDirection: true,
-
-              rotate: 1,
-              rotateMax: 10,
-              rotateDirection: false,
-            },
-
-            3: {
-              height: 55,
-            
-              deviation: 3,
-              deviationMax: 4,
-              deviationDirection: false,
-
-              rotate: 2,
-              rotateMax: 10,
-              rotateDirection: true,
-            },
-
-            4: {
-              height: 64,
-            
-              deviation: 1,
-              deviationMax: 4,
-              deviationDirection: false,
-
-              rotate: 5,
-              rotateMax: 10,
-              rotateDirection: false,
-            },
-
-            5: {
-              height: 58,
-            
-              deviation: 3,
-              deviationMax: 4,
-              deviationDirection: false,
-
-              rotate: 7,
-              rotateMax: 10,
-              rotateDirection: false,
-            },
-
-            6: {
-              height: 48,
-            
-              deviation: 2,
-              deviationMax: 4,
-              deviationDirection: false,
-
-              rotate: 1,
-              rotateMax: 10,
-              rotateDirection: false,
-            },
-          }
+          title: '«Профессиональная вёрстка»',
+          url: 'https://gb.ru/certificates/1093227'
         }
       },
-
-      rockSeaweedsInside: {
+      tests: {
         0: {
-          slide: 2,
-
-          position: {
-            x: 30,
-            y: 500
-          },
-
-          seaweeds: {
-            0: {
-              height: 43,
-            
-              deviation: 1,
-              deviationMax: 4,
-              deviationDirection: false,
-
-              rotate: 7,
-              rotateMax: 10,
-              rotateDirection: true,
-            },
-
-            1: {
-              height: 48,
-            
-              deviation: 3,
-              deviationMax: 4,
-              deviationDirection: true,
-
-              rotate: 0,
-              rotateMax: 10,
-              rotateDirection: false,
-            },
-
-            2: {
-              height: 53,
-            
-              deviation: 0,
-              deviationMax: 4,
-              deviationDirection: true,
-
-              rotate: 0,
-              rotateMax: 10,
-              rotateDirection: false,
-            },
-
-            3: {
-              height: 55,
-            
-              deviation: 3,
-              deviationMax: 4,
-              deviationDirection: false,
-
-              rotate: 2,
-              rotateMax: 10,
-              rotateDirection: true,
-            },
-
-            4: {
-              height: 64,
-            
-              deviation: 1,
-              deviationMax: 4,
-              deviationDirection: false,
-
-              rotate: 2,
-              rotateMax: 10,
-              rotateDirection: false,
-            },
-
-            5: {
-              height: 58,
-            
-              deviation: 2,
-              deviationMax: 4,
-              deviationDirection: false,
-
-              rotate: 7,
-              rotateMax: 10,
-              rotateDirection: false,
-            },
-
-            6: {
-              height: 48,
-            
-              deviation: 1,
-              deviationMax: 4,
-              deviationDirection: false,
-
-              rotate: 9,
-              rotateMax: 10,
-              rotateDirection: false,
-            },
-          }
+          title: '«HTML&CSS. Сложный уровень»',
+          url: 'https://gb.ru/go/VNNXB05'
         },
       },
-
-      // значения для рыб
-      infoFishs: {
-        1: {
-          0: {},
-          1: {},
-          2: {},
-          3: {},
-          4: {},
-        },
-        2: {
-          0: {},
-          1: {},
-          2: {},
-          3: {},
-          4: {},
+      recommendations: {
+        0: {
+          title: 'Компания «xseven»',
+          url: '/files/xseven.pdf'
         }
       },
-    };
+
+      position: {
+        x: -150,
+        y: -150,
+      },
+      color: 15,
+    },
+
+    CSS: {
+      experience: 'Больше 3х лет',
+      example: '',
+
+      courses: {
+        0: {
+          title: '«Профессиональная вёрстка»',
+          url: 'https://gb.ru/certificates/1093227'
+        }
+      },
+      tests: {
+        0: {
+          title: '«HTML&CSS. Сложный уровень»',
+          url: 'https://gb.ru/go/VNNXB05'
+        },
+      },
+      recommendations: {
+        0: {
+          title: 'Компания «xseven»',
+          url: '/files/xseven.pdf'
+        }
+      },
+
+      position: {
+        x: 150,
+        y: -100,
+      },
+      color: 15,
+    },
+
+    jQuery: {
+      experience: 'Больше 1 года',
+      example: '',
+
+      // courses: {
+      //   0: {
+      //     title: '«Профессиональная вёрстка»',
+      //     url: 'https://gb.ru/certificates/1093227'
+      //   }
+      // },
+      // tests: {
+      //   0: {
+      //     title: '«HTML&CSS. Сложный уровень»',
+      //     url: 'https://gb.ru/go/VNNXB05'
+      //   },
+      // },
+      recommendations: {
+        0: {
+          title: 'Компания «xseven»',
+          url: '/files/xseven.pdf'
+        }
+      },
+
+      position: {
+        x: -250,
+        y: 175,
+      },
+      color: 15,
+    },
+
+    JavaScript: {
+      experience: 'Больше 2х лет',
+      example: 'https://dontraffic.ru/market',
+
+      courses: {
+        0: {
+          title: '«Продвинутый курс JavaScript»',
+          url: 'https://gb.ru/certificates/2183847?7d5959fd53c11adb9fc8ab88269d3ea3'
+        },
+        1: {
+          title: '«Профессиональная вёрстка»',
+          url: 'https://gb.ru/certificates/1093227?26800bfbac76f0865cff8b768767d415'
+        },
+      },
+      tests: {
+        0: {
+          title: '«JavaScript. Сложный уровень»',
+          url: 'https://gb.ru/certificates/2185392?13da3644a25fd7f9af1bbe9255e31af5'
+        },
+      },
+      recommendations: {
+        0: {
+          title: 'Компания «xseven»',
+          url: '/files/xseven.pdf'
+        }
+      },
+
+      position: {
+        x: 100,
+        y: 100,
+      },
+      color: 15,
+    },
   },
 
-  mounted() {
-    this.globalSize = window.innerWidth > 425
-    this.canvas = document.getElementById('canvas-sea');
+  2: {
+    Canvas: {
+      experience: 'Больше 3х лет',
+      example: '',
 
-    if(this.globalSize) {
-      // обьявляем канвас
-      this.context = this.canvas.getContext('2d');
+      // courses: {
+      //   0: {
+      //     title: '«Профессиональная вёрстка»',
+      //     url: 'https://gb.ru/certificates/1093227'
+      //   }
+      // },
+      // tests: {
+      //   0: {
+      //     title: '«HTML&CSS. Сложный уровень»',
+      //     url: 'https://gb.ru/go/VNNXB05'
+      //   },
+      // },
+      recommendations: {
+        0: {
+          title: 'Этот сайт',
+          url: '#'
+        }
+      },
 
-      // настраиваем размеры canvas относительно глобальных размеров
-      this.canvasWidth = this.globalSize ? 
-        document.querySelector('.card').offsetWidth : 
-        window.innerWidth ;
-        this.canvas.width = this.canvasWidth
-      this.canvasHeight = this.globalSize ? 
-        document.querySelector('.card').offsetHeight : 
-        window.innerHeight ;
-        this.canvas.height = this.canvasHeight
+      position: {
+        x: 150,
+        y: -100,
+      },
+      color: 15,
+    },
 
-      // задаём динамический отступ волн от верха
-      this.waveOffsetHeightTop = document.querySelector('.card').offsetHeight/2
+    VUE: {
+      experience: 'Больше 1 года',
+      example: '',
 
-      // задаём общий цвет
-      this.context.fillStyle = "rgb(15, 15, 15)";
-      this.context.strokeStyle = "rgb(235, 235, 235)";
-      this.context.lineWidth = 1;
-      this.context.shadowColor = "rgb(235, 235, 235)";
+      // courses: {
+      //   0: {
+      //     title: '«Профессиональная вёрстка»',
+      //     url: 'https://gb.ru/certificates/1093227'
+      //   }
+      // },
+      // tests: {
+      //   0: {
+      //     title: '«HTML&CSS. Сложный уровень»',
+      //     url: 'https://gb.ru/go/VNNXB05'
+      //   },
+      // },
+      recommendations: {
+        0: {
+          title: 'Компания «xseven»',
+          url: '/files/xseven.pdf'
+        }
+      },
 
-      // создаём значения для рыбы
-      for (const slide in this.infoFishs) {
-        for (const fish in this.infoFishs[slide]) { this.generateFish(slide, fish, true) }
-      }
+      position: {
+        x: -150,
+        y: 175,
+      },
+      color: 15,
+    },
 
-      // запускаем анимацию
-      requestAnimationFrame(this.tick)
-    } else {
-      this.canvas.remove()
+    NUXT: {
+      experience: 'Больше 2х лет',
+      example: 'https://dontraffic.ru/market',
+
+      // courses: {
+      //   0: {
+      //     title: '«Продвинутый курс JavaScript»',
+      //     url: 'https://gb.ru/certificates/2183847?7d5959fd53c11adb9fc8ab88269d3ea3'
+      //   },
+      //   1: {
+      //     title: '«Профессиональная вёрстка»',
+      //     url: 'https://gb.ru/certificates/1093227?26800bfbac76f0865cff8b768767d415'
+      //   },
+      // },
+      // tests: {
+      //   0: {
+      //     title: '«JavaScript. Сложный уровень»',
+      //     url: 'https://gb.ru/certificates/2185392?13da3644a25fd7f9af1bbe9255e31af5'
+      //   },
+      // },
+      recommendations: {
+        0: {
+          title: 'Компания «xseven»',
+          url: '/files/xseven.pdf'
+        }
+      },
+
+      position: {
+        x: 200,
+        y: 100,
+      },
+      color: 15,
+    },
+  }
+}
+
+// значения для скалы
+const rockSeaweeds = {
+  0: {
+    slide: 1,
+
+    position: {
+      x: 60,
+      y: 65
+    },
+
+    seaweeds: {
+      0: {
+        height: 43,
+      
+        deviation: 1,
+        deviationMax: 4,
+        deviationDirection: false,
+
+        rotate: 7,
+        rotateMax: 10,
+        rotateDirection: true,
+      },
+
+      1: {
+        height: 48,
+      
+        deviation: 3,
+        deviationMax: 4,
+        deviationDirection: true,
+
+        rotate: 0,
+        rotateMax: 10,
+        rotateDirection: false,
+      },
+
+      2: {
+        height: 53,
+      
+        deviation: 0,
+        deviationMax: 4,
+        deviationDirection: true,
+
+        rotate: 0,
+        rotateMax: 10,
+        rotateDirection: false,
+      },
+
+      3: {
+        height: 55,
+      
+        deviation: 3,
+        deviationMax: 4,
+        deviationDirection: false,
+
+        rotate: 2,
+        rotateMax: 10,
+        rotateDirection: true,
+      },
+
+      4: {
+        height: 64,
+      
+        deviation: 1,
+        deviationMax: 4,
+        deviationDirection: false,
+
+        rotate: 2,
+        rotateMax: 10,
+        rotateDirection: false,
+      },
+
+      5: {
+        height: 58,
+      
+        deviation: 2,
+        deviationMax: 4,
+        deviationDirection: false,
+
+        rotate: 7,
+        rotateMax: 10,
+        rotateDirection: false,
+      },
+
+      6: {
+        height: 48,
+      
+        deviation: 1,
+        deviationMax: 4,
+        deviationDirection: false,
+
+        rotate: 9,
+        rotateMax: 10,
+        rotateDirection: false,
+      },
     }
   },
 
-  watch: {
-    // следим за активным слайдом и возобнавляем работу анимации
-    '$store.state.activeCard' (activeCard) {
-      if (activeCard == 'cardSkills' && this.globalSize) requestAnimationFrame(this.tick)
+  1: {
+    slide: 2,
+
+    position: {
+      x: 103,
+      y: 235
+    },
+
+    seaweeds: {
+      0: {
+        height: 43,
+      
+        deviation: 1,
+        deviationMax: 4,
+        deviationDirection: false,
+
+        rotate: 4,
+        rotateMax: 10,
+        rotateDirection: true,
+      },
+
+      1: {
+        height: 48,
+      
+        deviation: 0,
+        deviationMax: 4,
+        deviationDirection: true,
+
+        rotate: 3,
+        rotateMax: 10,
+        rotateDirection: false,
+      },
+
+      2: {
+        height: 53,
+      
+        deviation: 1,
+        deviationMax: 4,
+        deviationDirection: true,
+
+        rotate: 1,
+        rotateMax: 10,
+        rotateDirection: false,
+      },
+
+      3: {
+        height: 55,
+      
+        deviation: 3,
+        deviationMax: 4,
+        deviationDirection: false,
+
+        rotate: 2,
+        rotateMax: 10,
+        rotateDirection: true,
+      },
+
+      4: {
+        height: 64,
+      
+        deviation: 1,
+        deviationMax: 4,
+        deviationDirection: false,
+
+        rotate: 5,
+        rotateMax: 10,
+        rotateDirection: false,
+      },
+
+      5: {
+        height: 58,
+      
+        deviation: 3,
+        deviationMax: 4,
+        deviationDirection: false,
+
+        rotate: 7,
+        rotateMax: 10,
+        rotateDirection: false,
+      },
+
+      6: {
+        height: 48,
+      
+        deviation: 2,
+        deviationMax: 4,
+        deviationDirection: false,
+
+        rotate: 1,
+        rotateMax: 10,
+        rotateDirection: false,
+      },
+    }
+  }
+}
+
+const rockSeaweedsInside = {
+  0: {
+    slide: 2,
+
+    position: {
+      x: 30,
+      y: 500
+    },
+
+    seaweeds: {
+      0: {
+        height: 43,
+      
+        deviation: 1,
+        deviationMax: 4,
+        deviationDirection: false,
+
+        rotate: 7,
+        rotateMax: 10,
+        rotateDirection: true,
+      },
+
+      1: {
+        height: 48,
+      
+        deviation: 3,
+        deviationMax: 4,
+        deviationDirection: true,
+
+        rotate: 0,
+        rotateMax: 10,
+        rotateDirection: false,
+      },
+
+      2: {
+        height: 53,
+      
+        deviation: 0,
+        deviationMax: 4,
+        deviationDirection: true,
+
+        rotate: 0,
+        rotateMax: 10,
+        rotateDirection: false,
+      },
+
+      3: {
+        height: 55,
+      
+        deviation: 3,
+        deviationMax: 4,
+        deviationDirection: false,
+
+        rotate: 2,
+        rotateMax: 10,
+        rotateDirection: true,
+      },
+
+      4: {
+        height: 64,
+      
+        deviation: 1,
+        deviationMax: 4,
+        deviationDirection: false,
+
+        rotate: 2,
+        rotateMax: 10,
+        rotateDirection: false,
+      },
+
+      5: {
+        height: 58,
+      
+        deviation: 2,
+        deviationMax: 4,
+        deviationDirection: false,
+
+        rotate: 7,
+        rotateMax: 10,
+        rotateDirection: false,
+      },
+
+      6: {
+        height: 48,
+      
+        deviation: 1,
+        deviationMax: 4,
+        deviationDirection: false,
+
+        rotate: 9,
+        rotateMax: 10,
+        rotateDirection: false,
+      },
     }
   },
+}
 
-  methods: {
-    handlerClick(e) {
-      // блоки навыков
-      for (const key in this.infoSkills[-this.scrollActive]) {
-        let item = this.infoSkills[-this.scrollActive][key]
+// значения для рыб
+const infoFishs = {
+  1: {
+    0: {},
+    1: {},
+    2: {},
+    3: {},
+    4: {},
+  },
+  2: {
+    0: {},
+    1: {},
+    2: {},
+    3: {},
+    4: {},
+  }
+}
 
-        let coordX = (item.position.x < 0 ? this.canvasWidth + item.position.x : item.position.x) + 
-          -this.parallaxMoveX/4
-        let coordY = (item.position.y < 0 ? this.canvasHeight + item.position.y : item.position.y) + 
-          -this.parallaxMoveY/4 + (this.canvasHeight * (-this.scrollActive)) + this.animationMoveY
-        let textWidth = this.context.measureText(item.skill).width + 10
 
-        if(
-          coordX - this.blocksRadius < e.offsetX && e.offsetX < coordX + textWidth + this.blocksRadius && 
-          coordY - this.blocksRadius < e.offsetY && e.offsetY < coordY + this.blocksHeight + this.blocksRadius
-        ) this.openDialog(key)
+
+// инициализация канваса
+const canvasInit = () => {
+  canvas.value = document.getElementById('canvas-sea');
+
+  if(globalSize.value) {
+    let cardElem = document.querySelector('.card')
+
+    // обьявляем канвас
+    context.value = canvas.value.getContext('2d');
+
+    // настраиваем размеры canvas относительно глобальных размеров
+    canvasWidth = globalSize.value ? cardElem.offsetWidth : window.innerWidth ;
+      canvas.value.width = canvasWidth
+    canvasHeight = globalSize.value ? cardElem.offsetHeight : window.innerHeight ;
+      canvas.value.height = canvasHeight
+
+    // задаём динамический отступ волн от верха
+    waveOffsetHeightTop = cardElem.offsetHeight/2
+
+    // задаём общий цвет
+    context.value.fillStyle = "rgb(15, 15, 15)";
+    context.value.strokeStyle = "rgb(235, 235, 235)";
+    context.value.lineWidth = 1;
+    context.value.shadowColor = "rgb(235, 235, 235)";
+
+    // создаём значения для рыбы
+    for (const slide in infoFishs) {
+      for (const fish in infoFishs[slide]) { generateFish(slide, fish, true) }
+    }
+
+    // запускаем анимацию
+    requestAnimationFrame(tick)
+  } else {
+    canvas.value.remove()
+  }
+}
+
+// 
+const changeScrollPosition = (direction) => {
+  if (!handleScrollStatus) return
+    handleScrollStatus = false
+    setTimeout(() => { 
+      handleScrollStatus = true;
+
+      for (const key in scrollStatus) {
+        scrollStatus[key] = false
       }
-    },
+      scrollStatus[-scrollActive] = true
+    }, 1000);
 
-    randomInteger(min, max) {
-      return Math.floor(min + Math.random() * (max + 1 - min))
-    },
-
-    changeScrollPosition(direction) {
-      if (!this.handleScrollStatus) return
-        this.handleScrollStatus = false
-        setTimeout(() => { 
-          this.handleScrollStatus = true;
-
-          for (const key in this.scrollStatus) {
-            this.scrollStatus[key] = false
-          }
-          this.scrollStatus[-this.scrollActive] = true
-        }, 1000);
-
-        if (!direction && this.scrollActive == 0) return
-          if (!direction) {
-            this.scrollActive++
-            this.animationMoveDirection++
-          } else {
-            this.scrollActive--
-            this.animationMoveDirection--
-          }
-          this.scrollStatus[-this.scrollActive] = true
-
-        if (this.scrollActive <= -this.scrollCountMax) {
-          this.scrollActive++
-          this.animationMoveDirection++
-        }
-    },
-
-    printSun(){
-      this.context.fillStyle = "rgb(235, 235, 235)";
-      this.context.shadowBlur = 50
-
-      this.context.beginPath()
-        this.context.arc(
-          document.querySelector('.card').offsetWidth - 145 - this.parallaxMoveX/7, 
-          145 - this.parallaxMoveY/7,
-
-          100, 0, Math.PI*2,
-
-          true
-        );
-      this.context.closePath()
-      this.context.stroke()
-      this.context.fill()
-
-      this.context.fillStyle = "rgb(15, 15, 15)";
-      this.context.shadowBlur = 0
-    },
-
-    printWave() {
-      this.context.shadowBlur = 10
-      // context.setLineDash([40, 70])
-
-      for (let i = 1; i < this.wavePossition.length; i++) {
-        this.wavePossition[i]+= .15 + (.1*i)
-
-        let parallaxX = -this.parallaxMoveX * (i/3)
-        let parallaxY = -this.parallaxMoveY * (i/3)
-
-        this.context.beginPath()
-
-        this.context.moveTo(
-          (this.waveLenght * 0) - this.offsetLeft + parallaxX + this.wavePossition[i], 
-          this.waveOffsetHeightTop + (this.offsetHeight*i) + parallaxY + this.animationMoveY
-        )
-
-        for (let wave = 0; wave < this.waveCount; wave++) {  
-
-          let firstCoord = ((this.waveLenght * wave)) - this.offsetLeft + parallaxX
-          let secondCoord = ((this.waveLenght * wave) + this.waveLenght/2) - this.offsetLeft + parallaxX
-          let thirdCoord = ((this.waveLenght * wave) + this.waveLenght) - this.offsetLeft + parallaxX
-  
-          if (firstCoord + this.wavePossition[i] > (this.waveLenght*this.waveCount) - this.offsetLeft) this.wavePossition[i]-= this.waveLenght*2
-  
-          this.context.bezierCurveTo(
-            firstCoord + this.wavePossition[i], 
-            this.waveOffsetHeightTop + (this.offsetHeight*i) + parallaxY + this.animationMoveY,
-
-            secondCoord + this.wavePossition[i], 
-            this.waveOffsetHeightTop + (this.offsetHeight*i) + parallaxY + this.animationMoveY + (wave%2 ? this.waveMaxHeight + 6*i : -this.waveMaxHeight - 6*i),
-
-            thirdCoord + this.wavePossition[i], 
-            this.waveOffsetHeightTop + (this.offsetHeight*i) + parallaxY + this.animationMoveY
-          );
-        }
-
-        // Закрываем волну
-        this.context.lineTo((this.waveLenght * this.waveCount) - this.waveLenght + this.wavePossition[i] + parallaxX, this.canvasHeight + 10)
-        this.context.lineTo(this.wavePossition[i] - this.waveLenght + parallaxX, this.canvasHeight + 10)
-
-        // закрашиваем волну
-        this.context.closePath()
-        this.context.stroke()
-        this.context.fill()
-      }
-
-      this.context.shadowBlur = 0;
-    },
-
-    generateFish(slide, fish, first) {
-      this.infoFishs[slide][fish] = {
-        speed:  this.randomInteger(50, 100),
-        size:  this.randomInteger(0, 8),
-        direction: Boolean(this.randomInteger(0, 1)),
-      }
-      this.infoFishs[slide][fish].position = {
-        x: first ? 
-          this.randomInteger(0, this.canvasWidth) : 
-          this.infoFishs[slide][fish].direction ? -100 : this.canvasWidth,
-        y: (this.canvasHeight * slide) + this.randomInteger(50, this.canvasHeight-50),
-      }
-    },
-
-    printFish(slide, key) {
-      let fish = this.infoFishs[slide][key]
-      let positionY = this.animationMoveY + fish.position.y - this.parallaxMoveY/2
-      let positionX = fish.position.x - this.parallaxMoveX/2
-      let size = fish.size
-      let speed = fish.speed/100
-      let direction = fish.direction
-
-      if (direction) {
-        fish.position.x > this.canvasWidth + 50 ? this.generateFish(slide, key, false) : fish.position.x+= speed
-
-        this.context.beginPath();
-          // туловище
-          this.context.moveTo(
-            positionX - size, 
-            positionY
-          );
-            this.context.bezierCurveTo(
-              positionX - 5 - size, 
-              positionY - 15 + size,
-
-              positionX - 35 + size, 
-              positionY - 15 + size,
-
-              positionX - 50 + size, 
-              positionY,
-            );
-            this.context.bezierCurveTo(
-              positionX - 35 + size, 
-              positionY + 15 - size,
-
-              positionX - 5, 
-              positionY + 15 - size,
-
-              positionX - size, 
-              positionY,
-            );
-          this.context.fill()
-
-          // хвост
-          this.context.moveTo(
-            positionX - 50 + size, 
-            positionY
-          );
-            this.context.bezierCurveTo(
-              positionX - 65 + size, 
-              positionY - 15 + size,
-
-              positionX - 70 + size, 
-              positionY - 15 + size,
-
-              positionX - 60 + size, 
-              positionY,
-            );
-            this.context.bezierCurveTo(
-              positionX - 70 + size, 
-              positionY + 15 - size,
-
-              positionX - 65 + size, 
-              positionY + 15 - size,
-
-              positionX - 50 + size, 
-              positionY,
-            );
-          this.context.fill()
-
-          // глаз
-          this.context.moveTo(
-            positionX - 13 + 3 - size/4, 
-            positionY - 3 + size/4
-          );
-          this.context.arc(
-            positionX - 13 - size/4, 
-            positionY - 3 + size/4,
-
-            3 - Number('0.' + size), 0, Math.PI*2,
-
-            true
-          );
-
-          // жабры
-          this.context.moveTo(
-            positionX - 22, 
-            positionY - 6 + size/3
-          );
-          this.context.bezierCurveTo(
-            positionX - 25, 
-            positionY - 2,
-
-            positionX - 25, 
-            positionY + 2,
-
-            positionX - 22, 
-            positionY + 6 - size/3,
-          );
-
-          // плавник (верхний)
-          this.context.moveTo(
-            positionX - 18, 
-            positionY - 12 + size
-          );
-          this.context.bezierCurveTo(
-            positionX - 24, 
-            positionY - 20 + size,
-
-            positionX - 24, 
-            positionY - 20 + size,
-
-            positionX - 25, 
-            positionY - 12 + size,
-          );
-
-          // плавник (нижний)
-          this.context.moveTo(
-            positionX - 28, 
-            positionY + 10 - size/1.5
-          );
-          this.context.bezierCurveTo(
-            positionX - 36, 
-            positionY + 18 - size/1.5,
-
-            positionX - 36, 
-            positionY + 18 - size/1.5,
-
-            positionX - 35, 
-            positionY + 8 - size/1.5,
-          );
-
-        this.context.stroke()
+    if (!direction && scrollActive == 0) return
+      if (!direction) {
+        scrollActive++
+        animationMoveDirection++
       } else {
-        fish.position.x < -50 ? this.generateFish(slide, key, false) : fish.position.x-= speed
-
-        this.context.beginPath();
-          // туловище
-          this.context.moveTo(
-            positionX + size, 
-            positionY
-          );
-            this.context.bezierCurveTo(
-              positionX + 5 + size, 
-              positionY - 15 + size,
-
-              positionX + 35 - size, 
-              positionY - 15 + size,
-
-              positionX + 50 - size, 
-              positionY,
-            );
-            this.context.bezierCurveTo(
-              positionX + 35 - size, 
-              positionY + 15 - size,
-
-              positionX + 5, 
-              positionY + 15 - size,
-
-              positionX + size, 
-              positionY,
-            );
-          this.context.fill()
-
-          // хвост
-          this.context.moveTo(
-            positionX + 50 - size, 
-            positionY
-          );
-            this.context.bezierCurveTo(
-              positionX + 65 - size, 
-              positionY - 15 + size,
-
-              positionX + 70 - size, 
-              positionY - 15 + size,
-
-              positionX + 60 - size, 
-              positionY,
-            );
-            this.context.bezierCurveTo(
-              positionX + 70 - size, 
-              positionY + 15 - size,
-
-              positionX + 65 - size, 
-              positionY + 15 - size,
-
-              positionX + 50 - size, 
-              positionY,
-            );
-          this.context.fill()
-
-          // глаз
-          this.context.moveTo(
-            positionX + 13 + 3 + size/4, 
-            positionY - 3 + size/4
-          );
-          this.context.arc(
-            positionX + 13 + size/4, 
-            positionY - 3 + size/4,
-
-            3 - Number('0.' + size), 0, Math.PI*2,
-
-            true
-          );
-
-          // жабры
-          this.context.moveTo(
-            positionX + 22, 
-            positionY - 6 + size/3
-          );
-          this.context.bezierCurveTo(
-            positionX + 25, 
-            positionY - 2,
-
-            positionX + 25, 
-            positionY + 2,
-
-            positionX + 22, 
-            positionY + 6 - size/3,
-          );
-
-          // плавник (верхний)
-          this.context.moveTo(
-            positionX + 18, 
-            positionY - 12 + size
-          );
-          this.context.bezierCurveTo(
-            positionX + 24, 
-            positionY - 20 + size,
-
-            positionX + 24, 
-            positionY - 20 + size,
-
-            positionX + 25, 
-            positionY - 12 + size,
-          );
-
-          // плавник (нижний)
-          this.context.moveTo(
-            positionX + 28, 
-            positionY + 10 - size/1.5
-          );
-          this.context.bezierCurveTo(
-            positionX + 36, 
-            positionY + 18 - size/1.5,
-
-            positionX + 36, 
-            positionY + 18 - size/1.5,
-
-            positionX + 35, 
-            positionY + 8 - size/1.5,
-          );
-
-        this.context.stroke()
+        scrollActive--
+        animationMoveDirection--
       }
-    },
+      scrollStatus[-scrollActive] = true
 
-    blickCreate(slide, key, blickStart) {
-      let blick = this.blicksInfo[slide]
+    if (scrollActive <= -scrollCountMax) {
+      scrollActive++
+      animationMoveDirection++
+    }
+}
 
-      blick[key] = {}
-      blick[key].width = this.randomInteger(0, this.canvasWidth)
-      blick[key].height = slide == 0 ? 
-        this.randomInteger(blickStart, this.canvasHeight) : 
-        this.randomInteger(blickStart, blickStart + this.canvasHeight)
-      blick[key].offset = this.randomInteger(0, 40)
-      blick[key].anim = 0
-    },
+const printSun = ()=> {
+  context.value.fillStyle = "rgb(235, 235, 235)";
+  context.value.shadowBlur = 50
 
-    printBlick(slide) {
-      let blickStart = slide == 0 ? (this.canvasHeight/4.8)*3 : this.canvasHeight*slide ;
+  context.value.beginPath()
+    context.value.arc(
+      document.querySelector('.card').offsetWidth - 145 - parallaxMoveX/7, 
+      145 - parallaxMoveY/7,
 
-      for (let blick = 0; blick < this.blickCount; blick++) {
-        if (!this.blicksInfo[slide]) this.blicksInfo[slide] = {}
-        if (!this.blicksInfo[slide][blick]) this.blickCreate(slide, blick, blickStart)
+      100, 0, Math.PI*2,
 
-        let infoBlick = this.blicksInfo[slide][blick]
+      true
+    );
+  context.value.closePath()
+  context.value.stroke()
+  context.value.fill()
 
-        if (infoBlick.offset !=0) {
-          infoBlick.offset--
-          continue
-        }
+  context.value.fillStyle = "rgb(15, 15, 15)";
+  context.value.shadowBlur = 0
+}
 
-        infoBlick.anim += .3
-          if (infoBlick.anim > this.blickLimit*2) this.blickCreate(slide, blick, blickStart)
-        let blickHeight = infoBlick.height - this.parallaxMoveY + this.animationMoveY
-        let blickWidth = infoBlick.width - this.parallaxMoveX
+const printWave = () => {
+  context.value.shadowBlur = 10
+  // context.value.setLineDash([40, 70])
 
-        this.context.beginPath();
-          this.context.moveTo(
-            blickWidth + (infoBlick.anim >= this.blickLimit ? infoBlick.anim - this.blickLimit : 0), 
-            blickHeight
-          );
-          this.context.lineTo(
-            blickWidth + (infoBlick.anim >= this.blickLimit ? this.blickLimit : infoBlick.anim), 
-            blickHeight
-          )
-        this.context.stroke()
-      }
-    },
+  for (let i = 1; i < wavePossition.length; i++) {
+    wavePossition[i]+= .15 + (.1*i)
 
-    printMouse() {
-      switch (this.wheelStatus) {
-        case 1:
-          this.wheelMove+= .5
-          if (this.wheelMove >= 10) this.wheelStatus = 2
-        break;
+    let parallaxX = -parallaxMoveX * (i/3)
+    let parallaxY = -parallaxMoveY * (i/3)
 
-        case 2:
-          this.wheelMove-= .20
-          if (this.wheelMove <= 0) this.wheelStatus = 3
-        break;
+    context.value.beginPath()
 
-        case 3:
-        this.wheelStatus = 0
-          setTimeout(() => {this.wheelStatus = 1}, 2000)
-        break;
-      }
+    context.value.moveTo(
+      (waveLenght * 0) - offsetLeft + parallaxX + wavePossition[i], 
+      waveOffsetHeightTop + (offsetHeight*i) + parallaxY + animationMoveY
+    )
 
-      this.context.beginPath()
-        this.context.arc(
-          document.querySelector('.card').offsetWidth/2, 
-          document.querySelector('.card').offsetHeight - 45 + this.animationMoveY,
+    for (let wave = 0; wave < waveCount; wave++) {  
 
-          10, 0, Math.PI,
+      let firstCoord = ((waveLenght * wave)) - offsetLeft + parallaxX
+      let secondCoord = ((waveLenght * wave) + waveLenght/2) - offsetLeft + parallaxX
+      let thirdCoord = ((waveLenght * wave) + waveLenght) - offsetLeft + parallaxX
 
-          true
+      if (firstCoord + wavePossition[i] > (waveLenght*waveCount) - offsetLeft) wavePossition[i]-= waveLenght*2
+
+      context.value.bezierCurveTo(
+        firstCoord + wavePossition[i], 
+        waveOffsetHeightTop + (offsetHeight*i) + parallaxY + animationMoveY,
+
+        secondCoord + wavePossition[i], 
+        waveOffsetHeightTop + (offsetHeight*i) + parallaxY + animationMoveY + (wave%2 ? waveMaxHeight + 6*i : -waveMaxHeight - 6*i),
+
+        thirdCoord + wavePossition[i], 
+        waveOffsetHeightTop + (offsetHeight*i) + parallaxY + animationMoveY
+      );
+    }
+
+    // Закрываем волну
+    context.value.lineTo((waveLenght * waveCount) - waveLenght + wavePossition[i] + parallaxX, canvasHeight + 10)
+    context.value.lineTo(wavePossition[i] - waveLenght + parallaxX, canvasHeight + 10)
+
+    // закрашиваем волну
+    context.value.closePath()
+    context.value.stroke()
+    context.value.fill()
+  }
+
+  context.value.shadowBlur = 0;
+}
+
+const generateFish = (slide, fish, first) => {
+  infoFishs[slide][fish] = {
+    speed:  randomInteger(50, 200),
+    size:  randomInteger(0, 8),
+    direction: Boolean(randomInteger(0, 1)),
+  }
+  infoFishs[slide][fish].position = {
+    x: first ? 
+      randomInteger(0, canvasWidth) : 
+      infoFishs[slide][fish].direction ? -100 : canvasWidth,
+    y: (canvasHeight * slide) + randomInteger(50, canvasHeight-50),
+  }
+}
+
+const printFish = (slide, key) => {
+  let fish = infoFishs[slide][key]
+  let positionY = animationMoveY + fish.position.y - parallaxMoveY/2
+  let positionX = fish.position.x - parallaxMoveX/2
+  let size = fish.size
+  let speed = fish.speed/100
+  let direction = fish.direction
+
+  if (direction) {
+    fish.position.x > canvasWidth + 50 ? generateFish(slide, key, false) : fish.position.x+= speed
+
+    context.value.beginPath();
+      // туловище
+      context.value.moveTo(
+        positionX - size, 
+        positionY
+      );
+        context.value.bezierCurveTo(
+          positionX - 5 - size, 
+          positionY - 15 + size,
+
+          positionX - 35 + size, 
+          positionY - 15 + size,
+
+          positionX - 50 + size, 
+          positionY,
         );
-        this.context.arc(
-          document.querySelector('.card').offsetWidth/2, 
-          document.querySelector('.card').offsetHeight - 30 + this.animationMoveY,
+        context.value.bezierCurveTo(
+          positionX - 35 + size, 
+          positionY + 15 - size,
 
-          10, Math.PI, 0, 
+          positionX - 5, 
+          positionY + 15 - size,
 
-          true
+          positionX - size, 
+          positionY,
         );
-      this.context.closePath()
-      this.context.stroke()
-      this.context.fill()
+      context.value.fill()
 
-      this.context.beginPath()
-        this.context.arc(
-          document.querySelector('.card').offsetWidth/2, 
-          document.querySelector('.card').offsetHeight - 45 + this.wheelMove + this.animationMoveY,
+      // хвост
+      context.value.moveTo(
+        positionX - 50 + size, 
+        positionY
+      );
+        context.value.bezierCurveTo(
+          positionX - 65 + size, 
+          positionY - 15 + size,
 
-          1, 0, Math.PI,
+          positionX - 70 + size, 
+          positionY - 15 + size,
 
-          true
+          positionX - 60 + size, 
+          positionY,
         );
-        this.context.arc(
-          document.querySelector('.card').offsetWidth/2, 
-          document.querySelector('.card').offsetHeight - 40 + this.wheelMove + this.animationMoveY,
+        context.value.bezierCurveTo(
+          positionX - 70 + size, 
+          positionY + 15 - size,
 
-          1, Math.PI, 0, 
+          positionX - 65 + size, 
+          positionY + 15 - size,
 
-          true
+          positionX - 50 + size, 
+          positionY,
         );
-      this.context.closePath()
-      this.context.stroke()
-    },
+      context.value.fill()
 
-    printBlock(slide, key) {
-      let item = this.infoSkills[slide][key]
-      let parallaxX = -this.parallaxMoveX/4
-      let parallaxY = -this.parallaxMoveY/4
+      // глаз
+      context.value.moveTo(
+        positionX - 13 + 3 - size/4, 
+        positionY - 3 + size/4
+      );
+      context.value.arc(
+        positionX - 13 - size/4, 
+        positionY - 3 + size/4,
 
-      // задаём переменные
-      let coordX = (item.position.x < 0 ? this.canvasWidth + item.position.x : item.position.x) + 
-        parallaxX
-      let coordY = (item.position.y < 0 ? this.canvasHeight + item.position.y : item.position.y) + 
-        parallaxY + (this.canvasHeight*slide) + this.animationMoveY
-      let textWidth = this.context.measureText(key).width + this.blocksRadius
+        3 - Number('0.' + size), 0, Math.PI*2,
 
-      // следим когда курсор будет над блоком текста
-      if(
-        coordX - this.blocksRadius < this.mouseMoveX && this.mouseMoveX < coordX + textWidth + this.blocksRadius && 
-        coordY - this.blocksRadius < this.mouseMoveY && this.mouseMoveY < coordY + this.blocksHeight + this.blocksRadius
-      ) {
-        if (item.color < 235) item.color+=5
-      } else {
-        if (item.color > 15) item.color-=5
-      }
-      this.context.fillStyle = `rgba(${item.color}, ${item.color}, ${item.color}`
-
-      // рисуем блок текста
-      this.context.beginPath()
-        this.context.arc(
-          coordX, coordY,
-          this.blocksRadius, Math.PI, -Math.PI/2,
-          false
-        )
-        this.context.lineTo(coordX, coordY - this.blocksRadius)
-        this.context.arc(
-          coordX + textWidth , coordY,
-          this.blocksRadius, -Math.PI/2, Math.PI/2 - Math.PI/2,
-          false
-        )
-        this.context.lineTo(coordX + textWidth + this.blocksRadius, coordY + this.blocksHeight)
-        this.context.arc(
-          coordX + textWidth , coordY + this.blocksHeight,
-          this.blocksRadius, Math.PI*2, Math.PI/2,
-          false
-        )
-        this.context.lineTo(coordX + textWidth , coordY + this.blocksHeight + this.blocksRadius)
-        this.context.arc(
-          coordX, coordY + this.blocksHeight,
-          this.blocksRadius, Math.PI/2, Math.PI/2 + Math.PI/2,
-          false
-        )
-        this.context.lineTo(coordX - this.blocksRadius, coordY)
-      this.context.closePath()
-      this.context.fill()
-
-      // пишем текст
-      this.context.fillStyle = `rgba(${235 - item.color}, ${235 - item.color}, ${235 - item.color}`;
-      this.context.font = '24px Open Sans';
-      this.context.textAlign = 'center';
-      this.context.fillText(
-        key, 
-        coordX + textWidth/2, 
-        coordY + this.blocksHeight/2 + this.blocksRadius
+        true
       );
 
-      this.context.fillStyle = "rgb(15, 15, 15)";
-      this.context.stroke()
-    },
+      // жабры
+      context.value.moveTo(
+        positionX - 22, 
+        positionY - 6 + size/3
+      );
+      context.value.bezierCurveTo(
+        positionX - 25, 
+        positionY - 2,
 
-    printRockSeaweed(context, movePositionX, movePositionY, data) {
-      if ( !this.scrollStatus[data.slide] ) return
+        positionX - 25, 
+        positionY + 2,
 
-      let positionX = movePositionX + data.position.x
-      let positionY = movePositionY + data.position.y
+        positionX - 22, 
+        positionY + 6 - size/3,
+      );
 
-      for (const key in data.seaweeds) {
-        let seaweed = data.seaweeds[key]
-        let deviation = seaweed.deviation
-        let rotate = seaweed.rotate
-        let heightSeaweed = seaweed.height/6
+      // плавник (верхний)
+      context.value.moveTo(
+        positionX - 18, 
+        positionY - 12 + size
+      );
+      context.value.bezierCurveTo(
+        positionX - 24, 
+        positionY - 20 + size,
 
-        positionX+= Number(key)/2
+        positionX - 24, 
+        positionY - 20 + size,
 
-        if (deviation <= -seaweed.deviationMax || deviation >= seaweed.deviationMax) 
-          seaweed.deviationDirection = !seaweed.deviationDirection
-        seaweed.deviationDirection ? seaweed.deviation+=.02 : seaweed.deviation-=.02
+        positionX - 25, 
+        positionY - 12 + size,
+      );
 
-        if (rotate <= -seaweed.rotateMax || rotate >= seaweed.rotateMax) 
-          seaweed.rotateDirection = !seaweed.rotateDirection
-        seaweed.rotateDirection ? seaweed.rotate+=.02 : seaweed.rotate-=.02
+      // плавник (нижний)
+      context.value.moveTo(
+        positionX - 28, 
+        positionY + 10 - size/1.5
+      );
+      context.value.bezierCurveTo(
+        positionX - 36, 
+        positionY + 18 - size/1.5,
 
-        context.beginPath()
-          context.moveTo(positionX, positionY)
-          context.bezierCurveTo(
-            positionX+rotate/6, positionY-heightSeaweed*1, 
-            positionX+deviation+rotate/5, positionY-heightSeaweed*2, 
-            positionX+rotate/4, positionY-heightSeaweed*3
-          )
-          context.bezierCurveTo(
-            positionX-deviation+rotate/3, positionY-heightSeaweed*4, 
-            positionX-deviation+rotate/2, positionY-heightSeaweed*5, 
-            positionX+rotate/1, positionY-heightSeaweed*6
-          )
-        context.stroke();
-        context.closePath()
-      }
-    },
+        positionX - 36, 
+        positionY + 18 - size/1.5,
 
-    printRock() {
-      let movePositionX = -10 + (-this.parallaxMoveX/8)
-      let movePositionY = this.canvasHeight - 50 + this.animationMoveY + (this.canvasHeight/4)*3 + (-this.parallaxMoveY/8)
+        positionX - 35, 
+        positionY + 8 - size/1.5,
+      );
 
-      // водоросли
-      for (const key in this.rockSeaweeds) { this.printRockSeaweed(this.context, movePositionX, movePositionY, this.rockSeaweeds[key]) }
+    context.value.stroke()
+  } else {
+    fish.position.x < -50 ? generateFish(slide, key, false) : fish.position.x-= speed
 
-      // контур скалы
-      this.context.beginPath()
-        this.context.moveTo(movePositionX+43, movePositionY+11)
-        this.context.bezierCurveTo(
-          movePositionX+36, movePositionY+3, 
-          movePositionX+19, movePositionY+0, 
-          movePositionX+1, movePositionY+0
-        )
-        this.context.lineTo(1, movePositionY+733)
-        this.context.bezierCurveTo(
-          movePositionX+37, movePositionY+715, 
-          movePositionX+46, movePositionY+669, 
-          movePositionX+46, movePositionY+648
-        )
-        this.context.bezierCurveTo(
-          movePositionX+80, movePositionY+589, 
-          movePositionX+85, movePositionY+481, 
-          movePositionX+82, movePositionY+430
-        )
-        this.context.bezierCurveTo(
-          movePositionX+95, movePositionY+399, 
-          movePositionX+103, movePositionY+359, 
-          movePositionX+108, movePositionY+322
-        )
-        this.context.bezierCurveTo(
-          movePositionX+112, movePositionY+287, 
-          movePositionX+114, movePositionY+254, 
-          movePositionX+114, movePositionY+233
-        )
-        this.context.bezierCurveTo(
-          movePositionX+103, movePositionY+235, 
-          movePositionX+84, movePositionY+221, 
-          movePositionX+88, movePositionY+152
-        )
-        this.context.bezierCurveTo(
-          movePositionX+91, movePositionY+83, 
-          movePositionX+77, movePositionY+65, 
-          movePositionX+70, movePositionY+65
-        )
-        this.context.bezierCurveTo(
-          movePositionX+67, movePositionY+66, 
-          movePositionX+63, movePositionY+65, 
-          movePositionX+59, movePositionY+63
-        )
-        this.context.bezierCurveTo(
-          movePositionX+53, movePositionY+59, 
-          movePositionX+48, movePositionY+50, 
-          movePositionX+49, movePositionY+31
-        )
-        this.context.bezierCurveTo(
-          movePositionX+49, movePositionY+22, 
-          movePositionX+47, movePositionY+15, 
-          movePositionX+43, movePositionY+11
-        )
-      this.context.closePath();
-      this.context.fill();
-      this.context.stroke();
+    context.value.beginPath();
+      // туловище
+      context.value.moveTo(
+        positionX + size, 
+        positionY
+      );
+        context.value.bezierCurveTo(
+          positionX + 5 + size, 
+          positionY - 15 + size,
 
-      // внутренности скалы
-      this.context.moveTo(movePositionX+20, movePositionY+40)
-      this.context.lineTo(movePositionX+25, movePositionY+65)
-      this.context.lineTo(movePositionX+40, movePositionY+75)
-      this.context.stroke();
+          positionX + 35 - size, 
+          positionY - 15 + size,
 
-      this.context.moveTo(movePositionX+45, movePositionY+110)
-      this.context.lineTo(movePositionX+55, movePositionY+115)
-      this.context.lineTo(movePositionX+60, movePositionY+135)
-      this.context.stroke();
+          positionX + 50 - size, 
+          positionY,
+        );
+        context.value.bezierCurveTo(
+          positionX + 35 - size, 
+          positionY + 15 - size,
 
-      this.context.moveTo(movePositionX+25, movePositionY+150)
-      this.context.lineTo(movePositionX+40, movePositionY+170)
-      this.context.lineTo(movePositionX+30, movePositionY+195)
-      this.context.stroke();
+          positionX + 5, 
+          positionY + 15 - size,
 
-      if (this.scrollStatus[2] != true || this.scrollStatus[1] != true && this.scrollStatus[2] != true) return
+          positionX + size, 
+          positionY,
+        );
+      context.value.fill()
 
-      this.context.moveTo(movePositionX+65, movePositionY+230)
-      this.context.lineTo(movePositionX+75, movePositionY+250)
-      this.context.lineTo(movePositionX+90, movePositionY+255)
-      this.context.stroke();
+      // хвост
+      context.value.moveTo(
+        positionX + 50 - size, 
+        positionY
+      );
+        context.value.bezierCurveTo(
+          positionX + 65 - size, 
+          positionY - 15 + size,
 
-      this.context.moveTo(movePositionX+30, movePositionY+310)
-      this.context.lineTo(movePositionX+50, movePositionY+360)
-      this.context.lineTo(movePositionX+70, movePositionY+370)
-      this.context.stroke();
+          positionX + 70 - size, 
+          positionY - 15 + size,
 
-      // цветочек
-      this.context.moveTo(movePositionX+50, movePositionY+360)
-      this.context.bezierCurveTo(
-        movePositionX+60, movePositionY+340, 
-        movePositionX+40, movePositionY+340, 
-        movePositionX+50, movePositionY+360
-      )
-      this.context.bezierCurveTo(
-        movePositionX+50, movePositionY+340, 
-        movePositionX+75, movePositionY+345, 
-        movePositionX+50, movePositionY+360
-      )
-      this.context.bezierCurveTo(
-        movePositionX+60, movePositionY+345, 
-        movePositionX+80, movePositionY+355, 
-        movePositionX+50, movePositionY+360
-      )
-      this.context.bezierCurveTo(
-        movePositionX+70, movePositionY+370, 
-        movePositionX+80, movePositionY+350, 
-        movePositionX+50, movePositionY+360
-      )
-      this.context.stroke();
+          positionX + 60 - size, 
+          positionY,
+        );
+        context.value.bezierCurveTo(
+          positionX + 70 - size, 
+          positionY + 15 - size,
 
-      this.context.moveTo(movePositionX+82, movePositionY+430)
-      this.context.bezierCurveTo(
-        movePositionX+80, movePositionY+435, 
-        movePositionX+70, movePositionY+445, 
-        movePositionX+70, movePositionY+450
-      )
-      this.context.stroke();
+          positionX + 65 - size, 
+          positionY + 15 - size,
 
-      this.context.moveTo(movePositionX+65, movePositionY+230)
-      this.context.lineTo(movePositionX+75, movePositionY+250)
-      this.context.lineTo(movePositionX+90, movePositionY+255)
-      this.context.stroke();
+          positionX + 50 - size, 
+          positionY,
+        );
+      context.value.fill()
 
-      this.context.moveTo(movePositionX+0, movePositionY+470)
-      this.context.lineTo(movePositionX+30, movePositionY+500)
-      this.context.lineTo(movePositionX+50, movePositionY+500)
-      this.context.stroke();
+      // глаз
+      context.value.moveTo(
+        positionX + 13 + 3 + size/4, 
+        positionY - 3 + size/4
+      );
+      context.value.arc(
+        positionX + 13 + size/4, 
+        positionY - 3 + size/4,
 
-      this.context.moveTo(movePositionX+60, movePositionY+560)
-      this.context.lineTo(movePositionX+50, movePositionY+580)
-      this.context.stroke();
+        3 - Number('0.' + size), 0, Math.PI*2,
 
-      // водоросли внутри
-      for (const key in this.rockSeaweedsInside) { this.printRockSeaweed(this.context, movePositionX, movePositionY, this.rockSeaweedsInside[key]) }
-    },
+        true
+      );
 
-    tick() {
-      this.context.clearRect(0, 0, this.canvas.width, this.canvas.height) // чистим canvas
+      // жабры
+      context.value.moveTo(
+        positionX + 22, 
+        positionY - 6 + size/3
+      );
+      context.value.bezierCurveTo(
+        positionX + 25, 
+        positionY - 2,
 
-      // обнавляем значения параллакса
-      this.parallaxMoveX = ( this.mouseMoveX - this.canvas.offsetWidth/2 ) /this.parralaxSpeed
-      this.parallaxMoveY = ( this.mouseMoveY - this.canvasHeight/2 ) /this.parralaxSpeed
+        positionX + 25, 
+        positionY + 2,
 
-      // вычисляем куда прокручивать
-      if (this.animationMoveDirection != 0) {
-        this.animationMoveDirection > 0 ? 
-          this.animationMoveY+=this.animationMoveSpeed : 
-          this.animationMoveY-=this.animationMoveSpeed
+        positionX + 22, 
+        positionY + 6 - size/3,
+      );
 
-        if (this.animationMoveDirection < 0 && this.animationMoveY <= this.scrollActive*this.canvasHeight) this.animationMoveDirection = 0
-        if (this.animationMoveDirection > 0 && this.animationMoveY >= this.scrollActive*this.canvasHeight) this.animationMoveDirection = 0
-      }
+      // плавник (верхний)
+      context.value.moveTo(
+        positionX + 18, 
+        positionY - 12 + size
+      );
+      context.value.bezierCurveTo(
+        positionX + 24, 
+        positionY - 20 + size,
 
-      // вызываем функции рисования
-      if (this.scrollStatus[0]) {
-        this.printSun()
-        this.printWave()
-        this.printBlick(0)
-        this.printMouse()
-      }
+        positionX + 24, 
+        positionY - 20 + size,
 
-      if (this.scrollStatus[1]) {
-        for (const fish in this.infoFishs[1]) { this.printFish(1, fish) }
-        this.printBlick(1)
-        for (const skill in this.infoSkills[1]) { this.printBlock(1, skill) }
-      }
+        positionX + 25, 
+        positionY - 12 + size,
+      );
 
-      if (this.scrollStatus[2]) {
-        for (const fish in this.infoFishs[2]) { this.printFish(2, fish) }
-        this.printBlick(2)
-        for (const skill in this.infoSkills[2]) { this.printBlock(2, skill) }
-      }
+      // плавник (нижний)
+      context.value.moveTo(
+        positionX + 28, 
+        positionY + 10 - size/1.5
+      );
+      context.value.bezierCurveTo(
+        positionX + 36, 
+        positionY + 18 - size/1.5,
 
-      this.printRock()
+        positionX + 36, 
+        positionY + 18 - size/1.5,
 
-      // перезапускаем каждый тик
-      if (this.$store.state.activeCard == 'cardSkills') requestAnimationFrame(this.tick)
-    },
+        positionX + 35, 
+        positionY + 8 - size/1.5,
+      );
 
-    openDialog(language) {
-      this.activeSkill = language
-      this.controllerHide = true
-    },
+    context.value.stroke()
+  }
+}
 
-    closeModal() {
-      this.activeSkill = ''
-      this.controllerHide = false
+const blickCreate = (slide, key, blickStart) => {
+  let blick = blicksInfo[slide]
+
+  blick[key] = {}
+  blick[key].width = randomInteger(0, canvasWidth)
+  blick[key].height = slide == 0 ? 
+    randomInteger(blickStart, canvasHeight) : 
+    randomInteger(blickStart, blickStart + canvasHeight)
+  blick[key].offset = randomInteger(0, 40)
+  blick[key].anim = 0
+}
+
+const printBlick = (slide) => {
+  let blickStart = slide == 0 ? (canvasHeight/4.8)*3 : canvasHeight*slide ;
+
+  for (let blick = 0; blick < blickCount; blick++) {
+    if (!blicksInfo[slide]) blicksInfo[slide] = {}
+    if (!blicksInfo[slide][blick]) blickCreate(slide, blick, blickStart)
+
+    let infoBlick = blicksInfo[slide][blick]
+
+    if (infoBlick.offset !=0) {
+      infoBlick.offset--
+      continue
     }
-  },
-};
+
+    infoBlick.anim += .6
+      if (infoBlick.anim > blickLimit*2) blickCreate(slide, blick, blickStart)
+    let blickHeight = infoBlick.height - parallaxMoveY + animationMoveY
+    let blickWidth = infoBlick.width - parallaxMoveX
+
+    context.value.beginPath();
+      context.value.moveTo(
+        blickWidth + (infoBlick.anim >= blickLimit ? infoBlick.anim - blickLimit : 0), 
+        blickHeight
+      );
+      context.value.lineTo(
+        blickWidth + (infoBlick.anim >= blickLimit ? blickLimit : infoBlick.anim), 
+        blickHeight
+      )
+    context.value.stroke()
+  }
+}
+
+const printMouse = () => {
+  switch (wheelStatus) {
+    case 1:
+      wheelMove+= .5
+      if (wheelMove >= 10) wheelStatus = 2
+    break;
+
+    case 2:
+      wheelMove-= .20
+      if (wheelMove <= 0) wheelStatus = 3
+    break;
+
+    case 3:
+    wheelStatus = 0
+      setTimeout(() => {wheelStatus = 1}, 2000)
+    break;
+  }
+
+  context.value.beginPath()
+    context.value.arc(
+      document.querySelector('.card').offsetWidth/2, 
+      document.querySelector('.card').offsetHeight - 45 + animationMoveY,
+
+      10, 0, Math.PI,
+
+      true
+    );
+    context.value.arc(
+      document.querySelector('.card').offsetWidth/2, 
+      document.querySelector('.card').offsetHeight - 30 + animationMoveY,
+
+      10, Math.PI, 0, 
+
+      true
+    );
+  context.value.closePath()
+  context.value.stroke()
+  context.value.fill()
+
+  context.value.beginPath()
+    context.value.arc(
+      document.querySelector('.card').offsetWidth/2, 
+      document.querySelector('.card').offsetHeight - 45 + wheelMove + animationMoveY,
+
+      1, 0, Math.PI,
+
+      true
+    );
+    context.value.arc(
+      document.querySelector('.card').offsetWidth/2, 
+      document.querySelector('.card').offsetHeight - 40 + wheelMove + animationMoveY,
+
+      1, Math.PI, 0, 
+
+      true
+    );
+  context.value.closePath()
+  context.value.stroke()
+}
+
+const printBlock = (slide, key) => {
+  let item = infoSkills[slide][key]
+  let parallaxX = -parallaxMoveX/4
+  let parallaxY = -parallaxMoveY/4
+
+  // задаём переменные
+  let coordX = (item.position.x < 0 ? canvasWidth + item.position.x : item.position.x) + 
+    parallaxX
+  let coordY = (item.position.y < 0 ? canvasHeight + item.position.y : item.position.y) + 
+    parallaxY + (canvasHeight*slide) + animationMoveY
+  let textWidth = context.value.measureText(key).width + blocksRadius
+
+  // следим когда курсор будет над блоком текста
+  if(
+    coordX - blocksRadius < mouseMoveX && mouseMoveX < coordX + textWidth + blocksRadius && 
+    coordY - blocksRadius < mouseMoveY && mouseMoveY < coordY + blocksHeight + blocksRadius
+  ) {
+    if (item.color < 235) item.color+=5
+  } else {
+    if (item.color > 15) item.color-=5
+  }
+  context.value.fillStyle = `rgba(${item.color}, ${item.color}, ${item.color}`
+
+  // рисуем блок текста
+  context.value.beginPath()
+    context.value.arc(
+      coordX, coordY,
+      blocksRadius, Math.PI, -Math.PI/2,
+      false
+    )
+    context.value.lineTo(coordX, coordY - blocksRadius)
+    context.value.arc(
+      coordX + textWidth , coordY,
+      blocksRadius, -Math.PI/2, Math.PI/2 - Math.PI/2,
+      false
+    )
+    context.value.lineTo(coordX + textWidth + blocksRadius, coordY + blocksHeight)
+    context.value.arc(
+      coordX + textWidth , coordY + blocksHeight,
+      blocksRadius, Math.PI*2, Math.PI/2,
+      false
+    )
+    context.value.lineTo(coordX + textWidth , coordY + blocksHeight + blocksRadius)
+    context.value.arc(
+      coordX, coordY + blocksHeight,
+      blocksRadius, Math.PI/2, Math.PI/2 + Math.PI/2,
+      false
+    )
+    context.value.lineTo(coordX - blocksRadius, coordY)
+  context.value.closePath()
+  context.value.fill()
+
+  // пишем текст
+  context.value.fillStyle = `rgba(${235 - item.color}, ${235 - item.color}, ${235 - item.color}`;
+  context.value.font = '24px Open Sans';
+  context.value.textAlign = 'center';
+  context.value.fillText(
+    key, 
+    coordX + textWidth/2, 
+    coordY + blocksHeight/2 + blocksRadius
+  );
+
+  context.value.fillStyle = "rgb(15, 15, 15)";
+  context.value.stroke()
+}
+
+const printRockSeaweed = (context, movePositionX, movePositionY, data) => {
+  if ( !scrollStatus[data.slide] ) return
+
+  let positionX = movePositionX + data.position.x
+  let positionY = movePositionY + data.position.y
+
+  for (const key in data.seaweeds) {
+    let seaweed = data.seaweeds[key]
+    let deviation = seaweed.deviation
+    let rotate = seaweed.rotate
+    let heightSeaweed = seaweed.height/6
+
+    positionX+= Number(key)/2
+
+    if (deviation <= -seaweed.deviationMax || deviation >= seaweed.deviationMax) 
+      seaweed.deviationDirection = !seaweed.deviationDirection
+    seaweed.deviationDirection ? seaweed.deviation+=.02 : seaweed.deviation-=.02
+
+    if (rotate <= -seaweed.rotateMax || rotate >= seaweed.rotateMax) 
+      seaweed.rotateDirection = !seaweed.rotateDirection
+    seaweed.rotateDirection ? seaweed.rotate+=.02 : seaweed.rotate-=.02
+
+    context.value.beginPath()
+      context.value.moveTo(positionX, positionY)
+      context.value.bezierCurveTo(
+        positionX+rotate/6, positionY-heightSeaweed*1, 
+        positionX+deviation+rotate/5, positionY-heightSeaweed*2, 
+        positionX+rotate/4, positionY-heightSeaweed*3
+      )
+      context.value.bezierCurveTo(
+        positionX-deviation+rotate/3, positionY-heightSeaweed*4, 
+        positionX-deviation+rotate/2, positionY-heightSeaweed*5, 
+        positionX+rotate/1, positionY-heightSeaweed*6
+      )
+    context.value.stroke();
+    context.value.closePath()
+  }
+}
+
+const printRock = () => {
+  let movePositionX = -10 + (-parallaxMoveX/8)
+  let movePositionY = canvasHeight - 50 + animationMoveY + (canvasHeight/4)*3 + (-parallaxMoveY/8)
+
+  // водоросли
+  for (const key in rockSeaweeds) { printRockSeaweed(context, movePositionX, movePositionY, rockSeaweeds[key]) }
+
+  // контур скалы
+  context.value.beginPath()
+    context.value.moveTo(movePositionX+43, movePositionY+11)
+    context.value.bezierCurveTo(
+      movePositionX+36, movePositionY+3, 
+      movePositionX+19, movePositionY+0, 
+      movePositionX+1, movePositionY+0
+    )
+    context.value.lineTo(1, movePositionY+733)
+    context.value.bezierCurveTo(
+      movePositionX+37, movePositionY+715, 
+      movePositionX+46, movePositionY+669, 
+      movePositionX+46, movePositionY+648
+    )
+    context.value.bezierCurveTo(
+      movePositionX+80, movePositionY+589, 
+      movePositionX+85, movePositionY+481, 
+      movePositionX+82, movePositionY+430
+    )
+    context.value.bezierCurveTo(
+      movePositionX+95, movePositionY+399, 
+      movePositionX+103, movePositionY+359, 
+      movePositionX+108, movePositionY+322
+    )
+    context.value.bezierCurveTo(
+      movePositionX+112, movePositionY+287, 
+      movePositionX+114, movePositionY+254, 
+      movePositionX+114, movePositionY+233
+    )
+    context.value.bezierCurveTo(
+      movePositionX+103, movePositionY+235, 
+      movePositionX+84, movePositionY+221, 
+      movePositionX+88, movePositionY+152
+    )
+    context.value.bezierCurveTo(
+      movePositionX+91, movePositionY+83, 
+      movePositionX+77, movePositionY+65, 
+      movePositionX+70, movePositionY+65
+    )
+    context.value.bezierCurveTo(
+      movePositionX+67, movePositionY+66, 
+      movePositionX+63, movePositionY+65, 
+      movePositionX+59, movePositionY+63
+    )
+    context.value.bezierCurveTo(
+      movePositionX+53, movePositionY+59, 
+      movePositionX+48, movePositionY+50, 
+      movePositionX+49, movePositionY+31
+    )
+    context.value.bezierCurveTo(
+      movePositionX+49, movePositionY+22, 
+      movePositionX+47, movePositionY+15, 
+      movePositionX+43, movePositionY+11
+    )
+  context.value.closePath();
+  context.value.fill();
+  context.value.stroke();
+
+  // внутренности скалы
+  context.value.moveTo(movePositionX+20, movePositionY+40)
+  context.value.lineTo(movePositionX+25, movePositionY+65)
+  context.value.lineTo(movePositionX+40, movePositionY+75)
+  context.value.stroke();
+
+  context.value.moveTo(movePositionX+45, movePositionY+110)
+  context.value.lineTo(movePositionX+55, movePositionY+115)
+  context.value.lineTo(movePositionX+60, movePositionY+135)
+  context.value.stroke();
+
+  context.value.moveTo(movePositionX+25, movePositionY+150)
+  context.value.lineTo(movePositionX+40, movePositionY+170)
+  context.value.lineTo(movePositionX+30, movePositionY+195)
+  context.value.stroke();
+
+  if (scrollStatus[2] != true || scrollStatus[1] != true && scrollStatus[2] != true) return
+
+  context.value.moveTo(movePositionX+65, movePositionY+230)
+  context.value.lineTo(movePositionX+75, movePositionY+250)
+  context.value.lineTo(movePositionX+90, movePositionY+255)
+  context.value.stroke();
+
+  context.value.moveTo(movePositionX+30, movePositionY+310)
+  context.value.lineTo(movePositionX+50, movePositionY+360)
+  context.value.lineTo(movePositionX+70, movePositionY+370)
+  context.value.stroke();
+
+  // цветочек
+  context.value.moveTo(movePositionX+50, movePositionY+360)
+  context.value.bezierCurveTo(
+    movePositionX+60, movePositionY+340, 
+    movePositionX+40, movePositionY+340, 
+    movePositionX+50, movePositionY+360
+  )
+  context.value.bezierCurveTo(
+    movePositionX+50, movePositionY+340, 
+    movePositionX+75, movePositionY+345, 
+    movePositionX+50, movePositionY+360
+  )
+  context.value.bezierCurveTo(
+    movePositionX+60, movePositionY+345, 
+    movePositionX+80, movePositionY+355, 
+    movePositionX+50, movePositionY+360
+  )
+  context.value.bezierCurveTo(
+    movePositionX+70, movePositionY+370, 
+    movePositionX+80, movePositionY+350, 
+    movePositionX+50, movePositionY+360
+  )
+  context.value.stroke();
+
+  context.value.moveTo(movePositionX+82, movePositionY+430)
+  context.value.bezierCurveTo(
+    movePositionX+80, movePositionY+435, 
+    movePositionX+70, movePositionY+445, 
+    movePositionX+70, movePositionY+450
+  )
+  context.value.stroke();
+
+  context.value.moveTo(movePositionX+65, movePositionY+230)
+  context.value.lineTo(movePositionX+75, movePositionY+250)
+  context.value.lineTo(movePositionX+90, movePositionY+255)
+  context.value.stroke();
+
+  context.value.moveTo(movePositionX+0, movePositionY+470)
+  context.value.lineTo(movePositionX+30, movePositionY+500)
+  context.value.lineTo(movePositionX+50, movePositionY+500)
+  context.value.stroke();
+
+  context.value.moveTo(movePositionX+60, movePositionY+560)
+  context.value.lineTo(movePositionX+50, movePositionY+580)
+  context.value.stroke();
+
+  // водоросли внутри
+  for (const key in rockSeaweedsInside) { printRockSeaweed(context, movePositionX, movePositionY, rockSeaweedsInside[key]) }
+}
+
+const tick = () => {
+  context.value.clearRect(0, 0, canvasWidth, canvasHeight) // чистим canvas
+
+  // обнавляем значения параллакса
+  parallaxMoveX = ( mouseMoveX - canvas.value.offsetWidth/2 )/parralaxSpeed
+  parallaxMoveY = ( mouseMoveY - canvasHeight/2 )/parralaxSpeed
+
+  // вычисляем куда прокручивать
+  if (animationMoveDirection != 0) {
+    animationMoveDirection > 0 ? 
+      animationMoveY+=animationMoveSpeed : 
+      animationMoveY-=animationMoveSpeed
+
+    if (
+      animationMoveDirection < 0 && 
+      animationMoveY <= scrollActive*canvasHeight
+    ) animationMoveDirection = 0
+    if (
+      animationMoveDirection > 0 && 
+      animationMoveY >= scrollActive*canvasHeight
+    ) animationMoveDirection = 0
+  }
+
+  // вызываем функции рисования
+  if (scrollStatus[0]) {
+    printSun()
+    printWave()
+    printBlick(0)
+    printMouse()
+  }
+
+  if (scrollStatus[1]) {
+    for (const fish in infoFishs[1]) { printFish(1, fish) }
+    printBlick(1)
+    for (const skill in infoSkills[1]) { printBlock(1, skill) }
+  }
+
+  if (scrollStatus[2]) {
+    for (const fish in infoFishs[2]) { printFish(2, fish) }
+    printBlick(2)
+    for (const skill in infoSkills[2]) { printBlock(2, skill) }
+  }
+
+  printRock()
+
+  // перезапускаем каждый тик
+  if (store.state.activeCard == 'cardSkills') requestAnimationFrame(tick)
+}
+
+
+
+// Старт приложения
+onBeforeMount(() => {
+  if (process.client) {
+    window.addEventListener('resize', updateSize)
+    updateSize()
+  }
+})
+
+onMounted(() => {
+  if (process.client) {
+    canvasInit()
+  }
+})
+
+watch(
+  () => store.state.activeCard,
+  (activeCard) => {
+    if (activeCard === 'cardSkills' && globalSize.value) requestAnimationFrame(tick);
+  }
+)
 </script>

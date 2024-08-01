@@ -33,13 +33,11 @@ const moveSlide = (type, id) => {
     const card = document.querySelector(`#${id}`)
     let status = false
 
-    for (let i = 0; i < card.classList.length; i++) {
-        if (card.classList[i] == `card--position-${type}`) {
-            card.classList.remove(`card--position-${type}`)
-            document.querySelector(`#controller-${props.parentId}`)
-                .classList.add('controller--hide')
-            status = true
-        }
+    if (card.classList.contains(`card--position-${type}`)) {
+        card.classList.remove(`card--position-${type}`)
+        document.querySelector(`#controller-${props.parentId}`)
+            .classList.add('controller--hide')
+        status = true
     }
 
     if (!status) {
