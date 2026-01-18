@@ -7,6 +7,7 @@
         width: auto;
         height: auto;
         display: flex;
+        width: fit-content;
         
         &-wrap{
             width: 100%;
@@ -25,4 +26,8 @@
     &__btn:hover{
         cursor: pointer;
     }
+}
+
+.slider-line--transition, .scroll-thumb--transition{
+    transition: all 1s ease;
 }

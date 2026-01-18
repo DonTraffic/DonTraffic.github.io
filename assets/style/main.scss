@@ -33,7 +33,7 @@ html *::-webkit-scrollbar-thumb {
 body{
     width: 100vw;
     background-color: color-black();
-    overflow: hidden;
+    overflow-x: hidden;
 }
 
 img{

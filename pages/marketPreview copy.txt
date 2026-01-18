@@ -1,0 +1,2163 @@
+<template>
+<div id="PrintDonTraffic">
+    <main class="wrapper">
+        <section class="block catalog__items">
+            <!-- <canvas class="catalog__item block-canvas" id="canvasPrint"></canvas> -->
+
+            <!-- <block class="catalog__item block-canvas" id="blockSvg"></block> -->
+
+            <canvas class="catalog__item block-canvas" id="canvasSvg"></canvas>
+
+            <!-- <div class="catalog__item block-canvas" id="blockLog"></div> -->
+
+            <canvas class="catalog__item block-canvas" id="canvasLazer"></canvas>
+        </section>
+
+        <section class="block catalog__items">
+            <button class="catalog__item-btn" v-on:click="vectorize">start work</button>
+            <!-- <button class="catalog__item-btn" v-on:click="svgToLaserCommands">svg in command</button> -->
+            <button class="catalog__item-btn" v-on:click="loadImage">load img</button>
+            <button class="catalog__item-btn" v-on:click="combineCanvases">combine</button>
+            <button class="catalog__item-btn" v-on:click="printWork = !printWork">print work</button>
+        </section>
+    </main>
+</div>
+</template>
+
+<script>
+import Potrace from 'potrace';
+
+export default {
+    name: 'ShopDonTrafficPreview',
+
+    data() {
+        return {
+            canvas: {
+                print: {
+                    html: null,
+                    ctx: null,
+                },
+                svg: {
+                    html: null,
+                    ctx: null,
+                },
+                lazer: {
+                    html: null,
+                    ctx: null,
+                }
+            },
+            svgPath: null,
+            isLoading: false,
+
+            currentPosition: { x: 0, y: 0 },
+            isLaserOn: false,
+            currentInstructionIndex: 0,
+
+            printWork: false,
+        }
+    },
+
+    mounted() {
+        this.initCanvas();
+        this.loadImage();
+    },
+
+    methods: {
+        initCanvas() {
+            // this.canvas.print.html = document.querySelector('#canvasPrint');
+            //     this.canvas.print.html.width = this.canvas.print.html.offsetWidth;
+            //     this.canvas.print.html.height = this.canvas.print.html.offsetHeight;
+            // this.canvas.print.ctx = this.canvas.print.html.getContext("2d", { willReadFrequently: true });
+
+            this.canvas.svg.html = document.querySelector('#canvasSvg');
+                this.canvas.svg.html.width = this.canvas.svg.html.offsetWidth;
+                this.canvas.svg.html.height = this.canvas.svg.html.offsetHeight;
+            this.canvas.svg.ctx = this.canvas.svg.html.getContext("2d", { willReadFrequently: true });
+
+            this.canvas.lazer.html = document.querySelector('#canvasLazer');
+                this.canvas.lazer.html.width = this.canvas.lazer.html.offsetWidth;
+                this.canvas.lazer.html.height = this.canvas.lazer.html.offsetHeight;
+            this.canvas.lazer.ctx = this.canvas.lazer.html.getContext("2d", { willReadFrequently: true });
+                this.canvas.lazer.ctx.strokeStyle = 'black';
+                this.canvas.lazer.ctx.lineWidth = 1;
+        },
+
+        loadImage() {
+            this.isLoading = true;
+            const img = new Image();
+            img.crossOrigin = "Anonymous";
+            img.onload = async () => {
+                await this.drawImageCentered(img);
+                // await this.processImage();
+                this.isLoading = false;
+            };
+            img.onerror = () => {
+                console.error("Failed to load image");
+                this.isLoading = false;
+            };
+            img.src = 'images/market/aqua.png';
+        },
+
+        async drawImageCentered(img) {
+            const scale = Math.min(
+                this.canvas.svg.html.width / img.width,
+                this.canvas.svg.html.height / img.height
+            ) * 1
+
+            const x = (this.canvas.svg.html.width - img.width * scale) / 2
+            const y = (this.canvas.svg.html.height - img.height * scale) / 2
+
+            const image = await this.processingImage(img)
+
+            this.printCommandInCanvas(this.canvas.lazer.ctx, image.commands[0])
+
+            console.log(image);
+            
+
+            this.canvas.svg.ctx.drawImage(
+                image.vectors[0],
+                x,
+                y,
+                img.width * scale,
+                img.height * scale
+            )
+        },
+
+        async processingImage(image) {            
+            const result = {}
+
+
+            result.layers = await this.convertColorImage(image, 6)  
+
+            
+            await Promise.all(
+                result.layers.map((layer, index) => this.vectorizeImage(layer, this.getGrayShade(index, 7)))
+            ).then((processedLayers) => {
+                result.vectors = [...processedLayers]
+            })
+
+
+            await Promise.all(
+                result.vectors.map(vector => this.svgToCommands(vector, this.canvas.svg.html.width, this.canvas.svg.html.height))
+            ).then((processedCommands) => {
+                result.commands = [...processedCommands]
+            })
+
+
+            result.commands = result.vectors.map(vector => this.svgToCommands(vector, this.canvas.svg.html.width, this.canvas.svg.html.height))
+
+
+            await Promise.all(
+                result.vectors.map(vector => this.svgToImage(vector))
+            ).then((processedVectors) => {
+                result.vectors = [...processedVectors]
+            })
+
+            this.canvas.svg.ctx.drawImage(
+                result.vectors[1],
+                x,
+                y,
+                img.width * scale,
+                img.height * scale
+            )
+            
+
+            result.main = await this.createMainImage(result.vectors)
+
+
+            return result
+        },
+
+        async convertColorImage(image, colorCount) {
+            return new Promise((resolve) => {
+                const colorStep = (255 * 3) / colorCount
+                const resultLayers = []
+
+                // Создаем canvas и получаем исходное изображение
+                const canvas = document.createElement('canvas')
+                    canvas.width = image.width
+                    canvas.height = image.height
+                const ctx = canvas.getContext('2d')
+                ctx.drawImage(image, 0, 0)
+                
+                // Получаем оригинальные данные
+                const originalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+
+                // Создаем слои
+                for (let i = 0; i <= colorCount; i++) {
+                    const data = ctx.createImageData(canvas.width, canvas.height)
+                    resultLayers.push(data)
+                }
+
+                // Обработка пикселей
+                for (let i = 0; i < originalImageData.data.length; i += 4) {
+                    const r = originalImageData.data[i]
+                    const g = originalImageData.data[i+1]
+                    const b = originalImageData.data[i+2]
+                    const a = originalImageData.data[i+3]
+
+                    const brightness = r + g + b
+                    const indexLayer = Math.round(brightness / colorStep)
+                    const color = (indexLayer * colorStep) / 3                    
+
+                    if (indexLayer != colorCount) {
+                        const layerData = resultLayers[indexLayer].data
+                        layerData[i] = layerData[i+1] = layerData[i+2] = 0
+                        if(a) layerData[i+3] = 255;
+                    } else {
+                        originalImageData.data[i+3] = 0
+                    }
+                    
+                }
+
+                // Функция для преобразования ImageData в Image
+                const createImageFromImageData = (imageData) => {
+                    return new Promise((resolve) => {
+                        ctx.clearRect(0, 0, canvas.width, canvas.height)
+                        ctx.putImageData(imageData, 0, 0)
+
+                        const img = new Image()
+                            img.onload = () => resolve(img)
+                        img.src = canvas.toDataURL('image/png')
+                    })
+                }
+
+                // Обрабатываем основное изображение и все слои
+                Promise.all(
+                    resultLayers.map(layer => createImageFromImageData(layer))
+                ).then((processedLayers) => {
+                    resultLayers.splice(0, resultLayers.length, ...processedLayers)
+                    resolve(resultLayers)
+                })
+            })
+        },
+
+        async vectorizeImage(image, color = '#000000') {       
+            // 1. Создаем временный canvas
+            const canvas = document.createElement('canvas')
+                canvas.width = image.width
+                canvas.height = image.height
+            const ctx = canvas.getContext('2d')
+            ctx.drawImage(image, 0, 0)
+
+            // 2. Получаем ImageData
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+
+            // 3. Векторизация через Potrace
+
+            const params = {
+                color: color,
+                threshold: 128,
+                turdSize: 0,
+                optCurve: false,
+                optTolerance: 0,
+                turnPolicy: Potrace.POTRACE_TURNPOLICY_MINORITY
+            }
+
+            return new Promise((resolve) => {
+                Potrace.trace(imageData, params, (err, svg) => {
+                    if (err) throw err
+                    resolve(svg)
+                })
+            })
+        },
+
+
+        async svgToCommands(svgString, targetWidth, targetHeight, options = {}) {
+            const parser = new DOMParser()
+            const doc = parser.parseFromString(svgString, "image/svg+xml")
+            const svg = doc.querySelector('svg')
+            const pathElements = doc.querySelectorAll('path')
+            
+            // Получаем исходные размеры SVG
+            let svgWidth, svgHeight
+            
+            if (svg.hasAttribute('viewBox')) {
+                const viewBox = svg.getAttribute('viewBox').split(/\s+|,/).filter(Boolean)
+                svgWidth = parseFloat(viewBox[2])
+                svgHeight = parseFloat(viewBox[3])
+            } else {
+                svgWidth = parseFloat(svg.getAttribute('width')) || 0
+                svgHeight = parseFloat(svg.getAttribute('height')) || 0
+            }
+            
+            if (!svgWidth || !svgHeight) {
+                svgWidth = 100
+                svgHeight = 100
+                console.warn("SVG dimensions not found. Using default 100x100.")
+            }
+            
+            // Вычисляем scale с сохранением пропорций
+            const scale = Math.min(targetWidth / svgWidth, targetHeight / svgHeight)
+            
+            // Смещение для центрирования
+            const offsetX = (targetWidth - svgWidth * scale) / 2
+            const offsetY = (targetHeight - svgHeight * scale) / 2
+            
+            let commands = []
+            
+
+            // Обработка векторных путей в оригинальных размерах
+            pathElements.forEach(path => {
+                const pathData = path.getAttribute('d')
+                if (!pathData) return
+                
+                let currentX = 0
+                let currentY = 0
+                let subpathStartX = 0
+                let subpathStartY = 0
+                
+                const tokens = pathData.match(/[a-df-z]|[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?/gi) || []
+                let i = 0
+                
+                while (i < tokens.length) {
+                    const cmd = tokens[i++].toLowerCase()
+                    let points = []
+                    
+                    // MoveTo (M)
+                    if (cmd === 'm') {
+                        const x = parseFloat(tokens[i++])
+                        const y = parseFloat(tokens[i++])
+
+                        points.push(false, x, y)
+                        currentX = x
+                        currentY = y
+                        subpathStartX = x
+                        subpathStartY = y
+                        
+                        // Дополнительные координаты → LineTo (L)
+                        while (i < tokens.length && !isNaN(tokens[i])) {
+                            const x = parseFloat(tokens[i++])
+                            const y = parseFloat(tokens[i++])
+                            
+                            points.push(true, x, y)
+                            currentX = x
+                            currentY = y
+                        }
+                    }
+                    // LineTo (L)
+                    else if (cmd === 'l') {
+                        while (i < tokens.length && !isNaN(tokens[i])) {
+                            const x = parseFloat(tokens[i++])
+                            const y = parseFloat(tokens[i++])
+                            
+                            points.push(true, x, y)
+                            currentX = x
+                            currentY = y
+                        }
+                    }
+                    // Cubic Bezier (C)
+                    else if (cmd === 'c') {
+                        while (i < tokens.length && !isNaN(tokens[i])) {
+                            const x1 = parseFloat(tokens[i++])
+                            const y1 = parseFloat(tokens[i++])
+                            const x2 = parseFloat(tokens[i++])
+                            const y2 = parseFloat(tokens[i++])
+                            const x = parseFloat(tokens[i++])
+                            const y = parseFloat(tokens[i++])
+                            
+                            points.push(true, x1, y1, x2, y2, x, y)
+                            currentX = x
+                            currentY = y
+                        }
+                    }
+                    // ClosePath (Z)
+                    else if (cmd === 'z') {
+                        points.push(true, subpathStartX, subpathStartY)
+                        currentX = subpathStartX
+                        currentY = subpathStartY
+                    }
+                    
+                    if (points.length > 0) {
+                        commands.push(points)
+                    }
+                }
+            })
+
+
+
+            const canvas = document.createElement('canvas')
+            canvas.width = svgWidth
+            canvas.height = svgHeight
+            const ctx = canvas.getContext('2d')
+            
+            // Рендерим SVG на canvas
+            const img = new Image()
+            await new Promise(resolve => {
+                img.onload = resolve
+                img.src = 'data:image/svg+xml,' + encodeURIComponent(svgString)
+            })
+            
+            ctx.drawImage(img, 0, 0, svgWidth, svgHeight)
+            const imageData = ctx.getImageData(0, 0, svgWidth, svgHeight)
+            
+            // // Генерируем линии в оригинальных размерах
+            // commands = options.rasterMode === 'vertical' 
+            //     ? this.generateVerticalLines(imageData, options.step || 1)
+            //     : this.generateHorizontalLines(imageData, options.step || 1)
+            commands.push(...this.generateHorizontalLines(imageData, options.step || 1))
+
+
+            // this.downloadCanvas(canvas)
+
+
+
+            // Применяем масштабирование и смещение ко всем командам
+            return commands.map(cmd => {
+                const newCmd = []
+                for (let i = 0; i < cmd.length; i++) {
+                    if (i === 0) {
+                        newCmd.push(cmd[i]) // Состояние лазера не масштабируем
+                    } else if (typeof cmd[i] === 'number') {
+                        // Четные индексы - X, нечетные - Y
+                        newCmd.push(
+                            i % 2 === 1 
+                                ? cmd[i] * scale + offsetX 
+                                : cmd[i] * scale + offsetY
+                        )
+                    }
+                }
+                return newCmd
+            })
+        },
+
+        generateHorizontalLines(imageData, step = 1) {
+            const instructions = []
+            const { width, height, data } = imageData
+
+            for (let y = 0; y < height; y += step) {
+                let isLaserOn = false
+
+                for (let x = 0; x < width; x++) {
+                    const index = (y * width + x) * 4
+                    const isBlack = this.isBlackPixel(data, index)
+
+                    if (isBlack && !isLaserOn) {
+                        instructions.push([false, x++, y])
+                        isLaserOn = true
+                    } else if (!isBlack && isLaserOn) {
+                        instructions.push([true, x--, y])
+                        isLaserOn = false
+                    }
+                }
+
+                if (isLaserOn) instructions.push([false, width, y])
+            }
+
+            return instructions
+        },
+
+        generateVerticalLines(imageData, step = 1) {
+            const instructions = []
+            const { width, height, data } = imageData
+
+            for (let x = 0; x < width; x += step) {
+                let isLaserOn = false
+
+                for (let y = 0; y < height; y++) {
+                    const index = (y * width + x) * 4
+                    const isBlack = this.isBlackPixel(data, index)
+
+                    if (isBlack && !isLaserOn) {
+                        instructions.push([true, x, y++])
+                        isLaserOn = false
+                    } else if (!isBlack && isLaserOn) {
+                        instructions.push([false, x, y--])
+                        isLaserOn = true
+                    }
+                }
+
+                if (isLaserOn) instructions.push([false, x, height])
+            }
+
+            return instructions
+        },
+
+        isBlackPixel(data, index) {
+            return (
+                data[index] === 0 &&     // R
+                data[index + 1] === 0 && // G
+                data[index + 2] === 0 && // B
+                data[index + 3] > 0      // Alpha (не прозрачный)
+            )
+        },
+
+
+
+
+        // async svgToCommands(svgString, targetWidth, targetHeight, options = {}) {
+        //     const parser = new DOMParser()
+        //     const doc = parser.parseFromString(svgString, "image/svg+xml")
+        //     const svg = doc.querySelector('svg')
+        //     const pathElements = doc.querySelectorAll('path')
+            
+        //     // Получаем исходные размеры SVG
+        //     let svgWidth, svgHeight
+            
+        //     if (svg.hasAttribute('viewBox')) {
+        //         const viewBox = svg.getAttribute('viewBox').split(/\s+|,/).filter(Boolean)
+        //         svgWidth = parseFloat(viewBox[2])
+        //         svgHeight = parseFloat(viewBox[3])
+        //     } else {
+        //         svgWidth = parseFloat(svg.getAttribute('width')) || 0
+        //         svgHeight = parseFloat(svg.getAttribute('height')) || 0
+        //     }
+            
+        //     if (!svgWidth || !svgHeight) {
+        //         svgWidth = 100
+        //         svgHeight = 100
+        //         console.warn("SVG dimensions not found. Using default 100x100.")
+        //     }
+            
+        //     // Вычисляем scale с сохранением пропорций
+        //     const scale = Math.min(targetWidth / svgWidth, targetHeight / svgHeight)
+            
+        //     // Смещение для центрирования
+        //     const offsetX = (targetWidth - svgWidth * scale) / 2
+        //     const offsetY = (targetHeight - svgHeight * scale) / 2
+            
+        //     let commands = []
+            
+        //     // Обработка векторных путей
+        //     pathElements.forEach(path => {
+        //         const pathData = path.getAttribute('d')
+        //         if (!pathData) return
+                
+        //         let currentX = 0
+        //         let currentY = 0
+        //         let subpathStartX = 0
+        //         let subpathStartY = 0
+                
+        //         const tokens = pathData.match(/[a-df-z]|[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?/gi) || []
+        //         let i = 0
+                
+        //         while (i < tokens.length) {
+        //             const cmd = tokens[i++].toLowerCase()
+        //             let points = []
+        //             let active = true
+                    
+        //             // MoveTo (M)
+        //             if (cmd === 'm') {
+        //                 const x = parseFloat(tokens[i++]) * scale + offsetX
+        //                 const y = parseFloat(tokens[i++]) * scale + offsetY
+
+        //                 points.push(false, x, y)
+        //                 currentX = x
+        //                 currentY = y
+        //                 subpathStartX = x
+        //                 subpathStartY = y
+                        
+        //                 // Дополнительные координаты → LineTo (L)
+        //                 while (i < tokens.length && !isNaN(tokens[i])) {
+        //                     const x = parseFloat(tokens[i++]) * scale + offsetX
+        //                     const y = parseFloat(tokens[i++]) * scale + offsetY
+                            
+        //                     points.push(true, x, y)
+        //                     currentX = x
+        //                     currentY = y
+        //                 }
+        //             }
+        //             // LineTo (L)
+        //             else if (cmd === 'l') {
+        //                 while (i < tokens.length && !isNaN(tokens[i])) {
+        //                     const x = parseFloat(tokens[i++]) * scale + offsetX
+        //                     const y = parseFloat(tokens[i++]) * scale + offsetY
+                            
+        //                     points.push(true, x, y)
+        //                     currentX = x
+        //                     currentY = y
+        //                 }
+        //             }
+        //             // Cubic Bezier (C)
+        //             else if (cmd === 'c') {
+        //                 while (i < tokens.length && !isNaN(tokens[i])) {
+        //                     const x1 = parseFloat(tokens[i++]) * scale + offsetX
+        //                     const y1 = parseFloat(tokens[i++]) * scale + offsetY
+        //                     const x2 = parseFloat(tokens[i++]) * scale + offsetX
+        //                     const y2 = parseFloat(tokens[i++]) * scale + offsetY
+        //                     const x = parseFloat(tokens[i++]) * scale + offsetX
+        //                     const y = parseFloat(tokens[i++]) * scale + offsetY
+                            
+        //                     points.push(true, x1, y1, x2, y2, x, y)
+        //                     currentX = x
+        //                     currentY = y
+        //                 }
+        //             }
+        //             // ClosePath (Z)
+        //             else if (cmd === 'z') {
+        //                 points.push(true, subpathStartX, subpathStartY)
+        //                 currentX = subpathStartX
+        //                 currentY = subpathStartY
+        //             }
+                    
+        //             if (points.length > 0) {
+        //                 commands.push(points)
+        //             }
+        //         }
+        //     })
+
+        //     const canvas = document.createElement('canvas')
+        //         canvas.width = targetWidth
+        //         canvas.height = targetHeight
+        //     const ctx = canvas.getContext('2d')
+            
+        //     // Рендерим SVG на canvas
+        //     const img = new Image()
+        //     img.src = 'data:image/svg+xml,' + encodeURIComponent(svgString)
+        //     await new Promise(resolve => {
+        //         img.onload = resolve
+        //         img.src = 'data:image/svg+xml,' + encodeURIComponent(svgString)
+        //     })
+            
+        //     ctx.drawImage(img, offsetX, offsetY, svgWidth * scale, svgHeight * scale)
+        //     const imageData = ctx.getImageData(0, 0, targetWidth, targetHeight)
+            
+        //     // Генерируем горизонтальные линии
+        //     commands.push(...this.generateHorizontalLines(imageData, options.step || 1, 1))
+        //     // commands = [...this.generateHorizontalLines(imageData, options.step || 1, 1)]
+        //     commands.push(...this.generateVerticalLines(imageData, options.step || 1, 1))
+
+        //     return commands
+        // },
+
+        // isBlackPixel(data, index) {
+        //     return (
+        //         data[index] === 0 &&     // R
+        //         data[index + 1] === 0 && // G
+        //         data[index + 2] === 0 && // B
+        //         data[index + 3] > 0      // Alpha (не прозрачный)
+        //     )
+        // },
+
+        // generateHorizontalLines(imageData, step = 1, scale = 1) {
+        //     const instructions = []
+        //     const { width, height, data } = imageData
+
+        //     let isLaserOn = false
+
+        //     for (let y = 0; y < height; y += step) {
+
+        //         for (let x = 0; x < width; x++) {
+        //             const index = (y * width + x) * 4
+        //             const isBlack = this.isBlackPixel(data, index)
+
+        //             if (isBlack && !isLaserOn) {
+        //                 // Начало чёрного отрезка: включаем лазер и запоминаем позицию
+        //                 instructions.push([false, x*scale, y*scale]) // +
+        //                 isLaserOn = true
+        //             } else if (!isBlack && isLaserOn) {
+        //                 // Конец чёрного отрезка: выключаем лазер
+        //                 instructions.push([true, x*scale, y*scale]) // -
+        //                 isLaserOn = false
+        //             }
+        //         }
+
+        //         // Если линия закончилась на чёрном пикселе
+        //         if (isLaserOn) instructions.push([false, width, y]) // -
+        //     }
+
+        //     return instructions
+        // },
+
+        // generateVerticalLines(imageData, step = 1, scale = 1) {
+        //     const instructions = []
+        //     const { width, height, data } = imageData
+
+        //     for (let x = 0; x < width; x += step) {
+        //         let isLaserOn = false
+
+        //         for (let y = 0; y < height; y++) {
+        //             const index = (y * width + x) * 4
+        //             const isBlack = this.isBlackPixel(data, index)
+
+        //             if (isBlack && !isLaserOn) {
+        //                 // Начало чёрного отрезка: включаем лазер и запоминаем позицию
+        //                 instructions.push([false, x*scale, y*scale]) // +
+        //                 isLaserOn = true
+        //             } else if (!isBlack && isLaserOn) {
+        //                 // Конец чёрного отрезка: выключаем лазер
+        //                 instructions.push([true, x*scale, y*scale]) // -
+        //                 isLaserOn = false
+        //             }
+        //         }
+
+        //         // Если столбец закончился на чёрном пикселе
+        //         if (isLaserOn) instructions.push([false, x, height]) // -
+        //     }
+
+        //     return instructions
+        // },
+
+
+
+        // async svgToCommands(svgString, targetWidth, targetHeight) {
+        //     const parser = new DOMParser();
+        //     const doc = parser.parseFromString(svgString, "image/svg+xml");
+        //     const svg = doc.querySelector('svg');
+        //     const pathElements = doc.querySelectorAll('path');
+            
+        //     // Получаем исходные размеры SVG
+        //     let svgWidth, svgHeight;
+            
+        //     if (svg.hasAttribute('viewBox')) {
+        //         const viewBox = svg.getAttribute('viewBox').split(/\s+|,/).filter(Boolean);
+        //         svgWidth = parseFloat(viewBox[2]);
+        //         svgHeight = parseFloat(viewBox[3]);
+        //     } else {
+        //         svgWidth = parseFloat(svg.getAttribute('width')) || 0;
+        //         svgHeight = parseFloat(svg.getAttribute('height')) || 0;
+        //     }
+            
+        //     if (!svgWidth || !svgHeight) {
+        //         svgWidth = 100;
+        //         svgHeight = 100;
+        //         console.warn("SVG dimensions not found. Using default 100x100.");
+        //     }
+            
+        //     // Вычисляем scale с сохранением пропорций
+        //     const scale = Math.min(targetWidth / svgWidth, targetHeight / svgHeight);
+            
+        //     // Смещение для центрирования
+        //     const offsetX = (targetWidth - svgWidth * scale) / 2;
+        //     const offsetY = (targetHeight - svgHeight * scale) / 2;
+            
+        //     const commands = [];
+            
+        //     pathElements.forEach(path => {
+        //         const pathData = path.getAttribute('d');
+        //         if (!pathData) return;
+                
+        //         let currentX = 0;
+        //         let currentY = 0;
+        //         let subpathStartX = 0;
+        //         let subpathStartY = 0;
+                
+        //         const tokens = pathData.match(/[a-df-z]|[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?/gi) || [];
+        //         let i = 0;
+                
+        //         while (i < tokens.length) {
+        //             const cmd = tokens[i++].toLowerCase();
+        //             let points = [];
+        //             let active = true;
+                    
+        //             // MoveTo (M)
+        //             if (cmd === 'm') {
+        //                 const x = parseFloat(tokens[i++]) * scale + offsetX;
+        //                 const y = parseFloat(tokens[i++]) * scale + offsetY;
+
+        //                 points.push(false, x, y);
+        //                 currentX = x;
+        //                 currentY = y;
+        //                 subpathStartX = x;
+        //                 subpathStartY = y;
+                        
+        //                 // Дополнительные координаты → LineTo (L)
+        //                 while (i < tokens.length && !isNaN(tokens[i])) {
+        //                     const x = parseFloat(tokens[i++]) * scale + offsetX;
+        //                     const y = parseFloat(tokens[i++]) * scale + offsetY;
+                            
+        //                     points.push(true, x, y);
+        //                     currentX = x;
+        //                     currentY = y;
+        //                 }
+        //             }
+        //             // LineTo (L)
+        //             else if (cmd === 'l') {
+        //                 while (i < tokens.length && !isNaN(tokens[i])) {
+        //                     const x = parseFloat(tokens[i++]) * scale + offsetX;
+        //                     const y = parseFloat(tokens[i++]) * scale + offsetY;
+                            
+        //                     points.push(true, x, y);
+        //                     currentX = x;
+        //                     currentY = y;
+        //                 }
+        //             }
+        //             // Cubic Bezier (C)
+        //             else if (cmd === 'c') {
+        //                 while (i < tokens.length && !isNaN(tokens[i])) {
+        //                     const x1 = parseFloat(tokens[i++]) * scale + offsetX;
+        //                     const y1 = parseFloat(tokens[i++]) * scale + offsetY;
+        //                     const x2 = parseFloat(tokens[i++]) * scale + offsetX;
+        //                     const y2 = parseFloat(tokens[i++]) * scale + offsetY;
+        //                     const x = parseFloat(tokens[i++]) * scale + offsetX;
+        //                     const y = parseFloat(tokens[i++]) * scale + offsetY;
+                            
+        //                     points.push(true, x1, y1, x2, y2, x, y);
+        //                     currentX = x;
+        //                     currentY = y;
+        //                 }
+        //             }
+        //             // ClosePath (Z)
+        //             else if (cmd === 'z') {
+        //                 points.push(true, subpathStartX, subpathStartY);
+        //                 currentX = subpathStartX;
+        //                 currentY = subpathStartY;
+        //             }
+                    
+        //             if (points.length > 0) {
+        //                 commands.push(points);
+        //             }
+        //         }
+        //     });
+
+
+        //     const vectorImage = await this.svgToImage(svgString)
+        //     const combineImageCanvas = document.createElement('canvas')
+        //         combineImageCanvas.width = targetWidth
+        //         combineImageCanvas.height = targetHeight
+        //     const ctx = combineImageCanvas.getContext('2d')
+        //         ctx.drawImage(vectorImage, offsetX, offsetY) 
+        //     const combineImageCanvasData = ctx.getImageData(0, 0, combineImageCanvas.width, combineImageCanvas.height)
+
+
+        //     commands.push(...this.generateHorizontalLines(combineImageCanvasData, 5, scale));
+
+        //     // for (let i = 0; i < combineImageCanvasData.length; i += 4) {
+        //     //     const r = combineImageCanvasData[i]
+        //     //     const g = combineImageCanvasData[i+1]
+        //     //     const b = combineImageCanvasData[i+2]
+        //     //     const a = combineImageCanvasData[i+3]
+        //     // }
+            
+
+        //     return commands;
+        // },
+
+        // /**
+        //  * Проверяет, является ли пиксель чёрным (R=0, G=0, B=0, Alpha > 0)
+        //  * @param {Uint8ClampedArray} data - Массив данных изображения
+        //  * @param {number} index - Индекс пикселя в массиве данных
+        //  * @returns {boolean} true, если пиксель чёрный и не прозрачный
+        //  */
+        // isBlackPixel(data, index) {
+        //     return (
+        //         data[index] === 0 &&     // R
+        //         data[index + 1] === 0 && // G
+        //         data[index + 2] === 0 && // B
+        //         data[index + 3] > 0      // Alpha (не прозрачный)
+        //     );
+        // },
+
+        // generateHorizontalLines(imageData, step = 1, scale = 1) {
+        //     const instructions = [];
+        //     const { width, height, data } = imageData;
+
+        //     for (let y = 0; y < height; y += step) {
+        //         let isLaserOn = false;
+
+        //         for (let x = 0; x < width; x++) {
+        //             const index = (y * width + x) * 4;
+        //             const isBlack = this.isBlackPixel(data, index);
+
+        //             if (isBlack && !isLaserOn) {
+        //                 // Начало чёрного отрезка: включаем лазер и запоминаем позицию
+        //                 instructions.push([true, x*scale, y*scale]); // +
+        //                 isLaserOn = true;
+        //             } else if (!isBlack && isLaserOn) {
+        //                 // Конец чёрного отрезка: выключаем лазер
+        //                 instructions.push([false, x*scale, y*scale]); // -
+        //                 isLaserOn = false;
+        //             }
+        //         }
+
+        //         // Если линия закончилась на чёрном пикселе
+        //         if (isLaserOn) instructions.push([false, width, y]); // -
+        //     }
+
+        //     return instructions;
+        // },
+
+        // generateVerticalLines(imageData, step = 1) {
+        //     const instructions = [];
+        //     const { width, height, data } = imageData;
+
+        //     for (let x = 0; x < width; x += step) {
+        //         let isLaserOn = false;
+
+        //         for (let y = 0; y < height; y++) {
+        //             const index = (y * width + x) * 4;
+        //             const isBlack = this.isBlackPixel(data, index);
+
+        //             if (isBlack && !isLaserOn) {
+        //                 // Начало чёрного отрезка
+        //                 instructions.push({ type: "line", params: [x, y + 1] });
+        //                 instructions.push({ type: "laser", params: [800] });
+        //                 isLaserOn = true;
+        //             } else if (!isBlack && isLaserOn) {
+        //                 // Конец чёрного отрезка
+        //                 instructions.push({ type: "line", params: [x, y - 1] });
+        //                 instructions.push({ type: "laser", params: [0] });
+        //                 isLaserOn = false;
+        //             }
+        //         }
+
+        //         // Если столбец закончился на чёрном пикселе
+        //         if (isLaserOn) {
+        //             instructions.push({ type: "line", params: [x, height - 1] });
+        //             instructions.push({ type: "laser", params: [0] });
+        //         }
+        //     }
+
+        //     return instructions;
+        // },
+
+        // /**
+        //  * Основная функция
+        //  * @param {ImageData} imageData - Данные изображения
+        //  * @param {Object} options - Настройки
+        //  * @param {boolean} [options.vertical=false] - Добавить вертикальную штриховку
+        //  * @param {number} [options.step=1] - Шаг между линиями
+        //  */
+        // getHatchingInstructions(imageData, options = {}) {
+        //     const { vertical = true, step = 1 } = options;
+        //     const instructions = [];
+
+        //     // Горизонтальная штриховка (всегда)
+        //     instructions.push(...this.generateHorizontalLines(imageData, step));
+
+        //     // Вертикальная штриховка (опционально)
+        //     if (vertical) {
+        //         instructions.push(...this.generateVerticalLines(imageData, step));
+        //     }
+
+        //     // Убедимся, что лазер выключен в конце
+        //     if (instructions.length > 0 && instructions[instructions.length - 1].type === "laser") {
+        //         instructions[instructions.length - 1].params = [0];
+        //     }
+
+        //     return instructions;
+        // },
+
+        printCommandInCanvas(ctx, commands) {
+            commands.forEach(points => {
+                const [active, ...coords] = points;
+                
+                if (!active) {
+                    ctx.moveTo(coords[0], coords[1]); // MoveTo
+                } 
+                else if (coords.length === 2) {
+                    ctx.lineTo(coords[0], coords[1]); // LineTo или ClosePath
+                } 
+                else if (coords.length === 6) {
+                    ctx.bezierCurveTo(
+                        coords[0], coords[1],
+                        coords[2], coords[3],
+                        coords[4], coords[5]
+                    )
+                }
+            });
+
+            ctx.stroke();
+        },
+
+
+
+
+
+
+        // useSvgEmulator(canvas, commands, options = {}) {
+        //     // Настройки по умолчанию
+        //     const defaults = {
+        //         strokeStyle: '#000000',
+        //         lineWidth: 1,
+        //         fillStyle: 'transparent',
+        //         stepDelay: 100
+        //     };
+            
+        //     const settings = { ...defaults, ...options };
+            
+        //     // Состояние анимации
+        //     let animationId = null;
+        //     let currentCommandIndex = 0;
+        //     let currentPointIndex = 0;
+        //     let isAnimating = false;
+        //     let lastTimestamp = 0;
+        //     let currentPosition = { x: 0, y: 0 };
+        //     let subpathStart = { x: 0, y: 0 };
+            
+        //     const ctx = canvas.getContext('2d');
+        //     ctx.strokeStyle = settings.strokeStyle;
+        //     ctx.lineWidth = settings.lineWidth;
+        //     ctx.fillStyle = settings.fillStyle;
+            
+        //     // Основные методы
+        //     function reset() {
+        //         stopAnimation();
+        //         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        //         currentCommandIndex = 0;
+        //         currentPointIndex = 0;
+        //         currentPosition = { x: 0, y: 0 };
+        //         subpathStart = { x: 0, y: 0 };
+        //     }
+            
+        //     function executeStep() {
+        //         if (currentCommandIndex >= commands.length) {
+        //         stopAnimation();
+        //         return false;
+        //         }
+                
+        //         const command = commands[currentCommandIndex];                
+        //         const point = command.points[currentPointIndex];                
+                
+        //         if (command.active) {
+        //         ctx.beginPath();
+                
+        //         if (currentPointIndex === 0) {
+        //             ctx.moveTo(point.x, point.y);
+        //             currentPosition = { x: point.x, y: point.y };
+        //             subpathStart = { x: point.x, y: point.y };
+        //         } 
+        //         else if ('x' in point && 'y' in point) {
+        //             ctx.lineTo(point.x, point.y);
+        //             currentPosition = { x: point.x, y: point.y };
+        //         }
+        //         else if ('x1' in point) {
+        //             ctx.bezierCurveTo(
+        //             point.x1, point.y1,
+        //             point.x2, point.y2,
+        //             point.x, point.y
+        //             );
+        //             currentPosition = { x: point.x, y: point.y };
+        //         }
+                
+        //         ctx.stroke();
+        //         } else {
+        //         currentPosition = { x: point.x, y: point.y };
+        //         }
+                
+        //         // Переход к следующей точке/команде
+        //         currentPointIndex++;
+        //         if (currentPointIndex >= command.points.length) {
+        //         currentCommandIndex++;
+        //         currentPointIndex = 0;
+                
+        //         if (command.points.some(p => p.x === subpathStart.x && p.y === subpathStart.y)) {
+        //             ctx.closePath();
+        //             if (settings.fillStyle !== 'transparent') {
+        //             ctx.fill();
+        //             }
+        //         }
+        //         }
+                
+        //         return true;
+        //     }
+            
+        //     function animate(timestamp = 0) {
+        //         if (!isAnimating) return;
+
+        //         console.log('sdfsdf');
+                
+                
+        //         const delta = timestamp - lastTimestamp;
+                
+        //         if (delta >= settings.stepDelay) {
+        //         lastTimestamp = timestamp;
+        //         if (!executeStep()) {
+        //             stopAnimation();
+        //             return;
+        //         }
+        //         }
+                
+        //         animationId = requestAnimationFrame(animate);
+        //     }
+            
+        //     function startAnimation() {
+        //         if (isAnimating) return;
+        //         isAnimating = true;
+        //         lastTimestamp = performance.now();
+        //         animate();
+        //     }
+            
+        //     function stopAnimation() {
+        //         if (!isAnimating) return;
+        //         isAnimating = false;
+        //         cancelAnimationFrame(animationId);
+        //         animationId = null;
+        //     }
+            
+        //     function drawAll() {
+        //         reset();
+        //         ctx.beginPath();
+                
+        //         commands.forEach(command => {
+        //         command.points.forEach((point, i) => {
+        //             if (i === 0) {
+        //             ctx.moveTo(point.x, point.y);
+        //             currentPosition = { x: point.x, y: point.y };
+        //             subpathStart = { x: point.x, y: point.y };
+                    
+        //             if (!command.active) {
+        //                 ctx.beginPath();
+        //             }
+        //             } else {
+        //             if (command.active) {
+        //                 if ('x1' in point) {
+        //                 ctx.bezierCurveTo(
+        //                     point.x1, point.y1,
+        //                     point.x2, point.y2,
+        //                     point.x, point.y
+        //                 );
+        //                 } else {
+        //                 ctx.lineTo(point.x, point.y);
+        //                 }
+        //             }
+        //             currentPosition = { x: point.x, y: point.y };
+        //             }
+        //         });
+                
+        //         const lastPoint = command.points[command.points.length - 1];
+        //         if (lastPoint.x === subpathStart.x && lastPoint.y === subpathStart.y) {
+        //             ctx.closePath();
+        //             if (settings.fillStyle !== 'transparent') {
+        //             ctx.fill();
+        //             }
+        //         }
+                
+        //         if (command.active) {
+        //             ctx.stroke();
+        //         }
+        //         });
+        //     }
+            
+        //     // Возвращаем методы для использования
+        //     return {
+        //         reset,
+        //         startAnimation,
+        //         stopAnimation,
+        //         drawAll
+        //     };
+        // },
+
+
+
+        // svgToCommands(svgString) {
+        //     const parser = new DOMParser();
+        //     const doc = parser.parseFromString(svgString, "image/svg+xml");
+        //     const pathElements = doc.querySelectorAll('path');
+            
+        //     const commands = [];
+            
+        //     pathElements.forEach(path => {
+        //         const pathData = path.getAttribute('d');
+        //         if (!pathData) return;
+                
+        //         let currentX = 0;
+        //         let currentY = 0;
+        //         let subpathStartX = 0;
+        //         let subpathStartY = 0;
+                
+        //         const tokens = pathData.match(/[a-df-z]|[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?/gi) || [];
+        //         let i = 0;
+                
+        //         while (i < tokens.length) {
+        //             const cmd = tokens[i++];
+        //             let points = [];
+        //             let active = true;
+                    
+        //             switch (cmd.toLowerCase()) {
+        //                 // MoveTo
+        //                 case 'm':
+        //                 case 'l':
+        //                 case 't':
+        //                     while (i < tokens.length && !isNaN(tokens[i])) {
+        //                         const x = parseFloat(tokens[i++]);
+        //                         const y = parseFloat(tokens[i++]);
+        //                         points.push({x, y});
+                                
+        //                         if (cmd === 'm') {
+        //                             currentX = x;
+        //                             currentY = y;
+        //                             subpathStartX = x;
+        //                             subpathStartY = y;
+        //                             // Первая точка после M - это начало пути, не рисуем
+        //                             if (points.length === 1) {
+        //                                 active = false;
+        //                             }
+        //                         } else {
+        //                             currentX = x;
+        //                             currentY = y;
+        //                         }
+        //                     }
+        //                     break;
+                        
+        //                 // Horizontal line
+        //                 case 'h':
+        //                     while (i < tokens.length && !isNaN(tokens[i])) {
+        //                         const x = parseFloat(tokens[i++]);
+        //                         points.push({x, y: currentY});
+        //                         currentX = x;
+        //                     }
+        //                     break;
+                        
+        //                 // Vertical line
+        //                 case 'v':
+        //                     while (i < tokens.length && !isNaN(tokens[i])) {
+        //                         const y = parseFloat(tokens[i++]);
+        //                         points.push({x: currentX, y});
+        //                         currentY = y;
+        //                     }
+        //                     break;
+                        
+        //                 // Cubic Bezier curve
+        //                 case 'c':
+        //                     while (i < tokens.length && !isNaN(tokens[i])) {
+        //                         const x1 = parseFloat(tokens[i++]);
+        //                         const y1 = parseFloat(tokens[i++]);
+        //                         const x2 = parseFloat(tokens[i++]);
+        //                         const y2 = parseFloat(tokens[i++]);
+        //                         const x = parseFloat(tokens[i++]);
+        //                         const y = parseFloat(tokens[i++]);
+        //                         points.push({x1, y1, x2, y2, x, y});
+        //                         currentX = x;
+        //                         currentY = y;
+        //                     }
+        //                     break;
+                        
+        //                 // Quadratic Bezier curve
+        //                 case 'q':
+        //                     while (i < tokens.length && !isNaN(tokens[i])) {
+        //                         const x1 = parseFloat(tokens[i++]);
+        //                         const y1 = parseFloat(tokens[i++]);
+        //                         const x = parseFloat(tokens[i++]);
+        //                         const y = parseFloat(tokens[i++]);
+        //                         points.push({x1, y1, x, y});
+        //                         currentX = x;
+        //                         currentY = y;
+        //                     }
+        //                     break;
+                        
+        //                 // Close path
+        //                 case 'z':
+        //                     points.push({x: subpathStartX, y: subpathStartY});
+        //                     currentX = subpathStartX;
+        //                     currentY = subpathStartY;
+        //                     break;
+                        
+        //                 // Аналогичные команды с относительными координатами
+        //                 // (реализация аналогична, но с добавлением currentX/Y)
+        //                 case 'm':
+        //                 case 'l':
+        //                 case 't':
+        //                 case 'h':
+        //                 case 'v':
+        //                 case 'c':
+        //                 case 'q':
+        //                 case 's':
+        //                     const relative = true;
+        //                     // Реализация аналогична абсолютным командам,
+        //                     // но координаты добавляются к currentX/Y
+        //                     // Для краткости опущена
+        //                     break;
+        //             }
+                    
+        //             if (points.length > 0) {
+        //                 commands.push({
+        //                     command: cmd.toLowerCase(),
+        //                     points: points,
+        //                     active: active
+        //                 });
+        //             }
+        //         }
+        //     });
+            
+        //     return commands;
+        // },
+
+        // svgToCommands(svgPath) {
+        //     const instructions = [];
+        //     const path = svgPath.getAttribute('d');
+        //     const commands = path.match(/[MLC][^MLC]*/g) || [];
+
+        //     commands.forEach(cmd => {
+        //         const type = cmd[0];
+        //         const coords = cmd.slice(1).trim().split(/[\s,]+/).map(Number);
+
+        //         if (type === 'M') {
+        //             instructions.push({ active: false, coords: [coords[0], coords[1]] });
+        //         } else if (type === 'L') {
+        //             instructions.push({ active: true, coords: [coords[0], coords[1]] });
+        //         } else if (type === 'C') {
+        //             instructions.push({ active: true, coords: [coords[0], coords[1], coords[2], coords[3], coords[4], coords[5]] });
+        //         }
+        //     });
+
+        //     return instructions;
+        // },
+
+
+
+        async svgToImage(svg) {
+            return new Promise((resolve, reject) => {
+                const img = new Image()
+                img.onload = () => resolve(img)
+                img.onerror = reject
+                img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg)
+            })
+        },
+
+        async createMainImage(images) {
+            return new Promise((resolve) => {
+                // Создаем canvas и получаем исходное изображение
+                const canvas = document.createElement('canvas')
+                    canvas.width = images[0].width
+                    canvas.height = images[0].height
+                const ctx = canvas.getContext('2d')
+
+                images.forEach(image => {
+                   ctx.drawImage(image, 0, 0) 
+                })
+
+                const img = new Image();
+                    img.onload = () => resolve(img);
+                img.src = canvas.toDataURL('image/png');
+            })
+        },
+
+        getGrayShade(index, total) {
+            if (total <= 1) return '#000000'
+            
+            // Рассчитываем значение от 0 (чёрный) до 255 (белый)
+            const value = Math.round((index / (total - 1)) * 255)
+            
+            // Конвертируем в HEX и форматируем
+            const hex = value.toString(16).padStart(2, '0')
+            return `#${hex}${hex}${hex}`
+        },
+
+
+
+
+
+
+
+        // async convertColorImage(image, colorCount) {
+        //     return new Promise((resolve) => {
+        //         const colorStep = (255 * 3) / colorCount
+        //         const resultObject = {
+        //             image: null,
+        //             layers: []
+        //         }
+
+        //         // Создаем canvas и получаем исходное изображение
+        //         const canvas = document.createElement('canvas')
+        //             canvas.width = image.width
+        //             canvas.height = image.height
+        //         const ctx = canvas.getContext('2d')
+        //         ctx.drawImage(image, 0, 0)
+                
+        //         // Получаем оригинальные данные
+        //         const originalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+        //         resultObject.image = originalImageData
+
+        //         // Создаем слои
+        //         for (let i = 0; i <= colorCount; i++) {
+        //             const layer = ctx.createImageData(canvas.width, canvas.height)
+        //             resultObject.layers.push(layer)
+        //         }
+
+        //         // Обработка пикселей
+        //         for (let i = 0; i < originalImageData.data.length; i += 4) {
+        //             const r = originalImageData.data[i]
+        //             const g = originalImageData.data[i+1]
+        //             const b = originalImageData.data[i+2]
+        //             const brightness = r + g + b
+        //             const indexLayer = Math.round(brightness / colorStep)
+        //             const color = (indexLayer * colorStep) / 3
+
+        //             if (indexLayer != colorCount) {
+        //                 // Меняем основной image
+        //                 originalImageData.data[i] = originalImageData.data[i+1] = originalImageData.data[i+2] = color
+
+        //                 // Меняем соответствующий слой
+        //                 const layerData = resultObject.layers[indexLayer].data
+        //                 layerData[i] = layerData[i+1] = layerData[i+2] = 0
+        //                 if (color) layerData[i+3] = 255;
+        //             } else {
+        //                 originalImageData.data[i+3] = 0
+        //             }
+                    
+        //         }
+
+        //         // Функция для преобразования ImageData в Image
+        //         const createImageFromImageData = (imageData) => {
+        //             return new Promise((resolve) => {
+        //                 ctx.clearRect(0, 0, canvas.width, canvas.height);
+        //                 ctx.putImageData(imageData, 0, 0);
+
+        //                 const img = new Image();
+        //                     img.onload = () => resolve(img);
+        //                 img.src = canvas.toDataURL('image/png');
+        //             });
+        //         };
+
+        //         // Обрабатываем основное изображение и все слои
+        //         Promise.all([
+        //             createImageFromImageData(resultObject.image),
+        //             ...resultObject.layers.map(layer => createImageFromImageData(layer))
+        //         ]).then(([processedImage, ...processedLayers]) => {
+        //             resultObject.image = processedImage;
+        //             resultObject.layers = processedLayers;
+        //             resolve(resultObject);
+        //         });
+
+        //     })
+        // },
+
+        // async vectorizeImage(image, threshold = 128) {
+        //     // 1. Создаем временный canvas
+        //     const canvas = document.createElement('canvas')
+        //         canvas.width = image.width
+        //         canvas.height = image.height
+        //     const ctx = canvas.getContext('2d')
+        //     ctx.drawImage(image, 0, 0)
+
+        //     // 2. Получаем ImageData
+        //     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+
+        //     // 3. Векторизация через Potrace
+        //     return new Promise((resolve) => {
+        //         Potrace.trace(imageData, {
+        //             threshold: threshold,
+        //             color: '#000000',
+        //             background: 'none'
+        //         }, (err, svg) => {
+        //             if (err) throw err
+        //             resolve(svg)
+        //         })
+        //     })
+        // },
+
+        // async svgToImage(svg) {
+        //     return new Promise((resolve, reject) => {
+        //         const img = new Image()
+        //         img.onload = () => resolve(img)
+        //         img.onerror = reject
+        //         img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg)
+        //     })
+        // },
+
+
+
+
+
+
+
+        // async convertColorImage2(image, colorCount) {
+        //     return new Promise((resolve) => {
+        //         const resultObject = {
+        //             image: null,
+        //             layers: []
+        //         }
+
+        //         // Создаем виртуальный canvas
+        //         const canvas = document.createElement('canvas')
+        //             canvas.width = image.width
+        //             canvas.height = image.height
+        //         const ctx = canvas.getContext('2d')
+
+        //         for (let i = 0; i <= colorCount; i++) {
+        //             resultObject.layers[i] = structuredClone(ctx.getImageData(0, 0, image.width, image.height))
+        //         }
+
+        //         ctx.drawImage(image, 0, 0, image.width, image.height)
+        //         resultObject.image = ctx.getImageData(0, 0, image.width, image.height)
+                
+        //         // Перебираем и заменяем пиксели
+        //         const imageData = resultObject.image.data
+        //         const colorStep = (255 * 3) / colorCount                
+                
+        //         for (let i = 0; i < imageData.length; i += 4) {
+        //             const brightness = imageData[i] + imageData[i + 1] + imageData[i + 2]
+        //             const indexLayer = Math.round(brightness / colorStep)
+        //             const imageDataLayer = resultObject.layers[indexLayer].data
+        //             const color = (indexLayer * colorStep) / 3
+
+        //             // console.log(color);
+        //             // if(i < 1000) resultObject.layers[indexLayer].data[i] = 213;
+        //             // if(i < 1000) console.log(resultObject.layers[indexLayer].data[i])
+        //             // if(i < 1000) console.log(imageDataLayer[i])
+                    
+                    
+                    
+        //             imageDataLayer[i] = imageDataLayer[i + 1] = imageDataLayer[i + 2] = 124
+        //             // if(i < 1000) console.log(imageDataLayer[i])
+        //             imageData[i] = imageData[i + 1] = imageData[i + 2] = color
+        //         }
+
+        //         console.log(resultObject);
+                
+        //         // Записываем измененные данные обратно
+        //         ctx.putImageData(imageData, 0, 0)
+                
+        //         // Создаем новое изображение с результатом
+        //         const imageNew = new Image()
+        //             imageNew.onload = () => resultObject.image = imageNew
+        //         imageNew.src = canvas.toDataURL('image/png')
+
+        //         resultObject.layers.forEach(layer => {
+                    
+        //         });
+
+        //         resolve(resultObject)
+        //     })
+        // },
+
+        // convertColorImage(image, colorCount) {
+        //     // Создаем виртуальный canvas
+        //     const canvas = document.createElement('canvas')
+        //         canvas.width = image.width
+        //         canvas.height = image.height
+        //     const ctx = canvas.getContext('2d')
+            
+        //     // Рисуем изображение на canvas
+        //     ctx.drawImage(image, 0, 0, image.width, image.height)
+            
+
+        //     // Перебираем и заменяем пиксели
+        //     const colorStep = (255*3)/colorCount
+        //     const imageData = ctx.getImageData(0, 0, image.width, image.height).data
+
+        //     for (let i = 0; i < imageData.length; i += 4) {
+        //         const brightness = imageData[i] + imageData[i + 1] + imageData[i + 2]
+
+        //         const color = (Math.round(brightness/colorStep) * colorStep)/3
+
+        //         imageData[i] = imageData[i + 1] = imageData[i + 2] = color
+        //     }
+
+            
+        //     // Создаем новое изображение с результатом
+        //     const imageNew = new Image()
+        //     imageNew.onload = () => { return imageNew }
+        //     imageNew.src = canvas.toDataURL('image/png')
+        // },
+
+        // async convertColorImage(image, colorCount) {
+        //     return new Promise((resolve) => {
+        //         // Создаем виртуальный canvas для обработки
+        //         const canvas = document.createElement('canvas');
+        //             canvas.width = image.width;
+        //             canvas.height = image.height;
+        //         const ctx = canvas.getContext('2d');
+
+        //         // Рисуем изображение на canvas
+        //         ctx.drawImage(image, 0, 0, image.width, image.height);
+        //         const imageData = ctx.getImageData(0, 0, image.width, image.height);
+        //         const data = imageData.data;
+
+        //         // Вычисляем шаг для каждого оттенка
+        //         const maxBrightness = 255 * 3;
+        //         const colorStep = maxBrightness / colorCount;
+        //         const layers = [];
+
+        //         // Создаем общий массив для хранения всех оттенков
+        //         const shades = [];
+        //         for (let i = 0; i < colorCount; i++) {
+        //             shades.push(Math.round(i * colorStep) / 3); // Нормализуем на 1 канал (RGB одинаковые)
+        //         }
+
+        //         // Создаем общую картинку (как в оригинале)
+        //         const mergedImageData = ctx.getImageData(0, 0, image.width, image.height);
+        //         const mergedData = mergedImageData.data;
+
+        //         for (let i = 0; i < mergedData.length; i += 4) {
+        //             const brightness = mergedData[i] + mergedData[i + 1] + mergedData[i + 2];
+        //             const shadeIndex = Math.min(
+        //                 Math.floor(brightness / colorStep),
+        //                 colorCount - 1
+        //             );
+        //             const color = shades[shadeIndex];
+        //             mergedData[i] = mergedData[i + 1] = mergedData[i + 2] = color;
+        //         }
+        //         ctx.putImageData(mergedImageData, 0, 0);
+
+        //         // Создаем слой для каждого оттенка
+        //         shades.forEach((shade) => {
+        //             const layerCanvas = document.createElement('canvas');
+        //                 layerCanvas.width = image.width;
+        //                 layerCanvas.height = image.height;
+        //             const layerCtx = layerCanvas.getContext('2d');
+        //             const layerImageData = layerCtx.createImageData(image.width, image.height);
+        //             const layerData = layerImageData.data;
+
+        //             for (let i = 0; i < data.length; i += 4) {
+        //                 const r = data[i];
+        //                 const g = data[i + 1];
+        //                 const b = data[i + 2];
+        //                 const brightness = r + g + b;
+        //                 const currentShade = Math.round(brightness / colorStep) * colorStep / 3;
+
+        //                 if (Math.abs(currentShade - shade) < 0.1) { // Учитываем погрешность округления
+        //                     layerData[i] = r;
+        //                     layerData[i + 1] = g;
+        //                     layerData[i + 2] = b;
+        //                     layerData[i + 3] = 255; // Непрозрачный
+        //                 } else {
+        //                     layerData[i + 3] = 0; // Прозрачный
+        //                 }
+        //             }
+
+        //             layerCtx.putImageData(layerImageData, 0, 0);
+        //             layers.push(layerCanvas);
+        //         });
+
+        //         // Создаем итоговые изображения
+        //         const resultImage = new Image();
+        //         resultImage.onload = () => {
+        //             const resultLayers = layers.map((layerCanvas) => {
+        //                 const layerImage = new Image();
+        //                     layerImage.src = layerCanvas.toDataURL('image/png');
+        //                 return layerImage;
+        //             });
+
+        //             resolve({
+        //                 image: resultImage, // Общая картинка в оттенках серого
+        //                 layers: resultLayers, // Массив слоёв (по одному на оттенок)
+        //             });
+        //         };
+        //         resultImage.src = canvas.toDataURL('image/png');
+        //     });
+        // },
+
+        // async processImage() {
+        //     const { ctx, html } = this.canvas.svg;
+        //     const imageData = ctx.getImageData(0, 0, html.width, html.height);
+            
+        //     // Более точное преобразование в градации серого
+        //     for (let i = 0; i < imageData.data.length; i += 4) {
+        //         const r = imageData.data[i];
+        //         const g = imageData.data[i + 1];
+        //         const b = imageData.data[i + 2];
+        //         // Формула luminosity (лучше воспринимается глазом)
+        //         const gray = 0.21 * r + 0.72 * g + 0.07 * b;
+        //         const value = gray > 128 ? 255 : 0;
+                
+        //         imageData.data[i] = 
+        //         imageData.data[i + 1] = 
+        //         imageData.data[i + 2] = value;
+        //     }
+
+        //     ctx.putImageData(imageData, 0, 0);
+            
+        //     // Можно добавить размытие для сглаживания краев
+        //     // this.applyBlurFilter(1);
+        // },
+
+        // async drawSvgToCanvas(svgString, canvas) {
+        //     const ctx = canvas.ctx;
+            
+        //     // Создаём Blob из SVG-строки
+        //     const svgBlob = new Blob([svgString], { type: 'image/svg+xml' });
+        //     const svgUrl = URL.createObjectURL(svgBlob);
+            
+        //     // Загружаем SVG как изображение
+        //     const img = new Image();
+            
+        //     // Ждём загрузки изображения
+        //     await new Promise((resolve, reject) => {
+        //         img.onload = () => resolve();
+        //         img.onerror = () => reject(new Error("Failed to load SVG"));
+        //         img.src = svgUrl;
+        //     });
+            
+        //     // Устанавливаем размер canvas (если нужно)
+        //     canvas.html.width = img.width;
+        //     canvas.html.height = img.height;
+            
+        //     // Рисуем SVG на canvas
+        //     ctx.drawImage(img, 0, 0);
+            
+        //     // Освобождаем URL
+        //     URL.revokeObjectURL(svgUrl);
+        // },
+
+        // async vectorize() {
+        //     if (this.isLoading) return;            
+            
+        //     this.isLoading = true;
+        //     try {
+        //         // 1. Получаем данные из Canvas в формате Blob
+        //         const blob = await new Promise((resolve) => {
+        //             this.canvas.svg.html.toBlob((blob) => {
+        //                 resolve(blob);
+        //             }, 'image/png');
+        //         });
+
+        //         // 2. Создаем URL из Blob
+        //         const imageUrl = URL.createObjectURL(blob);
+
+        //         // 3. Используем Potrace с URL изображения
+        //         const params = {
+        //             color: '#000000',
+        //             threshold: 128,
+        //             turdSize: 0,
+        //             optCurve: false,
+        //             optTolerance: 0,
+        //             turnPolicy: Potrace.POTRACE_TURNPOLICY_MINORITY
+        //         };
+
+        //         const result = await new Promise((resolve, reject) => {
+        //             Potrace.trace(imageUrl, params, (err, svg) => {
+        //                 URL.revokeObjectURL(imageUrl); // Очищаем URL
+        //                 if (err) return reject(err);
+        //                 resolve(svg);
+        //             });
+        //         });
+
+        //         this.svgPath = result;
+        //         this.$nextTick(() => {                    
+        //             // const block = document.querySelector('#blockSvg');
+        //             // if (block) block.innerHTML = this.svgPath;
+
+        //             // if(this.printWork) {
+        //             //     // document.querySelector('.header__desc').innerHTML = this.svgPath
+
+        //             //     // this.downloadSVG(this.svgPath)
+
+        //             //     this.drawSvgToCanvas(this.svgPath, this.canvas.svg)
+
+        //             //     // this.svgToLaserCommands(this.svgPath)
+        //             // }
+
+        //             this.drawSvgToCanvas(this.svgPath, this.canvas.svg)
+
+        //             setTimeout(() => {
+        //                 this.svgToLaserCommands(this.svgPath)
+        //             }, 1000);
+
+        //             // let DataCommands = this.svgToLaserCommands(this.svgPath)
+
+        //             // const blockText = document.querySelector('#blockText');
+        //             // if (blockText) blockText.innerHTML = JSON.stringify(DataCommands[0]);
+
+        //             // this.executeInstructions(DataCommands)
+                    
+        //             // this.downloadJson(JSON.stringify(DataCommands))
+        //         });
+
+        //     } catch (error) {
+        //         console.error("Vectorization error:", error);
+        //         alert("Ошибка векторизации: " + error.message);
+        //     } finally {
+        //         this.isLoading = false;
+        //     }
+        // },
+
+        // svgToLaserCommands() {
+        //     // this.canvas.lazer.ctx.clearRect(0, 0, this.canvas.lazer.html.width, this.canvas.lazer.html.height);
+
+        //     let svgString = this.svgPath
+
+        //     const parser = new DOMParser();
+        //     const doc = parser.parseFromString(svgString, 'image/svg+xml');
+        //     const paths = doc.querySelectorAll('path');
+        //     let commands = [];
+
+        //     // Начальные команды
+        //     commands.push({ type: 'laser', params: [0] }); // Выключить лазер
+        //     commands.push({ type: 'move', params: [0, 0] }); // Начальная точка
+
+        //     paths.forEach(path => {
+        //         const d = path.getAttribute('d')
+        //         const fill = path.getAttribute('fill')
+        //         const stroke = path.getAttribute('stroke')
+
+        //         // Определяем мощность лазера по стилю
+        //         const power = 800
+
+        //         // Парсим команды SVG
+        //         const svgCommands = d.match(/[A-Za-z][^A-Za-z]*/g) || []
+        //         let currentX = 0
+        //         let currentY = 0
+
+        //         svgCommands.forEach(cmd => {
+        //             const type = cmd[0]
+        //             const args = cmd.slice(1).trim().split(/[\s,]+/).map(parseFloat)
+
+        //             switch (type.toUpperCase()) {
+        //                 case 'M': // Move To (без лазера)
+        //                     commands.push({ type: 'laser', params: [0] })
+        //                     commands.push({ type: 'move', params: [args[0], args[1]] })
+        //                     commands.push({ type: 'laser', params: [power] })
+        //                     currentX = args[0]
+        //                     currentY = args[1]
+        //                     break
+
+        //                 case 'L': // Line To (с лазером)
+        //                     commands.push({ type: 'line', params: [args[0], args[1]] })
+        //                     currentX = args[0]
+        //                     currentY = args[1]
+        //                     break
+
+        //                 case 'C': // Cubic Bezier (с лазером)
+        //                     commands.push({
+        //                         type: 'bezier',
+        //                         params: [
+        //                             args[0], args[1], // Контрольная точка 1
+        //                             args[2], args[3], // Контрольная точка 2
+        //                             args[4], args[5]  // Конечная точка
+        //                         ]
+        //                     })
+        //                     currentX = args[4]
+        //                     currentY = args[5]
+        //                     break
+
+        //                 case 'Z': // Замкнуть путь (линия к началу)
+        //                     commands.push({ type: 'line', params: [currentX, currentY] })
+        //                     break
+        //             }
+        //         });
+
+        //         commands.push({ type: 'laser', params: [0] }) // Выключить лазер после контура
+        //     });
+            
+
+        //     // Завершающая команда
+        //     commands.push({ type: 'move', params: [0, 0] }) // Вернуться в начало
+        //     commands.push({ type: 'laser', params: [0] }); // Выключить лазер
+            
+        //     // this.downloadJson(JSON.stringify(commands))
+
+        //     commands.push(...this.getHatchingInstructions(
+        //         this.canvas.svg.ctx.getImageData(0, 0, this.canvas.svg.html.width, this.canvas.svg.html.height), false, 2
+        //     ));
+
+
+        //     // commands = []
+        //     //     commands.push({ type: 'laser', params: [0] }); // Выключить лазер
+        //     //     commands.push({ type: 'move', params: [0, 0] }); // Начальная точка
+        //     // commands = this.getHatchingInstructions(this.canvas.svg.ctx.getImageData(0, 0, this.canvas.svg.html.width, this.canvas.svg.html.height), false, 2);
+
+        //     // this.downloadJson(JSON.stringify(commands))
+            
+            
+        //     this.executeInstructions(commands)
+        // },
+
+        downloadJson(jsonString, fileName = 'data.json') {
+            // Создаем Blob из JSON строки
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            
+            // Создаем URL для Blob
+            const url = URL.createObjectURL(blob);
+            
+            // Создаем элемент <a> для скачивания
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            
+            // Добавляем элемент на страницу (невидимо)
+            document.body.appendChild(a);
+            
+            // Имитируем клик для скачивания
+            a.click();
+            
+            // Удаляем элемент и освобождаем память
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 100);
+        },
+
+        /**
+         * Скачивает canvas в виде изображения
+         * @param {HTMLCanvasElement} canvas - Элемент canvas
+         * @param {string} [filename='image'] - Имя файла (без расширения)
+         * @param {string} [format='png'] - Формат изображения ('png', 'jpeg', 'webp')
+         */
+        downloadCanvas(canvas, filename = 'image', format = 'png') {
+            // Проверяем поддерживаемые форматы
+            const supportedFormats = ['png', 'jpeg', 'webp'];
+            if (!supportedFormats.includes(format.toLowerCase())) {
+                console.warn(`Формат "${format}" не поддерживается. Будет использован PNG.`);
+                format = 'png';
+            }
+
+            // Создаем ссылку для скачивания
+            const link = document.createElement('a');
+            link.download = `${filename}.${format}`;
+            
+            // Конвертируем canvas в Data URL
+            link.href = canvas.toDataURL(`image/${format}`);
+            
+            // Добавляем ссылку в DOM, кликаем и удаляем
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        },
+
+        downloadSVG(svgElement, fileName = 'image.svg') {
+            console.log(svgElement);
+            
+            // Получаем содержимое SVG
+            const serializer = new XMLSerializer();
+            let svgString = typeof svgElement == 'string' ? svgElement : serializer.serializeToString(svgElement);
+            
+            // Добавляем namespace, если его нет
+            if (!svgString.match(/^<svg[^>]+xmlns="http:\/\/www\.w3\.org\/2000\/svg"/)) {
+                svgString = svgString.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+            }
+            
+            // Добавляем декларацию XML, если её нет
+            if (!svgString.match(/^<\?xml[^>]+\?>/)) {
+                svgString = '<?xml version="1.0" standalone="no"?>\n' + svgString;
+            }
+            
+            // Создаём Blob объект
+            const blob = new Blob([svgString], {type: 'image/svg+xml;charset=utf-8'});
+            const url = URL.createObjectURL(blob);
+            
+            // Создаём ссылку для скачивания
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = fileName;
+            
+            // Добавляем ссылку в документ, кликаем и затем удаляем
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Освобождаем память
+            URL.revokeObjectURL(url);
+        },
+
+        // executeInstructions(instructions) {
+        //     this.consolePrint(this.currentInstructionIndex)
+
+        //     let ctx = this.canvas.lazer.ctx 
+
+        //     if (this.currentInstructionIndex >= instructions.length) {
+        //         this.currentInstructionIndex = 0
+        //         this.combineCanvases()
+        //         return;
+        //     }
+            
+        //     const instruction = instructions[this.currentInstructionIndex];
+        //     console.log("Выполняется:", instruction);
+            
+        //     switch (instruction.type) {
+        //         case 'laser':
+        //             this.isLaserOn = instruction.params[0] > 0
+        //             if(!this.isLaserOn) ctx.stroke()
+        //             break;
+
+        //         case 'line':
+        //             if (this.isLaserOn) {
+        //                 ctx.beginPath();
+        //                 ctx.moveTo(this.currentPosition.x, this.currentPosition.y);
+        //                 ctx.lineTo(instruction.params[0], instruction.params[1]);
+        //                 ctx.stroke();
+        //             }
+        //             this.currentPosition = { x: instruction.params[0], y: instruction.params[1] };
+        //             break;
+                    
+        //         case 'move':
+        //             if (this.isLaserOn) {
+        //                 // ctx.beginPath();
+        //                 ctx.moveTo(this.currentPosition.x, this.currentPosition.y);
+        //                 // ctx.lineTo(instruction.params[0], instruction.params[1]);
+        //                 // ctx.stroke();
+        //             }
+        //             this.currentPosition = { x: instruction.params[0], y: instruction.params[1] };
+        //             break;
+                    
+        //         case 'bezier':
+        //             if (this.isLaserOn) {
+        //                 ctx.beginPath();
+        //                 ctx.moveTo(this.currentPosition.x, this.currentPosition.y);
+        //                 ctx.bezierCurveTo(
+        //                     instruction.params[0], instruction.params[1],
+        //                     instruction.params[2], instruction.params[3],
+        //                     instruction.params[4], instruction.params[5]
+        //                 );
+        //                 ctx.stroke();
+        //             }
+        //             this.currentPosition = { x: instruction.params[4], y: instruction.params[5] };
+        //             break;
+        //     }
+            
+        //     this.currentInstructionIndex++;
+        //     setTimeout(() => { this.executeInstructions(instructions) }, 1);
+        //     // this.executeInstructions(instructions)
+        // },
+
+        // combineCanvases() {
+        //     const canvas1 = this.canvas.svg;
+        //     const canvas2 = this.canvas.lazer;
+
+        //     // Получаем данные пикселей с обоих canvas
+        //     const ctx1 = canvas1.ctx;
+        //     const ctx2 = canvas2.ctx;
+            
+        //     const imageData1 = ctx1.getImageData(0, 0, canvas1.html.width, canvas1.html.height);
+        //     const imageData2 = ctx2.getImageData(0, 0, canvas2.html.width, canvas2.html.height);
+        //     const data1 = imageData1.data;
+        //     const data2 = imageData2.data;
+            
+        //     // Проходим по всем пикселям
+        //     for (let i = 0; i < data1.length; i += 4) {
+        //         // Проверяем, является ли пиксель в canvas2 чёрным (и не прозрачным)
+        //         const isBlackInCanvas2 = (
+        //             data2[i] === 0 &&      // R = 0
+        //             data2[i + 1] === 0 &&  // G = 0
+        //             data2[i + 2] === 0 &&  // B = 0
+        //             data2[i + 3] > 0       // Alpha > 0 (не полностью прозрачный)
+        //         );
+                
+        //         if (isBlackInCanvas2) {
+        //             // Удаляем/перекрашиваем соответствующий пиксель в canvas1
+        //             if (true) {
+        //                 // Делаем полностью прозрачным
+        //                 data1[i + 3] = 0; // Alpha = 0
+        //             } else {
+        //                 // Или делаем белым (R=255, G=255, B=255, Alpha=255)
+        //                 data1[i] = 255;
+        //                 data1[i + 1] = 255;
+        //                 data1[i + 2] = 255;
+        //                 data1[i + 3] = 255;
+        //             }
+        //         }
+        //     }
+            
+        //     // Применяем изменения обратно на canvas1
+        //     ctx1.putImageData(imageData1, 0, 0);
+
+        //     if(this.printWork) this.vectorize()
+            
+        // },
+
+        // /**
+        //  * Проверяет, является ли пиксель чёрным (R=0, G=0, B=0, Alpha > 0)
+        //  * @param {Uint8ClampedArray} data - Массив данных изображения
+        //  * @param {number} index - Индекс пикселя в массиве данных
+        //  * @returns {boolean} true, если пиксель чёрный и не прозрачный
+        //  */
+        // isBlackPixel(data, index) {
+        //     return (
+        //         data[index] === 0 &&     // R
+        //         data[index + 1] === 0 && // G
+        //         data[index + 2] === 0 && // B
+        //         data[index + 3] > 0      // Alpha (не прозрачный)
+        //     );
+        // },
+
+        
+        // /**
+        //  * Генерирует инструкции для горизонтальной штриховки
+        //  */
+        // generateHorizontalLines(imageData, step = 1) {
+        //     const instructions = [];
+        //     const { width, height, data } = imageData;
+
+        //     for (let y = 0; y < height; y += step) {
+        //         let isLaserOn = false;
+
+        //         for (let x = 0; x < width; x++) {
+        //             const index = (y * width + x) * 4;
+        //             const isBlack = this.isBlackPixel(data, index);
+
+        //             if (isBlack && !isLaserOn) {
+        //                 // Начало чёрного отрезка: включаем лазер и запоминаем позицию
+        //                 instructions.push({ type: "line", params: [x + 1, y] });
+        //                 instructions.push({ type: "laser", params: [800] });
+        //                 isLaserOn = true;
+        //             } else if (!isBlack && isLaserOn) {
+        //                 // Конец чёрного отрезка: выключаем лазер
+        //                 instructions.push({ type: "line", params: [x - 1, y] });
+        //                 instructions.push({ type: "laser", params: [0] });
+        //                 isLaserOn = false;
+        //             }
+        //         }
+
+        //         // Если линия закончилась на чёрном пикселе
+        //         if (isLaserOn) {
+        //             instructions.push({ type: "line", params: [width - 1, y] });
+        //             instructions.push({ type: "laser", params: [0] });
+        //         }
+        //     }
+
+        //     return instructions;
+        // },
+
+        // /**
+        //  * Генерирует инструкции для вертикальной штриховки
+        //  */
+        // generateVerticalLines(imageData, step = 1) {
+        //     const instructions = [];
+        //     const { width, height, data } = imageData;
+
+        //     for (let x = 0; x < width; x += step) {
+        //         let isLaserOn = false;
+
+        //         for (let y = 0; y < height; y++) {
+        //             const index = (y * width + x) * 4;
+        //             const isBlack = this.isBlackPixel(data, index);
+
+        //             if (isBlack && !isLaserOn) {
+        //                 // Начало чёрного отрезка
+        //                 instructions.push({ type: "line", params: [x, y + 1] });
+        //                 instructions.push({ type: "laser", params: [800] });
+        //                 isLaserOn = true;
+        //             } else if (!isBlack && isLaserOn) {
+        //                 // Конец чёрного отрезка
+        //                 instructions.push({ type: "line", params: [x, y - 1] });
+        //                 instructions.push({ type: "laser", params: [0] });
+        //                 isLaserOn = false;
+        //             }
+        //         }
+
+        //         // Если столбец закончился на чёрном пикселе
+        //         if (isLaserOn) {
+        //             instructions.push({ type: "line", params: [x, height - 1] });
+        //             instructions.push({ type: "laser", params: [0] });
+        //         }
+        //     }
+
+        //     return instructions;
+        // },
+
+        // /**
+        //  * Основная функция
+        //  * @param {ImageData} imageData - Данные изображения
+        //  * @param {Object} options - Настройки
+        //  * @param {boolean} [options.vertical=false] - Добавить вертикальную штриховку
+        //  * @param {number} [options.step=1] - Шаг между линиями
+        //  */
+        // getHatchingInstructions(imageData, options = {}) {
+        //     const { vertical = true, step = 1 } = options;
+        //     const instructions = [];
+
+        //     // Горизонтальная штриховка (всегда)
+        //     instructions.push(...this.generateHorizontalLines(imageData, step));
+
+        //     // Вертикальная штриховка (опционально)
+        //     if (vertical) {
+        //         instructions.push(...this.generateVerticalLines(imageData, step));
+        //     }
+
+        //     // Убедимся, что лазер выключен в конце
+        //     if (instructions.length > 0 && instructions[instructions.length - 1].type === "laser") {
+        //         instructions[instructions.length - 1].params = [0];
+        //     }
+
+        //     return instructions;
+        // },
+    }
+}
+</script>
+
+<style lang="scss">
+    @use "@/assets/style/pages/pages.scss";
+    @use "@/assets/style/pages/page-market.scss";
+
+    .block-canvas{
+        height: 600px;
+        background-color: rgb(209, 209, 209);
+        padding: 0;
+
+        p{
+            color: black;
+            margin-bottom: 20px;
+        }
+    }
+</style>
