@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="Портрет не задан">
+  <!-- Общая заглушка вместо портрета персонажа. Заменяется одним файлом на весь проект.
+       Цвета приглушённые и полупрозрачные — читается и на золотой, и на нуар-теме. -->
+  <g fill="none" stroke="#c8a84b" stroke-opacity="0.42" stroke-width="3.5"
+     stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="48" cy="35" r="15"/>
+    <path d="M20 82c0-14.4 12.5-24 28-24s28 9.6 28 24"/>
+  </g>
+  <path d="M48 20a15 15 0 0 1 15 15" fill="none" stroke="#b87fd4" stroke-opacity="0.5"
+        stroke-width="3.5" stroke-linecap="round"/>
+</svg>
