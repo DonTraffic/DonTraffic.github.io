@@ -1,5 +1,11 @@
-.modal-skill{
-    &__content{
+@use '../core' as *;
+
+.modal-skill {
+    &__title {
+        font-size: $font-size-title;
+    }
+
+    &__content {
         width: 100%;
         display: flex;
         justify-content: space-between;
@@ -9,58 +15,55 @@
             flex-direction: column;
             align-items: center;
         }
-
     }
-    
-    &__lists{
+
+    &__lists {
         display: flex;
         flex-direction: column;
         justify-content: center;
         gap: 16px;
 
-        @include phone {
-            width: 100%;
+        @include phone { width: 100%; }
+
+        &-title {
+            font-size: $font-size-body;
         }
 
-        &-list{
-            &-item{
+        &-list {
+            &-item {
                 position: relative;
                 margin-left: 20px;
                 list-style: none;
 
-                a{
-                    font-size: 16px;
+                a {
+                    font-size: $font-size-base;
                     text-decoration: none;
-                    border-bottom: 1px solid color-black();
+                    // Прозрачная граница держит высоту строки при наведении
+                    border-bottom: 1px solid transparent;
 
-                    transition: .4s ease;
+                    transition: border-color $transition;
 
-                    &:hover{
-                        border-bottom: 1px solid color-white();
-                    }
+                    @include hover { border-bottom-color: color-white(); }
                 }
 
-                &::before{
+                // Маркер списка: точка крупнее самого текста
+                &::before {
                     content: '.';
                     font-size: 26px;
 
                     position: absolute;
                     left: -20px;
                     top: -6px;
-
                 }
-
             }
-
-            &:nth-child(1){
-                margin-bottom: 20px;
-            }
-
         }
 
+        &-item + &-item {
+            margin-top: 4px;
+        }
     }
 
-    &__info{
+    &__info {
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -74,36 +77,30 @@
             flex-direction: row;
         }
 
-        &-img{
+        &-img {
             width: 121px;
             height: 121px;
-            pointer-events: none;
         }
 
-        &-text{
+        &-text {
             text-align: center;
 
-            @include phone {
-                text-align: left;
-            }
-
+            @include phone { text-align: left; }
         }
-
     }
 
-    &__example{
+    &__example {
         width: fit-content;
         text-decoration: none;
         border: 1px solid color-white();
-        border-radius: 6px;
+        border-radius: $radius;
         padding: 8px 16px;
 
-        transition: .4s ease;
+        transition: background-color $transition, color $transition;
 
-        &:hover{
+        @include hover {
             background-color: color-white();
             color: color-black();
         }
-
     }
 }

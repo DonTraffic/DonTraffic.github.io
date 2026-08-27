@@ -1,7 +1,7 @@
-@import '../media.scss';
-@import '../variable.scss';
+@use '../core' as *;
 
-@import '../modules/header.scss';
+
+@use '../modules/header.scss';
 
 .wrapper{
     max-width: $max-width;

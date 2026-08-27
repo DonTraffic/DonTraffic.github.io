@@ -1,42 +1,52 @@
+@use 'sass:list';
+@use '../core' as *;
+
+// Длительность качания для каждого из 16 слоёв волн (снизу вверх).
+// Числа не кратны друг другу — иначе слои синхронизируются и «дышат» вместе.
+$sea-wave-durations: 13s, 9s, 12s, 14s, 10s, 12s, 15s, 11s, 12s, 9s, 14s, 12s, 9s, 15s, 11s, 14s;
+
 .card-skills {
     z-index: 3;
     left: 50%;
     transform: translate(-50%, 0);
-    
-    @include phone{
-        left: 0px;
+
+    @include phone {
+        left: 0;
         transform: translate(0, 0);
     }
 
-    &__content{
+    &__content {
         width: 100%;
 
-        @include phone {
-            z-index: 2;
-        }
+        @include phone { z-index: 2; }
 
-        &-quote{
+        &-quote {
             position: absolute;
             top: 36px;
             left: 36px;
 
             width: 400px;
             font-weight: 400;
-            font-size: 20px;
+            font-size: $font-size-body;
             line-height: 24px;
+            transition: opacity $transition;
 
             @include phone {
-                max-width: 100%;
                 width: 100%;
+                max-width: 100%;
                 top: 0;
-                left: 0%;
+                left: 0;
 
                 padding: 24px;
-
-                // font-size: 16px;
             }
 
-            &-author{
+            // Цитата относится к заставке: уплывая на слайд с навыками, она гаснет
+            &--hidden {
+                opacity: 0;
+                pointer-events: none;
+            }
+
+            &-author {
                 margin-top: 16px;
                 font-style: oblique;
                 display: block;
@@ -44,145 +54,131 @@
         }
     }
 
-    &__background{
-        @include phone {
-            z-index: 1 !important;
+    // Дублёр содержимого холста для клавиатуры и скринридеров.
+    // Спрятан визуально, но всплывает панелью, как только в него попал фокус, —
+    // иначе фокус уезжал бы в невидимую область.
+    &__fallback {
+        position: absolute;
+        left: 0;
+        top: 0;
+        z-index: 11;
+        clip-path: inset(50%);
+
+        &:focus-within {
+            clip-path: none;
+
+            background-color: color-black();
+            border: 1px solid color-white();
+            border-radius: 0 $radius $radius 0;
+            padding: 12px 16px;
         }
 
-        @mixin layerSeaWave($count, $time) {
-            z-index: calc(100 - #{$count});
-            bottom: calc((#{$count} - 1) * 30px);
-            animation: moveWave $time infinite;
-
-            .sea__wave-block{
-                animation: moveWaveBlock $time infinite;
-            }
+        ul {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4px;
+            list-style: none;
         }
 
-        &-sea{
+        button {
+            font-size: $font-size-base;
+            text-decoration: underline;
+        }
+    }
+
+    // Море перекрывает цитату на десктопе — на телефоне порядок обратный
+    &__background {
+        z-index: 2;
+
+        @include phone { z-index: 1; }
+
+        &-sea {
             position: relative;
             top: 0;
 
-            &--mobile{
+            // Разметка волн нужна только узким экранам, где canvas не запускается
+            &--mobile {
                 display: none;
 
-                @include phone{
+                @include phone {
                     display: flex;
 
                     height: 100%;
                     width: 100%;
                 }
             }
+        }
+    }
+}
 
-            .sea{
-                &__sun{
-                    position: absolute;
-                    right: 24px;
-                    top: 24px;
+.sea {
+    &__sun {
+        position: absolute;
+        right: 24px;
+        top: 24px;
 
-                    @include tablet{
-                        top: 100px;
-                    }
-                }
+        @include tablet { top: 100px; }
+    }
 
-                &__wave{
-                    width: 100%;
-                    position: absolute;
-                    left: 50%;
-                    bottom: -20px;
+    &__wave {
+        width: 100%;
+        position: absolute;
+        left: 50%;
+        bottom: -20px;
 
-                    height: 80px;
+        height: 80px;
 
-                    &-block{
-                        top: -15%;
-                        position: absolute;
-                        left: 50%;
+        // Слои идут снизу вверх: чем ближе к зрителю, тем ниже и тем выше в стопке
+        @for $i from 1 through list.length($sea-wave-durations) {
+            &--#{$i} {
+                $duration: list.nth($sea-wave-durations, $i);
 
-                        display: flex;
-                        justify-content: center;
-                        align-items: center;
+                z-index: calc(100 - #{$i});
+                bottom: ($i - 1) * 30px;
+                animation: moveWave $duration infinite;
 
-                        width: 70px;
-                        height: 70px;
+                .sea__wave-block { animation: moveWaveBlock $duration infinite; }
+            }
+        }
 
-                        background-color: color-black();
-                        border: 1px solid color-white();
-                        border-radius: 6px;
+        &-block {
+            top: -15%;
+            position: absolute;
+            // Горизонтальное положение задаёт компонент: оно часть данных о навыке
+            left: var(--block-left, 50%);
 
-                        padding: 4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
 
-                        transition: .4s ease;
+            width: 70px;
+            height: 70px;
 
-                        &-svg{
-                            width: 100%;
-                            height: 100%;
-                            object-fit: contain;
-                        }
+            background-color: color-black();
+            border: 1px solid color-white();
+            border-radius: $radius;
 
-                        &:hover{
-                            background-color: color-white();
-                            color: color-black();
-                        }
+            padding: 4px;
 
-                        &--45{
-                            left: 45%;
-                        }
+            transition: background-color $transition, color $transition;
 
-                        &--50{
-                            left: 50%;
-                        }
-
-                        &--65{
-                            left: 65%;
-                        }
-
-                        &--70{
-                            left: 70%;
-                        }
-
-                        &--85{
-                            left: 85%;
-                        }
-
-                        &--95{
-                            left: 95%;
-                        }
-                    }
-
-                    &-1{ @include layerSeaWave(1, 13s); }
-                    &-2{ @include layerSeaWave(2, 9s); }
-                    &-3{ @include layerSeaWave(3, 12s); }
-                    &-4{ @include layerSeaWave(4, 14s); }
-                    &-5{ @include layerSeaWave(5, 10s); }
-                    &-6{ @include layerSeaWave(6, 12s); }
-                    &-7{ @include layerSeaWave(7, 15s); }
-                    &-8{ @include layerSeaWave(8, 11s); }
-                    &-9{ @include layerSeaWave(9, 12s); }
-                    &-10{ @include layerSeaWave(10, 9s); }
-                    &-11{ @include layerSeaWave(11, 14s); }
-                    &-12{ @include layerSeaWave(12, 12s); }
-                    &-13{ @include layerSeaWave(13, 9s); }
-                    &-14{ @include layerSeaWave(14, 15s); }
-                    &-15{ @include layerSeaWave(15, 11s); }
-                    &-16{ @include layerSeaWave(16, 14s); }
-                }
-
-                @keyframes moveWave { 0%{ translate: -60% 40%; } 50% { translate: -80% 40%; } 100% { translate: -60% 40%; } }
-                @keyframes moveWaveBlock { 
-                    0%{ 
-                        translate: -50% 0;
-                        rotate: 10deg;
-                    } 
-                    50% { 
-                        translate: -80% 0;
-                        rotate: -10deg;
-                    } 
-                    100% { 
-                        translate: -50% 0;
-                        rotate: 10deg;
-                    } 
-                }
+            @include hover {
+                background-color: color-white();
+                color: color-black();
             }
         }
     }
+}
+
+@keyframes moveWave {
+    0%   { translate: -60% 40%; }
+    50%  { translate: -80% 40%; }
+    100% { translate: -60% 40%; }
+}
+
+@keyframes moveWaveBlock {
+    0%   { translate: -50% 0; rotate: 10deg; }
+    50%  { translate: -80% 0; rotate: -10deg; }
+    100% { translate: -50% 0; rotate: 10deg; }
 }

@@ -1,73 +1,81 @@
 <template>
-    <div class="modal modal-skill" :class="{'modal--show': activeSkill}">
-        <div class="modal__close" @click="$emit('closeModal')">
-            <svg class="modal__close-icon">
-                <use xlink:href="@/assets/svg/sprite.svg#close"></use>
-            </svg>
-        </div>
+    <modals-modalBase
+        class="modal-skill"
+        :open="Boolean(skill)"
+        :label="skill ? `Навык: ${skill.name}` : ''"
+        @close="emit('close')"
+    >
+        <h2 class="modal-skill__title">Язык: {{ skill?.name }}</h2>
 
-        <template v-if="activeSkill">
-            <h2 class="modal-skill__title">Язык: {{ activeSkill }}</h2>
+        <div class="modal-skill__content">
+            <div class="modal-skill__lists">
+                <!-- Курсы, тесты и рекомендации отличались только заголовком
+                     и полем данных — раньше разметка была скопирована трижды -->
+                <div
+                    v-for="group in linkGroups"
+                    :key="group.field"
+                    class="modal-skill__lists-item"
+                >
+                    <h3 class="modal-skill__lists-title">{{ group.title }}</h3>
 
-            <div class="modal-skill__content">
-                <div class="modal-skill__lists">
-                    <div class="modal-skill__lists-item" v-if="info[activeSkill]['courses']">
-                        <h3 class="modal-skill__lists-title">Курсы:</h3>
-                        <ul class="modal-skill__lists-list">
-                            <li
-                                class="modal-skill__lists-list-item"
-                                v-for="item in info[activeSkill]['courses']" 
-                                :key="item.title"
-                            ><a :href="item.url">{{ item.title }}</a></li>
-                        </ul>
-
-                    </div>
-
-                    <div class="modal-skill__lists-item" v-if="info[activeSkill]['tests']">
-                        <h3 class="modal-skill__lists-title">Пройденные тесты:</h3>
-                        <ul class="modal-skill__lists-list">
-                            <li
-                                class="modal-skill__lists-list-item"
-                                v-for="item in info[activeSkill]['tests']" 
-                                :key="item.title"
-                            ><a :href="item.url">{{ item.title }}</a></li>
-                        </ul>
-                    </div>
-
-                    <div class="modal-skill__lists-item" v-if="info[activeSkill]['recommendations']">
-                        <h3 class="modal-skill__lists-title">Рекомендации:</h3>
-                        <ul class="modal-skill__lists-list">
-                            <li
-                                class="modal-skill__lists-list-item"
-                                v-for="item in info[activeSkill]['recommendations']" 
-                                :key="item.title"
-                            ><a :href="item.url">{{ item.title }}</a></li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="modal-skill__info">
-                    <img
-                        class="modal-skill__info-img"
-                        :src="'/svg/skills/' + activeSkill + '.svg'"
-                        :alt="activeSkill + '.svg'"
-                    >
-                    <p class="modal-skill__info-text">Опыт <br/> {{ info[activeSkill]['experience'] }} </p>
+                    <ul class="modal-skill__lists-list">
+                        <li
+                            v-for="item in group.items"
+                            :key="item.url"
+                            class="modal-skill__lists-list-item"
+                        >
+                            <a :href="item.url" target="_blank" rel="noopener noreferrer">{{ item.title }}</a>
+                        </li>
+                    </ul>
                 </div>
             </div>
 
-            <a class="modal-skill__example" :href="info[activeSkill]['example']">Пример</a>
-        </template>
-    </div>
+            <div class="modal-skill__info">
+                <img
+                    class="modal-skill__info-img"
+                    :src="skill?.icon"
+                    :alt="`Логотип ${skill?.name}`"
+                    width="121"
+                    height="121"
+                    loading="lazy"
+                    decoding="async"
+                >
+                <p class="modal-skill__info-text">Опыт <br> {{ skill?.experience }}</p>
+            </div>
+        </div>
+
+        <!-- Ссылка появляется, только когда пример есть: раньше у половины
+             навыков это был <a href=""> — клик перезагружал страницу -->
+        <a
+            v-if="skill?.example"
+            class="modal-skill__example"
+            :href="skill.example"
+            target="_blank"
+            rel="noopener noreferrer"
+        >Пример</a>
+    </modals-modalBase>
 </template>
 
-<script>
-export default {
-    name: 'modal-skill',
+<script setup>
+const props = defineProps({
+    skill: { type: Object, default: null },
+})
 
-    props: {
-        activeSkill: String,
-        info: Object
-    },
-}
+const emit = defineEmits(['close'])
+
+const LINK_GROUPS = [
+    { field: 'courses', title: 'Курсы:' },
+    { field: 'tests', title: 'Пройденные тесты:' },
+    { field: 'recommendations', title: 'Рекомендации:' },
+]
+
+/** Только непустые списки вида { field, title, items } — пустые обёртки в разметку не попадают */
+const linkGroups = computed(() => {
+    const skill = props.skill
+    if (!skill) return []
+
+    return LINK_GROUPS
+        .map(group => ({ ...group, items: skill[group.field] ?? [] }))
+        .filter(group => group.items.length > 0)
+})
 </script>

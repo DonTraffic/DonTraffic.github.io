@@ -246,6 +246,15 @@
     </main>
 </template>
 
+<script setup>
+// SEO и флаг общей шапки: раньше это лежало в состоянии Vuex,
+// куда layout ходил по имени маршрута
+import { PAGE_META } from '~/data/pages'
+
+definePageMeta({ header: true })
+usePageSeo(PAGE_META.market)
+</script>
+
 <script>
 import {DTScroll} from '~/scripts/slider'
 import Potrace from 'potrace';

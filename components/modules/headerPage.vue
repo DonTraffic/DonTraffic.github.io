@@ -1,16 +1,14 @@
 <template>
-    <div class="wrapper">
+    <div v-if="meta" class="wrapper">
         <header class="header">
-            <h1 class="header__title">{{ store.state.pageData[route.name].title }}</h1>
-            <h2 class="header__desc">{{ store.state.pageData[route.name].description }}</h2>
+            <h1 class="header__title">{{ meta.title }}</h1>
+            <p class="header__desc">{{ meta.description }}</p>
         </header>
     </div>
 </template>
 
 <script setup>
-    import { useStore } from 'vuex';
-    import { useRoute } from 'vue-router';
-
-    const store = useStore();
-    const route = useRoute();
+// Раньше шапка лезла в состояние Vuex по имени маршрута и падала,
+// если для страницы там не оказывалось записи
+const meta = useCurrentPageMeta()
 </script>

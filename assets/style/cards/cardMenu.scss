@@ -1,3 +1,5 @@
+@use '../core' as *;
+
 .card-menu {
     z-index: 2;
     bottom: 50%;
@@ -8,10 +10,11 @@
         transform: translate(0, 0);
     }
 
-    &__content{
+    &__content {
         position: absolute;
-        left: 32px;
-        top: 32px;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
 
         display: flex;
         flex-direction: column;
@@ -19,30 +22,30 @@
 
         min-width: 225px;
 
-
-        @include phone{
+        @include phone {
             left: 50%;
             top: 50%;
             transform: translate(-50%, -50%);
         }
 
-        p{
+        p {
             font-weight: 400;
             font-size: 25px;
             text-align: center;
             line-height: 100%;
         }
 
-        &-btns{
+        &-btns {
             display: flex;
             justify-content: center;
             gap: 8px;
 
             padding-top: 6px;
+            font-style: normal;
 
-            a{                
+            a {
                 background: color-black();
-                border: 1px solid color-white();
+                // border: 1px solid color-white();
                 border-radius: 30px;
 
                 padding: 4px 8px;
@@ -55,137 +58,40 @@
                 font-size: 18px;
 
                 text-decoration: none;
-                transition: .4s ease;
+                transition: background-color $transition, color $transition;
 
                 svg {
-                    transition: .4s ease;
-                    
+                    transition: fill $transition;
+
                     width: 16px;
                     height: 16px;
 
                     fill: color-white();
                 }
 
-                &:nth-child(1) {
-                    svg{
-                        padding-right: 2px;
-                    }
-                }
-                
-                &:hover{
+                @include hover {
                     color: color-black();
                     background-color: color-white();
 
-                    svg{
-                        fill: color-black();
-                    }
-
+                    svg { fill: color-black(); }
                 }
-
             }
 
+            // Иконка Telegram нарисована со сдвигом вправо — компенсируем оптически
+            &-telegram svg {
+                padding-right: 2px;
+            }
         }
-
     }
 
-    &__background  {
+    &__background {
+        &-img {
 
-        &-lake {
-            position: absolute;
 
-            bottom: -25px;
-            left: -5px;
+            width: calc(100% + 2px);
+            height: calc(100% + 2px);
 
-            width: 650px;
-            height: 41%;
-
-            @include phone {
-                bottom: -15px;
-                left: -5px;
-                width: 830px;
-                height: 26%;
-            }
-
+            object-fit: cover;
         }
-
-        &-stone {
-            position: absolute;
-
-            height: 170px;
-            width: 270px;
-
-            bottom: -10px;
-            right: -10px;
-
-            @include phone {
-                height: 280px;
-                width: 450px;
-
-                right: -60px;
-            }
-        }
-
-        &-boat {
-            position: absolute;
-
-            height: 46px;
-            width: 125px;
-
-            bottom: 115px;
-            left: 20%;
-
-            @include phone {
-                height: 60px;
-                width: 150px;
-                
-                bottom: 135px;
-                left: 5%;
-            }
-        }
-
-        &-sun{
-            position: absolute;
-            top: 20px;
-            right: 50%;
-            transform: translate(50%, 0);
-
-            @include phone {
-                top: 40px;
-            }
-
-        }
-
-        &-tree {
-            pointer-events: none;
-            position: absolute;
-
-            height: 600px;
-            width: 790px;
-
-            object-fit: contain;
-
-            top: -230px;
-            right: -410px;
-
-            @include phone {
-                top: -255px;
-                right: -515px;
-            }
-
-        }
-
-        @keyframes moveTree {
-            0%{transform: skewX(2deg) translate(-2px);}
-            50%{transform: skewX(-2deg) translate(2px);}
-            100%{transform: skewX(2deg) translate(-2px);} 
-        }
-
-        @keyframes moveBoat {
-            0%{transform:translate(-3px);}
-            50%{transform: translate(3px);}
-            100%{transform: translate(-3px);} 
-        }
-
     }
-
 }

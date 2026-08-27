@@ -1,43 +1,59 @@
 <template>
     <div id="app">
-        <modules-headerPage v-if="$store.state.pageData[$route.name].settings.header"/>
+        <modules-headerPage v-if="showHeader" />
+
         <slot />
 
-        <div id="custom-cursor" ref="custom-cursor"></div>
+        <!-- Точку показывает CSS по классу .has-custom-cursor, который ставит JS.
+             v-if по media-запросу расходился бы с server-side разметкой. -->
+        <div id="custom-cursor" ref="cursor" aria-hidden="true"></div>
     </div>
 </template>
 
-<script>
-import { useStore } from 'vuex'
+<script setup>
+const route = useRoute()
+const showHeader = computed(() => route.meta.header === true)
 
-export default {
-    name: 'app',
+// На тач-экранах курсора нет — рисовать точку незачем
+const hasFinePointer = useMediaQuery('(hover: hover) and (pointer: fine)')
 
-    mounted() {
-        let cursor = this.$refs['custom-cursor']
-        document.addEventListener('mousemove', (e) => {
-            cursor.style.left = `${e.pageX}px`
-            cursor.style.top = `${e.pageY}px`
-        })
-    },
+const cursor = useTemplateRef('cursor')
 
-    setup() {
-        const route = useRoute()
-        const pageSEO = useStore().state.pageData[route.name]
+let frameId = 0
+let pointerX = 0
+let pointerY = 0
 
-        useHead({
-            title: pageSEO.title,
-            meta: [
-                { name: 'keywords', content: pageSEO.keywords },
-                { charset: "utf-8" },
-                { name: "viewport", content: "width=device-width, initial-scale=1" },
-                { property: "og:title", content: pageSEO.title, },
-                { property: "og:url", content: `https://dontraffic.ru${route.name != 'index' ? '/' + route.name : ''}` },
-                { name: 'description', content: pageSEO.description },
-                { property: "og:description", content: pageSEO.description },
-                { property: "og:image", content: 'https://dontraffic.ru/images/wallpapperLink.jpg', }
-            ]
-        })
-    }
+/**
+ * Своя точка вместо курсора.
+ *
+ * Координаты кладём в CSS-переменные и обновляем раз в кадр:
+ * прежняя версия писала left/top прямо на каждое движение мыши,
+ * заставляя браузер пересчитывать раскладку сотни раз в секунду.
+ * Слушатель тогда же вешался навсегда и не снимался.
+ */
+function render() {
+    frameId = 0
+    cursor.value?.style.setProperty('--cursor-x', `${pointerX}px`)
+    cursor.value?.style.setProperty('--cursor-y', `${pointerY}px`)
 }
+
+function onPointerMove(event) {
+    pointerX = event.clientX
+    pointerY = event.clientY
+    if (!frameId) frameId = requestAnimationFrame(render)
+}
+
+onMounted(() => {
+    if (!hasFinePointer.value) return
+
+    // Класс ставит JS: не загрузился скрипт — остаётся системный курсор
+    document.documentElement.classList.add('has-custom-cursor')
+    document.addEventListener('pointermove', onPointerMove, { passive: true })
+})
+
+onBeforeUnmount(() => {
+    document.removeEventListener('pointermove', onPointerMove)
+    document.documentElement.classList.remove('has-custom-cursor')
+    if (frameId) cancelAnimationFrame(frameId)
+})
 </script>

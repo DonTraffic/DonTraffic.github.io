@@ -1,0 +1,87 @@
+/**
+ * Места работы и проекты для карточки «Проекты».
+ *
+ * Прежняя структура делила данные на `project` и `company` и в четырёх местах
+ * разметки выбирала между ними через v-if/v-else. Здесь у записи всегда есть
+ * заголовок и ссылка, а `company` заполняется, только когда проект принадлежит
+ * стороннему заказчику.
+ */
+
+// Запись о проекте:
+//   id           — ключ для :key и имён файлов в /public/svg/projects
+//   title, link, description, previewIcon, logoIcon
+//   company      — работодатель { name, link }; null, когда проект и есть компания
+//   job          — должность { name, link }
+//   experience   — { from, to }, где значение вида '2021-08' либо 'actual'
+//   duties       — список обязанностей
+//   achievements — список достижений, необязателен
+//   tags         — список технологий
+
+const RESUME_URL = 'https://vologda.hh.ru/resume/c1497482ff0b662b500039ed1f4a6e78766c69'
+
+const FRONTEND_JOB = {
+    name: 'Frontend-developer',
+    link: RESUME_URL,
+}
+
+export const PROJECTS = [
+    {
+        id: 'qayli',
+        title: 'qayli',
+        link: 'https://qayli.com/',
+        description: 'Портал для поиска новостроек и ипотечные предложения',
+        previewIcon: '/svg/projects/preview-qayli.svg',
+        logoIcon: '/svg/projects/qayli-logo.svg',
+        company: {
+            name: 'x.seven',
+            link: 'https://xseven.io/',
+        },
+        job: FRONTEND_JOB,
+        experience: { from: '2021-08', to: '2023-04' },
+        duties: [
+            'Декомпозиция задач и оценка сроков',
+            'Адаптивная верстка (html, css, scss) страниц портала по макетам из Figma',
+            'Написание и поддержка компонентов Vue.js',
+            'Перенос страниц портала со стека php/html+css на стек php/nuxt.js',
+            'Работа REST-API для реализации логики на стороне клиента',
+            'Оптимизация запросов к API',
+            'Исправление багов',
+            'Добавление нового функционала',
+        ],
+        achievements: [
+            'Совместно с backend программистом полностью перевели портал со стека php/html+css на стек php/nuxt.js с реализацией рендеринга страниц на сервере (SSR)',
+            'На 30% сократил количество запросов к API',
+            'Занял 2 место в компании по соревнованию быстрой печати среди программистов',
+        ],
+        tags: ['JavaScript', 'Vue2', 'Nuxt2', 'Git', 'WebPack', 'Editor.js', 'Node.js'],
+    },
+    {
+        id: 'servizoria',
+        title: 'servizoria',
+        link: 'https://servizoria.ru/',
+        description: 'Экосистема маркетинговых исследований и продуктов для бизнеса',
+        previewIcon: '/svg/projects/preview-servizoria.svg',
+        logoIcon: '/svg/projects/servizoria-logo.svg',
+        company: null,
+        job: FRONTEND_JOB,
+        experience: { from: '2023-04', to: 'actual' },
+        duties: [
+            'Декомпозиция задач и оценка сроков',
+            'Адаптивная верстка (html, css, scss) страниц портала по макетам из Figma',
+            'Добавление нового функционала',
+            'Написание кода на jQuery и поддержка/обновление legacy кода',
+        ],
+        tags: ['JavaScript', 'Git'],
+    },
+]
+
+/** Контакты вынесены из разметки: их же использует микроразметка Person. */
+export const CONTACTS = {
+    name: 'Уханов Дмитрий',
+    role: 'Middle Frontend разработчик',
+    telegram: 'https://t.me/KaeruYami',
+    resume: RESUME_URL,
+    phone: '+79210638647',
+    phoneLabel: '+7 (921) 063-86-47',
+    site: 'https://autist-program.ru/',
+}

@@ -1,20 +1,24 @@
-.card-projects{
+@use '../core' as *;
+
+.card-projects {
     z-index: 3;
-    display: grid !important;
+    // Перебивает `display: flex` базовой .card — работает за счёт порядка
+    // подключения в DonTraffic.scss, !important не нужен
+    display: grid;
     grid-template-columns: 1fr 1px 1fr;
 
-    @include tablet{
+    @include tablet {
         grid-template-columns: 1fr;
         grid-template-rows: 1fr 1px 1fr;
     }
 
-    &__preview{
+    &__preview {
         min-height: 100%;
         position: relative;
         overflow: hidden;
         pointer-events: none;
 
-        &-svg{
+        &-svg {
             position: absolute;
             bottom: 0;
             right: -70px;
@@ -23,33 +27,34 @@
             object-fit: cover;
         }
 
-        &-sun{
+        &-sun {
             position: absolute;
             left: 16px;
             top: 16px;
         }
 
-        &-container{
+        &-container {
             overflow: hidden;
             position: relative;
             height: 100%;
         }
 
-        &-viewport{
+        &-viewport {
             height: 100%;
-            transition: 1s ease;
+            transition: translate $card-transition ease;
 
             display: flex;
+            // Превью едет вверх, текст вниз — навстречу друг другу
             flex-direction: column-reverse;
         }
     }
 
-    &__line{
+    &__line {
         background-color: color-white();
         height: 100%;
     }
 
-    &__content{
+    &__content {
         height: 100%;
         padding: 24px;
         display: flex;
@@ -57,75 +62,76 @@
         justify-content: center;
         flex-direction: column;
 
-        &-container{
+        &-container {
             overflow: hidden;
             position: relative;
             height: 100%;
         }
 
-        &-viewport{
+        &-viewport {
             height: 100%;
-            transition: 1s ease;
+            transition: translate $card-transition ease;
         }
 
-        &-logo{
+        &-logo {
             display: flex;
             align-items: center;
             justify-content: center;
-    
-            &-icon{
+
+            &-icon {
                 margin: 10px 8px 0 0;
                 fill: color-white();
                 height: 35px;
                 width: 35px;
             }
-    
-            &-title{
+
+            &-title {
                 text-decoration: none;
                 text-transform: capitalize;
-                font-size: 31.25px;
+                font-size: $font-size-title;
                 font-weight: 400;
-                border-bottom: 1px solid color-black();
-                transition: .4s ease;
-    
-                &:hover{
-                    border-bottom: 1px solid color-white();
+                // Прозрачная граница держит высоту строки, чтобы текст
+                // не подпрыгивал при наведении
+                border-bottom: 1px solid transparent;
+                transition: border-color $transition;
+
+                @include hover {
+                    border-bottom-color: color-white();
                 }
             }
         }
-    
-        &-desc{
+
+        &-desc {
             text-align: center;
-            font-size: 16px;
-            font-style: normal;
+            font-size: $font-size-base;
             font-weight: 400;
             margin-bottom: 16px;
         }
-    
-        &-btn{
-            transition: .4s ease;
+
+        &-btn {
+            transition: background-color $transition, color $transition;
             padding: 8px 24px;
             border: 1px solid color-white();
-            background-color: rgba(255, 255, 255, 0);
-            border-radius: 6px;
-            font-size: 16px;
+            background-color: transparent;
+            border-radius: $radius;
+            font-size: $font-size-base;
             font-weight: 400;
             color: color-white();
-    
-            &:hover{
+
+            @include hover {
                 background-color: color-white();
                 color: color-black();
             }
         }
 
-        &-controll{
-            transition: .4s ease;
+        &-controll {
+            transition: background-color $transition;
             width: 40px;
             height: 40px;
 
             background-color: color-black();
             border: 1px solid color-white();
-            border-radius: 6px;
+            border-radius: $radius;
 
             padding: 8px;
 
@@ -135,25 +141,21 @@
             left: 50%;
             translate: -50% 0;
 
-            &:hover{
+            @include hover {
                 background-color: color-white();
 
-                .card-projects__content-controll-svg{
-                    fill: color-black();
-                }
+                .card-projects__content-controll-icon { fill: color-black(); }
             }
 
-            &--bottom{
+            &--bottom {
                 top: auto;
                 bottom: 16px;
 
-                .card-projects__content-controll-svg{
-                    rotate: 180deg;
-                }
+                .card-projects__content-controll-icon { rotate: 180deg; }
             }
 
-            &-svg{
-                transition: .4s ease;
+            &-icon {
+                transition: fill $transition;
                 width: 100%;
                 height: 100%;
                 fill: color-white();

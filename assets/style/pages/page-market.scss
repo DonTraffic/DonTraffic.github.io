@@ -1,7 +1,7 @@
-@import '../media.scss';
-@import '../variable.scss';
+@use '../core' as *;
 
-@import '../modules/slider.scss';
+
+@use '../modules/slider.scss';
 
 #PrintDonTraffic{
     padding: 16px 0;

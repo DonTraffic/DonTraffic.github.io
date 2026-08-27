@@ -1,247 +1,117 @@
 <template>
-  <div class="card card-start" id="cardStart">
-    <div class="card__content card-start__content">
-      <h1 class="text-shadow">{{ printData.value.h1 }}</h1>
-      <h2 class="text-shadow">{{ printData.value.h2 }}</h2>
-      <button @click="showMore">Показать больше</button>
-    </div>
+    <div class="card card-start" :data-position="positionOf('cardStart')">
+        <div class="card__content card-start__content">
+            <h1 class="text-shadow">{{ printed.h1 }}</h1>
+            <h2 class="text-shadow">{{ printed.h2 }}</h2>
 
-    <div class="card__background card-start__background">
-      <canvas id="canvasGrass" width="698" height="448"></canvas>
-    </div>
+            <button
+                type="button"
+                :style="{ '--reveal-delay': `${revealDelay}ms` }"
+                @click="goTo('cardMenu')"
+            >Показать больше</button>
+        </div>
 
-    <img 
-      class="card__background card-start__background--mobile"
-      src="@/assets/img/grass.png" 
-      alt="grass-mobile"
-      v-if="!globalSize" 
-    >
-  </div>
+        <!--
+            Что показать, решает CSS, а не v-if: при server-side рендере
+            ширина окна неизвестна, и любая ветка расходилась бы с гидрацией.
+            Холст на узких экранах просто не запускается, а трава лежит
+            фоном в media-запросе — на десктопе её никто не скачивает.
+        -->
+        <div class="card__background card-start__background" aria-hidden="true">
+            <canvas ref="canvas"></canvas>
+        </div>
+
+        <div class="card-start__background--mobile" aria-hidden="true"></div>
+    </div>
 </template>
 
 <script setup>
-import { useStore } from 'vuex';
+import { createGrassScene } from '~/utils/grassScene'
 
+const { goTo, positionOf, isOnScreen } = useCards()
+const isDesktop = useIsDesktop()
+const prefersReducedMotion = usePrefersReducedMotion()
 
-// Глобальные или общие переменные
-const store = useStore();
+// ── Печатающийся заголовок ───────────────────────────────────
+const PHRASES = [
+    { h1: '唐特拉菲克', h2: '如果你编程，那么用爱' },
+    { h1: 'DonTraffic', h2: 'Если программировать, то с любовью' },
+]
 
+const FINAL = PHRASES[PHRASES.length - 1]
 
-// Печатание текста
-const printData = ref({
-  text: {
-    china: {
-      h1: "唐特拉菲克",
-      h2: "如果你编程，那么用爱",
-    },
-    rus: {
-      h1: "DonTraffic",
-      h2: "Если программировать, то с любовью",
-    },
-  },
-  value: {
-    h1: "",
-    h2: "",
-  },
-  setting: {
-    interval: 100,
-    intervalSet: 0,
-  },
-});
+const LETTER_DELAY_MS = 100
+const PHRASE_DELAY_MS = 500
 
-const printText = () => {
-  let dataText = printData.value.text;
-  let dataValue = printData.value.value;
+/**
+ * На сервере и в первый кадр в разметке лежит готовый текст.
+ * Так заголовок страницы не пустой для поисковиков и для ботов соцсетей,
+ * которые JS не исполняют, — раньше в HTML уходил `<h1></h1>`.
+ * Эффект печати запускается уже после гидрации.
+ */
+const printed = reactive({ h1: FINAL.h1, h2: FINAL.h2 })
 
-  for (let countLang = 0; countLang < Object.keys(dataText).length; countLang++) {
-    let langKey = Object.keys(dataText)[countLang];
+const totalLetters = PHRASES.reduce((sum, phrase) => sum + phrase.h1.length + phrase.h2.length, 0)
+const typingDuration = totalLetters * LETTER_DELAY_MS + (PHRASES.length - 1) * PHRASE_DELAY_MS
 
-    setTimeout(() => {
-      for (let countText = 0; countText < Object.keys(dataText[langKey]).length; countText++) {
-        let textKey = Object.keys(dataText[langKey])[countText];
+/** Кнопка появляется ровно тогда, когда текст допечатался, а не через подобранные 8 секунд */
+const revealDelay = computed(() => (prefersReducedMotion.value ? 0 : typingDuration + 200))
 
-        for (let countLetter = 0; countLetter < dataText[langKey][textKey].length; countLetter++) {
-          setTimeout(() => {
-            dataValue[textKey].length > countLetter
-              ? (dataValue[textKey] = dataValue[textKey].replace(
-                  dataValue[textKey][countLetter],
-                  dataText[langKey][textKey][countLetter]
-                ))
-              : (dataValue[textKey] += dataText[langKey][textKey][countLetter]);
-          }, (printData.value.setting.interval += 100));
+let cancelled = false
+const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
+
+/** Замена по индексу, а не по значению: в тексте есть повторяющиеся буквы */
+function replaceAt(value, index, letter) {
+    if (index >= value.length) return value + letter
+    return value.slice(0, index) + letter + value.slice(index + 1)
+}
+
+async function typeText() {
+    printed.h1 = ''
+    printed.h2 = ''
+
+    for (const [phraseIndex, phrase] of PHRASES.entries()) {
+        if (phraseIndex > 0) await wait(PHRASE_DELAY_MS)
+
+        for (const key of ['h1', 'h2']) {
+            for (let letter = 0; letter < phrase[key].length; letter++) {
+                await wait(LETTER_DELAY_MS)
+                // Компонент могли размонтировать, пока мы ждали
+                if (cancelled) return
+                printed[key] = replaceAt(printed[key], letter, phrase[key][letter])
+            }
         }
-      }
-    }, (printData.value.setting.interval += printData.value.setting.intervalSet));
-    printData.value.setting.intervalSet = 500;
-  }
-};
-
-
-// Определение размеров
-const globalSize = ref(false);
-
-const updateSize = () => {
-  if (process.client) globalSize.value = window.innerWidth > 425;
+    }
 }
 
+// ── Поле травы на canvas ─────────────────────────────────────
+const canvas = useTemplateRef('canvas')
+const scene = shallowRef(null)
 
-// Функция смены стартового слайда
-const showMore = () => {
-  document.getElementById("cardMenu").classList.remove("card--position-bottom");
-  store.commit('changeActiveCard', 'cardMenu');
-}
+useAnimationFrame(
+    () => scene.value?.draw(),
+    () => Boolean(scene.value) && isOnScreen('cardStart'),
+)
 
+onMounted(async () => {
+    if (!prefersReducedMotion.value) typeText()
 
-// Объявление canvas
-const canvas = ref(null)
-const context = ref(null)
+    // Узкие экраны довольствуются фоновой картинкой: тяжёлая сцена там не видна
+    if (!isDesktop.value) return
 
-// Настройки солнца
-let angleSun = 2.6
-let speedSun = 0.0015
+    await nextTick()
+    const element = canvas.value
+    const card = element?.closest('.card')
+    if (!element || !card) return
 
-// Зададим значение отклонения влево
-let grassDeviationMax = 10
-let grassDeviationSpeed = 0.025
-
-// настройки травинки
-let grassCount = 0
-let grassWidth = 8
-let grassSizeMax = 0
-
-// Генерируем случайные значения
-let grassRandomSize = []
-let grassRandomDeviation = []
-let grassRandomPosition = []
-
-
-// отрисовка анимации каждый тик
-const canvasTick = () => {
-  // чистим canvas
-  context.value.clearRect(0, 0, canvas.value.width, canvas.value.height);
-
-  // рисуем траву
-  if(globalSize.value) for (let i = 0; i < grassCount; i++) { printGrass(i) }
-
-  // рисуем солнце
-  printSun()
-
-  // отрисовываем каждый тик
-  if (store.state.activeCard == 'cardStart') requestAnimationFrame(canvasTick)
-}
-
-// инициализация травинок
-const initGrass = () => {
-  const elemCard = document.querySelector('.card-start')
-
-  // Отпределяем и настраиваем область canvas
-  canvas.value = document.getElementById('canvasGrass')
-    canvas.value.width = elemCard.offsetWidth
-    canvas.value.height = elemCard.offsetHeight
-  context.value = canvas.value.getContext('2d')
-
-  // Переводим точку отсчета в левый нижний угол
-  context.value.translate(0, canvas.value.height)
-  context.value.scale(1, -1)
-
-  // Задаём общий цвет
-  context.value.fillStyle = "rgb(235, 235, 235)"
-
-  // Настройки травинки
-  grassCount = Math.round((canvas.value.width / grassWidth) + 20)
-  grassSizeMax = globalSize.value ? 180 : 225 ;
-
-  // Генерируем случайные значения
-  for (let i = 0; i < grassCount; i++) {
-    // Позиция
-    grassRandomPosition.push(
-      (i * (grassWidth - 1)) + 
-      (Math.floor(Math.random() * 5) + grassWidth) - 20
-    )
-
-    // Отклонение 
-    grassRandomDeviation.push([
-      Math.round(Math.random() * (grassDeviationMax - 1)), 
-      Boolean(Math.round(Math.random() * 1))
-    ])
-
-    // Высота
-    grassRandomSize.push(
-      Math.random() * 
-      (grassSizeMax - (grassSizeMax - 20)) + 
-      grassSizeMax - 20
-    )
-  }
-
-  requestAnimationFrame(canvasTick)
-}
-
-// рисуем солнце
-const printSun = () => {
-  // Заставляем солнце сбавлять скорость в конце пути
-  if (speedSun > 0.000001 && angleSun > 4.5) speedSun -= 0.00002;
-  if (angleSun < 4.7) angleSun += Math.PI * speedSun;
-
-  // Рисуем солнце
-  context.value.beginPath();
-  context.value.arc(
-    canvas.value.width / 1.3 + (globalSize.value ? 400 : window.innerWidth / 1.3) * Math.cos(-angleSun),
-    canvas.value.height / 12 + (globalSize.value ? 300 : window.innerHeight / 1.5) * Math.sin(-angleSun),
-    70, 0, Math.PI * 2
-  );
-  context.value.shadowBlur = 15;
-  context.value.shadowColor = "rgb(235, 235, 235)";
-  context.value.fill();
-}
-
-// рисуем траву
-const printGrass = (i) => {
-  // получаем настройки
-  let startX = grassRandomPosition[i]
-  let grassSize = grassRandomSize[i]
-  let grassDeviation = grassRandomDeviation[i][0]
-
-  // проверяем, в какую сторону наклоняется травинка
-  if (
-    grassDeviation >= grassDeviationMax || 
-    grassDeviation <= -grassDeviationMax
-  ) grassRandomDeviation[i][1] = !grassRandomDeviation[i][1]
-
-  grassRandomDeviation[i][1] ? 
-    grassRandomDeviation[i][0] += grassDeviationSpeed : 
-    grassRandomDeviation[i][0] -= grassDeviationSpeed;
-
-  // рисуем травинку
-  context.value.beginPath()
-    context.value.bezierCurveTo(
-      startX, 0,
-      startX + 3, grassSize/1.2,
-      startX + 6 - grassWidth - grassDeviation * 5, grassSize + (grassDeviation > 0 ? -grassDeviation : grassDeviation)*2,
-    );
-    context.value.bezierCurveTo(
-      startX + 9 - grassDeviation * 2, grassSize/1.2 + grassDeviation/3,
-      startX + 12, grassSize/2 + grassDeviation,
-      startX + 12, 0
-    );
-  context.value.closePath();
-  context.value.shadowBlur = 5;
-  context.value.shadowColor = "rgb(235, 235, 235)";
-  context.value.fill();
-}
-
-
-// Старт приложения
-onBeforeMount(() => {
-  if (process.client) {
-    window.addEventListener('resize', updateSize)
-    updateSize()
-  }
+    scene.value = createGrassScene(element, {
+        width: card.clientWidth,
+        height: card.clientHeight,
+    })
 })
 
-onMounted(() => {
-  if (process.client) {
-    printText()
-    if (globalSize.value) initGrass()
-  }
+onBeforeUnmount(() => {
+    // Иначе цепочка таймеров продолжит писать в состояние снятого компонента
+    cancelled = true
 })
 </script>

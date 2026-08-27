@@ -1,43 +1,52 @@
 <template>
-    <!-- @touchstart="(event) => moveSlideTouch(event)" -->
-    <div id="DonTraffic">
-        <div class="card card-shadow"></div>
+    <main id="DonTraffic" :style="{ '--card-transition': `${CARD_TRANSITION_MS}ms` }">
+        <!-- Неподвижная подложка: карточки ездят, а свечение под ними остаётся -->
+        <div class="card card-shadow" aria-hidden="true"></div>
 
-        <cards-cardStart v-if="statusCards.cardStart" />
-        <cards-cardMenu v-if="statusCards.cardMenu" />
-        <cards-cardSkills v-if="statusCards.cardSkills" />
-        <cards-cardProjects v-if="statusCards.cardProjects" />
-    </div>
+        <cards-cardStart v-if="isMounted('cardStart')" />
+        <cards-cardMenu v-if="isMounted('cardMenu')" />
+        <cards-cardSkills v-if="isMounted('cardSkills')" />
+        <cards-cardProjects v-if="isMounted('cardProjects')" />
+    </main>
 </template>
 
-<script>
-export default {
-    name: 'DonTraffic',
+<script setup>
+import { CARD_TRANSITION_MS } from '~/composables/useCards'
+import { CONTACTS, PROJECTS } from '~/data/projects'
+import { PAGE_META, SITE_IMAGE, SITE_URL } from '~/data/pages'
 
-    computed: {
-        statusCards() {
-            return this.$store.state.statusCards
-        }
-	},
+definePageMeta({ header: false })
 
-    mounted() {
-        if (process.client) document.getElementById('DonTraffic').style.height = `${window.innerHeight}px`
-    },
+usePageSeo(PAGE_META.index)
 
-    methods: {
-        moveSlideTouch(event) {
-            let startX = event.touches[0].pageX
-            let startY = event.touches[0].pageY
-            
-            window.ontouchmove = (event) => {
-                if(startX + 125 < event.touches[0].pageX) console.log('left');
-                if(startX - 125 > event.touches[0].pageX) console.log('right');
-                if(startY + 125 < event.touches[0].pageY) console.log('top');
-                if(startY - 125 > event.touches[0].pageY) console.log('bottom');
-            }; window.ontouchend = () => { window.ontouchmove = null }
-        },
-    },
-}
+const { isMounted } = useCards()
+
+/**
+ * Микроразметка Person: для визитки это самый дешёвый способ объяснить
+ * поисковику, чья это страница, чем человек занимается и как с ним связаться.
+ */
+useHead({
+    script: [{
+        type: 'application/ld+json',
+        innerHTML: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'Person',
+            name: CONTACTS.name,
+            jobTitle: CONTACTS.role,
+            url: SITE_URL,
+            image: SITE_IMAGE,
+            telephone: CONTACTS.phone,
+            description: PAGE_META.index.description,
+            sameAs: [CONTACTS.telegram, CONTACTS.resume],
+            knowsAbout: ['HTML', 'CSS', 'JavaScript', 'TypeScript', 'Vue.js', 'Nuxt.js', 'jQuery'],
+            worksFor: PROJECTS.map(project => ({
+                '@type': 'Organization',
+                name: project.company?.name ?? project.title,
+                url: project.company?.link ?? project.link,
+            })),
+        }),
+    }],
+})
 </script>
 
 <style lang="scss">

@@ -1,100 +1,89 @@
-.modal-project{
-    &-content{
-        display: flex;
-        flex-direction: column;
-        align-items: start;
-        gap: 24px;
+@use '../core' as *;
 
-        padding-right: 20px;
+.modal-project {
+    a {
+        text-decoration: none;
+        // Прозрачная граница держит высоту строки при наведении
+        border-bottom: 1px solid transparent;
+
+        transition: border-color $transition;
+
+        @include hover { border-bottom-color: color-white(); }
     }
 
-    &__slider{
+    &__slider {
         max-width: 100%;
         max-height: 100%;
     }
 
-    a{
-        text-decoration: none;
-        text-decoration: none;
-        border-bottom: 1px solid color-black();
-
-        transition: .4s ease;
-
-        &:hover{
-            border-bottom: 1px solid color-white();
-        }
-    }
-
-    &__header{
+    &__header {
         display: flex;
         flex-direction: column;
         margin-bottom: 16px;
 
         gap: 4px;
 
-        &-logo{
+        &-logo {
             display: flex;
             align-items: center;
             width: fit-content;
 
-            &-icon{
+            &-icon {
                 margin: 5px 8px 0 0;
                 fill: color-white();
                 height: 35px;
                 width: 35px;
             }
 
-            &-title{
-                text-decoration: none;
+            &-title {
                 text-transform: capitalize;
-                font-size: 31.25px;
-                transition: .4s ease;
+                font-size: $font-size-title;
                 padding-bottom: 5px;
             }
         }
     }
 
-    &__date{
+    &__date {
         display: flex;
         align-items: center;
         margin-bottom: 16px;
 
-        &-point{
+        &-point {
             display: flex;
             flex-direction: column;
             gap: 4px;
         }
 
-        &-bracket{
+        &-bracket {
             height: 50px;
             width: 20px;
-            margin: 0px 16px;
+            margin: 0 16px;
+            fill: color-white();
         }
 
-        &-sum{
-            @include tablet{
-                max-width: 100px;
-            }
+        &-sum {
+            @include tablet { max-width: 100px; }
         }
     }
 
-    &__list{
+    &__list {
         margin-bottom: 16px;
-        
-        &-title{
+
+        &-title {
             margin-bottom: 4px;
         }
 
-        &-item{
-            list-style: none;
+        &-item {
+            // Нумерация внутри строки: раньше номер печатался в шаблоне вручную
+            list-style: decimal inside;
             line-height: 150%;
         }
     }
 
-    &__scrollbar{
+    // Свой скроллбар: системный скрыт глобально, а содержимое окна прокручивается
+    &__scrollbar {
         position: absolute;
         height: 70%;
-        // height: 100%;
         width: 14px;
 
         right: 10px;
@@ -102,22 +91,20 @@
         translate: 0 -50%;
 
         background-color: color-black();
-        border: 1px solid rgba(255, 255, 255, 0);
-        border-radius: 6px;
-        transition: .4s ease;
+        border: 1px solid transparent;
+        border-radius: $radius;
+        transition: border-color $transition;
 
         overflow: hidden;
 
-        &:hover{
-            border: 1px solid color-white();
-        }
+        @include hover { border-color: color-white(); }
 
-        &-thumb{
+        &-thumb {
             position: absolute;
 
             width: 100%;
             background-color: color-white();
-            border-radius: 6px;
+            border-radius: $radius;
         }
     }
 }
