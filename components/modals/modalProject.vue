@@ -117,17 +117,11 @@ const period = computed(() => {
     }
 })
 
-/**
- * Свой скроллбар пересобирается, когда в окно приезжает другой проект.
- * Прежняя версия следила за этим через MutationObserver с subtree: true —
- * а сам DTScroll меняет DOM, то есть наблюдатель будил сам себя
- * и никогда не отключался.
- */
+// Свой скроллбар пересобирается, когда в окно приезжает другой проект
 watch(() => props.project, async (project) => {
     if (!project || !import.meta.client) return
 
     await nextTick()
-    // DTScroll — свой минифицированный скрипт без типов
     if (DTScroll.scrollsData[SCROLL_ID]) DTScroll.sliderUpdateDeep(SCROLL_ID)
     else DTScroll.initScroll(SCROLL_ID)
 })

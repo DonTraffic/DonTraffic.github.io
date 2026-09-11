@@ -1,10 +1,6 @@
 import { PAGE_META, SITE_IMAGE, SITE_NAME, SITE_URL } from '~/data/pages'
 
-/**
- * Мета-теги страницы: Open Graph, Twitter и канонический адрес.
- * Прежняя версия собирала часть тегов в layout и не выставляла ни canonical,
- * ни og:type, ни язык документа.
- */
+/** Мета-теги страницы: Open Graph, Twitter и канонический адрес. */
 export function usePageSeo(meta) {
     const route = useRoute()
     const canonical = `${SITE_URL}${route.path === '/' ? '' : route.path}`
@@ -36,7 +32,7 @@ export function usePageSeo(meta) {
     })
 }
 
-/** Мета текущей страницы по её имени в роутере — используется в шапке. */
+/** Описание текущей страницы по её имени в роутере — его показывает шапка. */
 export function useCurrentPageMeta() {
     const route = useRoute()
     return computed(() => PAGE_META[route.name] ?? null)

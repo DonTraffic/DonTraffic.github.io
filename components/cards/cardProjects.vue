@@ -14,8 +14,6 @@
 
         <div class="card-projects__content-container">
             <div class="card-projects__content-viewport" :style="{ translate: `0 ${-slide * 100}%` }">
-                <!-- Раньше здесь дважды дублировалась разметка: под проект
-                     и под компанию. Теперь у записи всегда есть заголовок. -->
                 <article v-for="project in PROJECTS" :key="project.id" class="card-projects__content">
                     <h2 class="card-projects__content-logo">
                         <img

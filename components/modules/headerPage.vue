@@ -8,7 +8,5 @@
 </template>
 
 <script setup>
-// Раньше шапка лезла в состояние Vuex по имени маршрута и падала,
-// если для страницы там не оказывалось записи
 const meta = useCurrentPageMeta()
 </script>

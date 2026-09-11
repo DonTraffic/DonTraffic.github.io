@@ -1,15 +1,14 @@
 <template>
-    <!-- inert убирает стрелки из таб-порядка, пока поверх открыто окно -->
+    <!-- inert убирает стрелки из таб-порядка, пока карточка не активна
+         или поверх неё открыто окно -->
     <div class="controller" :class="{ 'controller--hide': isHidden }" :inert="isHidden">
         <div
             v-for="item in items"
             :key="item.direction"
             :class="['controller__btn-container', `controller__btn-container--${item.direction}`]"
         >
-            <!--
-                Клик и подпись живут на самой кнопке, а не на обёртке:
-                раньше обработчик висел на <div>, и с клавиатуры стрелки не работали.
-            -->
+            <!-- Клик и подпись живут на самой кнопке, а не на обёртке,
+                 иначе стрелка недоступна с клавиатуры -->
             <button
                 type="button"
                 class="controller__btn"

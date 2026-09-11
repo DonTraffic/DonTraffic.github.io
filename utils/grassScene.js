@@ -5,8 +5,6 @@ import { fitCanvas } from '~/composables/useCanvas'
  *
  * Сцена владеет своим состоянием и ничего не знает ни о Vue, ни о документе:
  * компонент отдаёт ей холст с размерами и раз в кадр просит нарисовать себя.
- * Раньше эта логика жила прямо в компоненте, читала размеры из DOM
- * на каждом кадре и запускалась на телефонах, где её никто не видел.
  */
 
 const COLOR = 'rgb(235, 235, 235)'
@@ -34,12 +32,8 @@ const BLADE_SWAY_SPEED = 0.025
  * @returns объект с методом draw() или null, если холст не дал контекст
  */
 export function createGrassScene(canvas, size) {
-    const canvasContext = fitCanvas(canvas, size)
-    if (!canvasContext) return null
-
-    // Отдельная константа с уже суженным типом: внутри вложенных функций
-    // TypeScript не помнит про проверку выше
-    const context = canvasContext
+    const context = fitCanvas(canvas, size)
+    if (!context) return null
 
     // Ноль переезжает в левый нижний угол: трава растёт вверх, а не вниз
     context.translate(0, size.height)

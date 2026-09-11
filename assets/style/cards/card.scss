@@ -7,8 +7,8 @@
 $card-offscreen: calc(100vw + 55%);
 
 #DonTraffic {
-    // 100dvh учитывает адресную строку мобильных браузеров.
-    // Раньше высоту выставлял JS один раз при mount — и она ехала при повороте экрана.
+    // 100dvh учитывает адресную строку мобильных браузеров
+    // и переживает поворот экрана
     height: 100dvh;
     width: 100%;
 
@@ -35,7 +35,7 @@ $card-offscreen: calc(100vw + 55%);
     justify-content: center;
     align-items: center;
 
-    // Только transform: `transition: 1s ease` тянул за собой ещё и тень с фоном
+    // Только transform: сокращение до `1s ease` тянуло бы за собой тень и фон
     transition: transform $card-transition ease;
 
     &__content {
@@ -58,8 +58,7 @@ $card-offscreen: calc(100vw + 55%);
         box-shadow: $glow;
     }
 
-    // Положение карточки — производная от активной карточки, а не набор
-    // классов, которые компоненты навешивали друг другу через classList.
+    // Положение карточки — производная от того, какая карточка сейчас активна
     &[data-position='bottom'] { transform: translate(0, $card-offscreen); }
     &[data-position='top']    { transform: translate(0, calc(#{$card-offscreen} * -1)); }
     &[data-position='right']  { transform: translate($card-offscreen); }

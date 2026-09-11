@@ -64,12 +64,8 @@ const randomInteger = (min, max) => Math.floor(min + Math.random() * (max + 1 - 
  *   ...либо null, если холст не дал контекст.
  */
 export function createSeaScene(canvas, size, options = {}) {
-    const canvasContext = fitCanvas(canvas, size)
-    if (!canvasContext) return null
-
-    // Отдельная константа с уже суженным типом: внутри вложенных функций
-    // TypeScript не помнит про проверку выше
-    const context = canvasContext
+    const context = fitCanvas(canvas, size)
+    if (!context) return null
 
     const { width, height } = size
 
@@ -78,7 +74,7 @@ export function createSeaScene(canvas, size, options = {}) {
     context.lineWidth = 1
     context.shadowColor = COLOR_LIGHT
     // Шрифт нужен ещё до первого кадра: по нему считается ширина блока,
-    // а значит и область, в которой ловится клик по навыку.
+    // а значит и область, в которой ловится клик по навыку
     context.font = BLOCK_FONT
     context.textAlign = 'center'
 
@@ -107,7 +103,7 @@ export function createSeaScene(canvas, size, options = {}) {
     const blockHighlight = new Map()
 
     // Копии, а не сами данные: водоросли качаются, меняя свои поля,
-    // и общий на всё приложение константный объект для этого не годится
+    // а исходный объект один на всё приложение
     const cloneGroups = groups =>
         groups.map(group => ({ ...group, seaweeds: group.seaweeds.map(weed => ({ ...weed })) }))
 
@@ -390,8 +386,7 @@ export function createSeaScene(canvas, size, options = {}) {
             : Math.max(BLOCK_TONE_DARK, current - BLOCK_HIGHLIGHT_STEP)
         blockHighlight.set(skill.name, tone)
 
-        // Прежний код собирал строку `rgba(15, 15, 15` — без альфы и без скобки.
-        // Негодный цвет canvas молча игнорирует, поэтому подсветка не работала вовсе.
+        // Негодную строку цвета canvas молча игнорирует, оставляя предыдущую заливку
         context.fillStyle = `rgb(${tone}, ${tone}, ${tone})`
 
         // Скруглённый прямоугольник вокруг подписи
@@ -461,8 +456,8 @@ export function createSeaScene(canvas, size, options = {}) {
         const baseX = -10 + (-parallaxX / 8)
         const baseY = height - 50 + scrollOffsetY + (height / 4) * 3 + (-parallaxY / 8)
 
-        // Каждый штрих начинает свой путь: без beginPath линии копились в одном
-        // контуре и обводились заново на каждом stroke() — десяток лишних проходов за кадр
+        // Каждый штрих начинает свой путь: иначе линии копятся в одном контуре
+        // и обводятся заново на каждом stroke()
         const crack = points => {
             context.beginPath()
             context.moveTo(baseX + points[0][0], baseY + points[0][1])
@@ -478,8 +473,6 @@ export function createSeaScene(canvas, size, options = {}) {
         context.beginPath()
         context.moveTo(baseX + 43, baseY + 11)
         context.bezierCurveTo(baseX + 36, baseY + 3, baseX + 19, baseY, baseX + 1, baseY)
-        // В оригинале здесь стояла абсолютная единица вместо baseX + 1 — левый нижний
-        // угол скалы единственный не следовал за параллаксом
         context.lineTo(baseX + 1, baseY + 733)
         context.bezierCurveTo(baseX + 37, baseY + 715, baseX + 46, baseY + 669, baseX + 46, baseY + 648)
         context.bezierCurveTo(baseX + 80, baseY + 589, baseX + 85, baseY + 481, baseX + 82, baseY + 430)
@@ -579,8 +572,7 @@ export function createSeaScene(canvas, size, options = {}) {
         },
 
         scroll(down) {
-            // Пока идёт переезд, новую прокрутку не принимаем. Раньше это
-            // сторожил таймер на секунду — теперь сама анимация.
+            // Пока идёт переезд, новую прокрутку не принимаем
             if (scrollDirection !== 0) return
 
             const next = down ? activeSlide + 1 : activeSlide - 1

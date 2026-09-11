@@ -2,8 +2,8 @@
 
 .card-projects {
     z-index: 3;
-    // Перебивает `display: flex` базовой .card — работает за счёт порядка
-    // подключения в DonTraffic.scss, !important не нужен
+    // Перебивает `display: flex` базовой .card за счёт порядка
+    // подключения в DonTraffic.scss
     display: grid;
     grid-template-columns: 1fr 1px 1fr;
 

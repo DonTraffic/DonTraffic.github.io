@@ -12,10 +12,10 @@
         </div>
 
         <!--
-            Что показать, решает CSS, а не v-if: при server-side рендере
-            ширина окна неизвестна, и любая ветка расходилась бы с гидрацией.
-            Холст на узких экранах просто не запускается, а трава лежит
-            фоном в media-запросе — на десктопе её никто не скачивает.
+            Что показать, решает CSS, а не v-if: при рендере на сервере ширина
+            окна неизвестна, и любая ветка разошлась бы с гидрацией. Холст
+            на узких экранах не запускается, а трава лежит фоном в media-запросе
+            и на широких экранах не скачивается.
         -->
         <div class="card__background card-start__background" aria-hidden="true">
             <canvas ref="canvas"></canvas>
@@ -44,9 +44,8 @@ const LETTER_DELAY_MS = 100
 const PHRASE_DELAY_MS = 500
 
 /**
- * На сервере и в первый кадр в разметке лежит готовый текст.
- * Так заголовок страницы не пустой для поисковиков и для ботов соцсетей,
- * которые JS не исполняют, — раньше в HTML уходил `<h1></h1>`.
+ * На сервере и в первый кадр в разметке лежит готовый текст: так заголовок
+ * не пустой для поисковиков и для ботов соцсетей, которые скрипты не исполняют.
  * Эффект печати запускается уже после гидрации.
  */
 const printed = reactive({ h1: FINAL.h1, h2: FINAL.h2 })
@@ -54,7 +53,7 @@ const printed = reactive({ h1: FINAL.h1, h2: FINAL.h2 })
 const totalLetters = PHRASES.reduce((sum, phrase) => sum + phrase.h1.length + phrase.h2.length, 0)
 const typingDuration = totalLetters * LETTER_DELAY_MS + (PHRASES.length - 1) * PHRASE_DELAY_MS
 
-/** Кнопка появляется ровно тогда, когда текст допечатался, а не через подобранные 8 секунд */
+/** Кнопка появляется ровно тогда, когда текст допечатался */
 const revealDelay = computed(() => (prefersReducedMotion.value ? 0 : typingDuration + 200))
 
 let cancelled = false

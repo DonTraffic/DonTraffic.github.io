@@ -16,8 +16,8 @@ $radius: 6px;
 $glow: 0 0 6px color-white();
 $transition: .4s ease;
 
-// Длительность проезда карточек. Дублируется в TS-константе CARD_TRANSITION_MS
-// и приезжает сюда через CSS-переменную, чтобы значения не разъезжались.
+// Длительность проезда карточек. Значение задаёт константа CARD_TRANSITION_MS
+// в composables/useCards.js и передаёт сюда CSS-переменной.
 $card-transition: var(--card-transition, 1000ms);
 
 // Типографика: fluid-шкала вместо пар «px на десктопе / vw на телефоне»

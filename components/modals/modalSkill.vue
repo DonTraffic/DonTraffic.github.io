@@ -9,8 +9,6 @@
 
         <div class="modal-skill__content">
             <div class="modal-skill__lists">
-                <!-- Курсы, тесты и рекомендации отличались только заголовком
-                     и полем данных — раньше разметка была скопирована трижды -->
                 <div
                     v-for="group in linkGroups"
                     :key="group.field"
@@ -44,8 +42,7 @@
             </div>
         </div>
 
-        <!-- Ссылка появляется, только когда пример есть: раньше у половины
-             навыков это был <a href=""> — клик перезагружал страницу -->
+        <!-- Живой пример есть не у каждого навыка -->
         <a
             v-if="skill?.example"
             class="modal-skill__example"
@@ -69,7 +66,7 @@ const LINK_GROUPS = [
     { field: 'recommendations', title: 'Рекомендации:' },
 ]
 
-/** Только непустые списки вида { field, title, items } — пустые обёртки в разметку не попадают */
+/** Непустые списки вида { field, title, items }: пустые обёртки в разметку не попадают */
 const linkGroups = computed(() => {
     const skill = props.skill
     if (!skill) return []

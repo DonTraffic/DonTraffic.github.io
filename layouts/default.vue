@@ -4,8 +4,8 @@
 
         <slot />
 
-        <!-- Точку показывает CSS по классу .has-custom-cursor, который ставит JS.
-             v-if по media-запросу расходился бы с server-side разметкой. -->
+        <!-- Точку показывает CSS по классу .has-custom-cursor, который ставит скрипт:
+             v-if по media-запросу разошёлся бы с разметкой, отданной сервером -->
         <div id="custom-cursor" ref="cursor" aria-hidden="true"></div>
     </div>
 </template>
@@ -24,12 +24,9 @@ let pointerX = 0
 let pointerY = 0
 
 /**
- * Своя точка вместо курсора.
- *
- * Координаты кладём в CSS-переменные и обновляем раз в кадр:
- * прежняя версия писала left/top прямо на каждое движение мыши,
- * заставляя браузер пересчитывать раскладку сотни раз в секунду.
- * Слушатель тогда же вешался навсегда и не снимался.
+ * Своя точка вместо курсора. Координаты кладутся в CSS-переменные и обновляются
+ * раз в кадр: запись left/top на каждое движение мыши заставляла бы браузер
+ * пересчитывать раскладку сотни раз в секунду.
  */
 function render() {
     frameId = 0
@@ -46,7 +43,7 @@ function onPointerMove(event) {
 onMounted(() => {
     if (!hasFinePointer.value) return
 
-    // Класс ставит JS: не загрузился скрипт — остаётся системный курсор
+    // Класс ставит скрипт: не загрузился — остаётся системный курсор
     document.documentElement.classList.add('has-custom-cursor')
     document.addEventListener('pointermove', onPointerMove, { passive: true })
 })
