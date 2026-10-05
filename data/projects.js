@@ -62,14 +62,41 @@ export const PROJECTS = [
         logoIcon: '/svg/projects/servizoria-logo.svg',
         company: null,
         job: FRONTEND_JOB,
-        experience: { from: '2023-04', to: 'actual' },
+        experience: { from: '2023-04', to: '2024-07' },
         duties: [
             'Декомпозиция задач и оценка сроков',
             'Адаптивная верстка (html, css, scss) страниц портала по макетам из Figma',
             'Добавление нового функционала',
             'Написание кода на jQuery и поддержка/обновление legacy кода',
+            'Перенос проекта на Nuxt 3',
         ],
-        tags: ['JavaScript', 'Git'],
+        tags: ['JavaScript', 'jQuery', 'Nuxt3', 'SCSS', 'Figma', 'Git'],
+    },
+    {
+        // Иконок пока нет: запись нужна микроразметке worksFor на главной
+        id: 'nanosoft',
+        title: 'nanosoft',
+        link: 'https://nanosoft.team/',
+        description: 'Сайт компании: дизайн и разработка целиком, от макета до сервера',
+        company: {
+            name: 'Нанософт',
+            link: 'https://www.nanocad.ru/',
+        },
+        job: {
+            name: 'Программист 1С / Интегратор',
+            link: RESUME_URL,
+        },
+        experience: { from: '2024-11', to: 'actual' },
+        duties: [
+            'Настройка и создание интеграций с внешними сервисами',
+            'Доработка и создание печатных форм, внешних обработок и функционала по требованиям',
+            'Работа с клиентами: помощь и формирование задач',
+            'Разработка и поддержка сайта компании как дизайнер и fullstack-разработчик',
+        ],
+        achievements: [
+            'Прошёл официальное обучение Anthropic по Claude Code: не формат «сделай мне задачу», а тонкая настройка и понимание процессов под капотом — два сертификата',
+        ],
+        tags: ['1С', 'JavaScript', 'HTML', 'CSS', 'Figma', 'Claude Code'],
     },
 ]
 

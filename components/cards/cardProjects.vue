@@ -34,101 +34,6 @@ const onScreen = computed(() => isOnScreen('cardProjects'))
 
 // данные проектов (порядок = хронология сверху вниз)
 const projectsData = [
-    // --- временные блоки для проверки прокрутки ленты, удалить перед продакшеном ---
-    {
-        title: 'Тестовый 1',
-
-        company: {
-            name: 'test-one',
-            link: 'https://example.com/',
-            description: 'Тестовый блок для проверки прокрутки хронологической линии'
-        },
-
-        job: {
-            name: 'Верстальщик',
-            link: 'https://vologda.hh.ru/resume/c1497482ff0b662b500039ed1f4a6e78766c69'
-        },
-
-        experience: {
-            from: '2017-02',
-            before: '2018-05'
-        },
-
-        duties: {
-            1: 'Первая тестовая обязанность',
-            2: 'Вторая тестовая обязанность подлиннее, чтобы проверить перенос строк внутри панели',
-            3: 'Третья тестовая обязанность',
-        },
-
-        tags: 'HTML, CSS'
-    },
-
-    {
-        title: 'Тестовый 2',
-
-        company: {
-            name: 'test-two',
-            link: 'https://example.com/',
-            description: 'Ещё один тестовый блок'
-        },
-
-        job: {
-            name: 'Верстальщик',
-            link: 'https://vologda.hh.ru/resume/c1497482ff0b662b500039ed1f4a6e78766c69'
-        },
-
-        experience: {
-            from: '2018-05',
-            before: '2019-11'
-        },
-
-        duties: {
-            1: 'Тестовая обязанность',
-            2: 'Ещё одна тестовая обязанность',
-        },
-
-        achievements: {
-            1: 'Тестовое достижение, тоже достаточно длинное, чтобы занять две строки в панели подробностей',
-        },
-
-        tags: 'HTML, CSS, jQuery'
-    },
-
-    {
-        title: 'Тестовый 3',
-
-        project: {
-            name: 'test-three',
-            link: 'https://example.com/',
-            description: 'Тестовый проект с отдельной компанией'
-        },
-
-        company: {
-            name: 'test-company',
-            link: 'https://example.com/'
-        },
-
-        job: {
-            name: 'Junior-разработчик',
-            link: 'https://vologda.hh.ru/resume/c1497482ff0b662b500039ed1f4a6e78766c69'
-        },
-
-        experience: {
-            from: '2019-11',
-            before: '2021-08'
-        },
-
-        duties: {
-            1: 'Тестовая обязанность',
-            2: 'Тестовая обязанность',
-            3: 'Тестовая обязанность',
-            4: 'Тестовая обязанность',
-        },
-
-        tags: 'JavaScript, Git'
-    },
-    // --- конец временных блоков ---
-
     {
         title: 'Кайли',
 
@@ -189,7 +94,7 @@ const projectsData = [
 
         experience: {
             from: '2023-04',
-            before: 'actual'
+            before: '2024-07'
         },
 
         duties: {
@@ -197,9 +102,48 @@ const projectsData = [
             2: 'Адаптивная верстка (html, css, scss) страниц портала по макетам из Figma',
             3: 'Добавление нового функционала',
             4: 'Написание кода на jQuery и поддержка/обновление legacy кода',
+            5: 'Перенос проекта на Nuxt 3',
         },
 
-        tags: 'JavaScript, Git'
+        tags: 'JavaScript, jQuery, Nuxt3, SCSS, Figma, Git'
+    },
+
+    {
+        title: 'Нанософт',
+
+        project: {
+            name: 'nanosoft',
+            link: 'https://nanosoft.team/',
+            description: 'Сайт компании: дизайн и разработка целиком, от макета до сервера'
+        },
+
+        company: {
+            name: 'nanocad',
+            link: 'https://www.nanocad.ru/'
+        },
+
+        job: {
+            name: 'Программист 1С / Интегратор',
+            link: 'https://vologda.hh.ru/resume/c1497482ff0b662b500039ed1f4a6e78766c69'
+        },
+
+        experience: {
+            from: '2024-11',
+            before: 'actual'
+        },
+
+        duties: {
+            1: 'Настройка и создание интеграций с внешними сервисами',
+            2: 'Доработка и создание печатных форм, внешних обработок и функционала по требованиям',
+            3: 'Работа с клиентами: помощь и формирование задач',
+            4: 'Разработка и поддержка сайта компании как дизайнер и fullstack-разработчик',
+        },
+
+        achievements: {
+            1: 'Прошёл официальное обучение Anthropic по Claude Code: не формат «сделай мне задачу», а тонкая настройка и понимание процессов под капотом — два сертификата',
+        },
+
+        tags: '1С, JavaScript, HTML, CSS, Figma, Claude Code'
     }
 ]
 
