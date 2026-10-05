@@ -1,9 +1,4 @@
-@use 'sass:list';
 @use '../core' as *;
-
-// Длительность качания для каждого из 16 слоёв волн (снизу вверх).
-// Числа не кратны друг другу — иначе слои синхронизируются и «дышат» вместе.
-$sea-wave-durations: 13s, 9s, 12s, 14s, 10s, 12s, 15s, 11s, 12s, 9s, 14s, 12s, 9s, 15s, 11s, 14s;
 
 .card-skills {
     z-index: 3;
@@ -15,10 +10,12 @@ $sea-wave-durations: 13s, 9s, 12s, 14s, 10s, 12s, 15s, 11s, 12s, 9s, 14s, 12s, 9
         transform: translate(0, 0);
     }
 
+    // Цитата лежит поверх холста. Клики она не перехватывает: под ней
+    // находятся блоки навыков, и касание должно доходить до сцены.
     &__content {
         width: 100%;
-
-        @include phone { z-index: 2; }
+        z-index: 2;
+        pointer-events: none;
 
         &-quote {
             position: absolute;
@@ -43,7 +40,6 @@ $sea-wave-durations: 13s, 9s, 12s, 14s, 10s, 12s, 15s, 11s, 12s, 9s, 14s, 12s, 9
             // Цитата относится к заставке: уплывая на слайд с навыками, она гаснет
             &--hidden {
                 opacity: 0;
-                pointer-events: none;
             }
 
             &-author {
@@ -51,6 +47,20 @@ $sea-wave-durations: 13s, 9s, 12s, 14s, 10s, 12s, 15s, 11s, 12s, 9s, 14s, 12s, 9
                 font-style: oblique;
                 display: block;
             }
+        }
+    }
+
+    &__background {
+        z-index: 1;
+
+        &-sea {
+            display: block;
+            width: 100%;
+            height: 100%;
+
+            // Свайпы по сцене переключают слайды, поэтому браузеру
+            // отдавать их нельзя: иначе он прокрутит страницу
+            touch-action: none;
         }
     }
 
@@ -86,99 +96,4 @@ $sea-wave-durations: 13s, 9s, 12s, 14s, 10s, 12s, 15s, 11s, 12s, 9s, 14s, 12s, 9
             text-decoration: underline;
         }
     }
-
-    // Море перекрывает цитату на десктопе — на телефоне порядок обратный
-    &__background {
-        z-index: 2;
-
-        @include phone { z-index: 1; }
-
-        &-sea {
-            position: relative;
-            top: 0;
-
-            // Разметка волн нужна только узким экранам, где canvas не запускается
-            &--mobile {
-                display: none;
-
-                @include phone {
-                    display: flex;
-
-                    height: 100%;
-                    width: 100%;
-                }
-            }
-        }
-    }
-}
-
-.sea {
-    &__sun {
-        position: absolute;
-        right: 24px;
-        top: 24px;
-
-        @include tablet { top: 100px; }
-    }
-
-    &__wave {
-        width: 100%;
-        position: absolute;
-        left: 50%;
-        bottom: -20px;
-
-        height: 80px;
-
-        // Слои идут снизу вверх: чем ближе к зрителю, тем ниже и тем выше в стопке
-        @for $i from 1 through list.length($sea-wave-durations) {
-            &--#{$i} {
-                $duration: list.nth($sea-wave-durations, $i);
-
-                z-index: calc(100 - #{$i});
-                bottom: ($i - 1) * 30px;
-                animation: moveWave $duration infinite;
-
-                .sea__wave-block { animation: moveWaveBlock $duration infinite; }
-            }
-        }
-
-        &-block {
-            top: -15%;
-            position: absolute;
-            // Горизонтальное положение задаёт компонент: оно часть данных о навыке
-            left: var(--block-left, 50%);
-
-            display: flex;
-            justify-content: center;
-            align-items: center;
-
-            width: 70px;
-            height: 70px;
-
-            background-color: color-black();
-            border: 1px solid color-white();
-            border-radius: $radius;
-
-            padding: 4px;
-
-            transition: background-color $transition, color $transition;
-
-            @include hover {
-                background-color: color-white();
-                color: color-black();
-            }
-        }
-    }
-}
-
-@keyframes moveWave {
-    0%   { translate: -60% 40%; }
-    50%  { translate: -80% 40%; }
-    100% { translate: -60% 40%; }
-}
-
-@keyframes moveWaveBlock {
-    0%   { translate: -50% 0; rotate: 10deg; }
-    50%  { translate: -80% 0; rotate: -10deg; }
-    100% { translate: -50% 0; rotate: 10deg; }
 }

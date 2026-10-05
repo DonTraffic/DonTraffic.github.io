@@ -18,33 +18,13 @@
                 ref="canvas"
                 class="card-skills__background-sea"
                 aria-hidden="true"
-                @mousemove="onPointerMove"
+                @pointerdown="onPointerDown"
+                @pointermove="onPointerMove"
+                @pointerup="onPointerUp"
+                @pointercancel="onPointerCancel"
+                @pointerleave="onPointerLeave"
                 @wheel.passive="scene?.scroll($event.deltaY > 0)"
-                @click="onCanvasClick"
             ></canvas>
-
-            <!-- Волны для узких экранов, где canvas не запускается -->
-            <div class="card-skills__background-sea card-skills__background-sea--mobile">
-                <div class="sea__sun icon-sun"></div>
-
-                <div class="sea">
-                    <div
-                        v-for="wave in waves"
-                        :key="wave.index"
-                        :class="['sea__wave', `sea__wave--${wave.index}`]"
-                    >
-                        <button
-                            v-if="wave.skill"
-                            type="button"
-                            class="sea__wave-block"
-                            :style="{ '--block-left': wave.skill.mobile.left }"
-                            @click="activeSkill = wave.skill"
-                        >{{ wave.skill.mobile.label ?? wave.skill.name }}</button>
-
-                        <img src="@/assets/svg/wave.svg" alt="" width="600" height="30">
-                    </div>
-                </div>
-            </div>
         </div>
 
         <!-- Содержимое холста недоступно ни с клавиатуры, ни скринридеру,
@@ -65,43 +45,96 @@
 
 <script setup>
 import { createSeaScene } from '~/utils/seaScene'
-import { ALL_SKILLS, MOBILE_WAVE_COUNT } from '~/data/skills'
+import { ALL_SKILLS } from '~/data/skills'
+
+/** Палец сдвинулся дальше — это свайп, а не касание блока */
+const TAP_SLOP = 12
+/** Дольше — значит не тап, а удержание */
+const TAP_TIME_MS = 400
+/** Путь, с которого свайп считается пролистыванием слайда */
+const SWIPE_DISTANCE = 48
+
+/**
+ * Сцена на слабом железе упирается не в ядра, а в площадь заливки,
+ * поэтому на узком экране хватит тридцати кадров: шаг анимации считается
+ * по времени, так что скорость от этого не меняется, а работы вдвое меньше.
+ */
+const NARROW_FPS = 30
 
 const { positionOf, isOnScreen } = useCards()
-const isDesktop = useIsDesktop()
+const hasFinePointer = useMediaQuery('(hover: hover) and (pointer: fine)')
+const isNarrow = useMediaQuery('(max-width: 560px)')
 
 const activeSkill = ref(null)
 const activeSlide = ref(0)
 
-// ── Волны узкой версии ───────────────────────────────────────
-const waves = computed(() =>
-    Array.from({ length: MOBILE_WAVE_COUNT }, (_, index) => ({
-        index: index + 1,
-        skill: ALL_SKILLS.find(({ skill }) => skill.mobile.wave === index + 1)?.skill,
-    })),
-)
-
-// ── Сцена на canvas ──────────────────────────────────────────
 const canvas = useTemplateRef('canvas')
 const scene = shallowRef(null)
 
 useAnimationFrame(
-    () => scene.value?.draw(),
+    step => scene.value?.draw(step),
     () => Boolean(scene.value) && isOnScreen('cardSkills'),
+    { fps: () => (isNarrow.value ? NARROW_FPS : 0) },
 )
 
+// ── Ввод ─────────────────────────────────────────────────────
+let gesture = null
+
+function onPointerDown(event) {
+    canvas.value?.setPointerCapture?.(event.pointerId)
+
+    gesture = {
+        id: event.pointerId,
+        startX: event.offsetX,
+        startY: event.offsetY,
+        startedAt: event.timeStamp,
+        swiped: false,
+    }
+}
+
 function onPointerMove(event) {
-    scene.value?.setPointer(event.offsetX, event.offsetY)
+    // Параллакс ведём только мышью: от касания сцена дёргалась бы рывками
+    if (event.pointerType === 'mouse') scene.value?.setPointer(event.offsetX, event.offsetY)
+
+    if (!gesture || gesture.id !== event.pointerId || gesture.swiped) return
+
+    const shiftY = event.offsetY - gesture.startY
+    if (Math.abs(shiftY) < SWIPE_DISTANCE) return
+
+    // Палец вверх — уходим глубже, как при прокрутке вниз
+    scene.value?.scroll(shiftY < 0)
+    gesture.swiped = true
 }
 
-function onCanvasClick(event) {
-    const skill = scene.value?.hitTest(event.offsetX, event.offsetY)
-    if (skill) activeSkill.value = skill
+function onPointerUp(event) {
+    if (!gesture || gesture.id !== event.pointerId) return
+
+    const moved = Math.hypot(event.offsetX - gesture.startX, event.offsetY - gesture.startY)
+    const quick = event.timeStamp - gesture.startedAt < TAP_TIME_MS
+
+    if (!gesture.swiped && moved < TAP_SLOP && quick) {
+        const skill = scene.value?.hitTest(event.offsetX, event.offsetY)
+        if (skill) activeSkill.value = skill
+    }
+
+    gesture = null
 }
 
+function onPointerCancel() {
+    gesture = null
+}
+
+function onPointerLeave() {
+    gesture = null
+    // Курсор ушёл с холста — сцена возвращается в центральное положение
+    if (hasFinePointer.value) scene.value?.setPointer(-9999, -9999)
+}
+
+// ── Сцена ────────────────────────────────────────────────────
 let builtWidth = 0
 let builtHeight = 0
 let observer
+let resizeTimer
 
 function buildScene() {
     const element = canvas.value
@@ -118,27 +151,34 @@ function buildScene() {
     scene.value = createSeaScene(
         element,
         { width, height },
-        { onSlideChange: slide => { activeSlide.value = slide } },
+        {
+            touch: !hasFinePointer.value,
+            onSlideChange: slide => { activeSlide.value = slide },
+        },
     )
     // Пересобранная сцена возвращается на тот слайд, где был посетитель
     scene.value?.goToSlide(activeSlide.value)
 }
 
 onMounted(async () => {
-    // На узких экранах вместо холста работает разметка волн
-    if (!isDesktop.value) return
-
     await nextTick()
     buildScene()
 
-    // Размеры холста заданы в пикселях: без пересборки
-    // при изменении окна картинка растянется
     const card = canvas.value?.closest('.card')
     if (!card) return
 
-    observer = new ResizeObserver(buildScene)
+    // Размеры холста заданы в пикселях, поэтому при изменении окна сцену нужно
+    // собрать заново. На телефоне адресная строка дёргает высоту на каждой
+    // прокрутке, а пересборка перерисовывает все спрайты — поэтому с задержкой.
+    observer = new ResizeObserver(() => {
+        clearTimeout(resizeTimer)
+        resizeTimer = setTimeout(buildScene, 200)
+    })
     observer.observe(card)
 })
 
-onBeforeUnmount(() => observer?.disconnect())
+onBeforeUnmount(() => {
+    clearTimeout(resizeTimer)
+    observer?.disconnect()
+})
 </script>

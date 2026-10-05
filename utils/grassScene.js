@@ -32,8 +32,10 @@ const BLADE_SWAY_SPEED = 0.025
  * @returns объект с методом draw() или null, если холст не дал контекст
  */
 export function createGrassScene(canvas, size) {
-    const context = fitCanvas(canvas, size)
-    if (!context) return null
+    const fitted = fitCanvas(canvas, size)
+    if (!fitted) return null
+
+    const { context } = fitted
 
     // Ноль переезжает в левый нижний угол: трава растёт вверх, а не вниз
     context.translate(0, size.height)

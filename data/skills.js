@@ -14,7 +14,7 @@
 //   courses / tests / recommendations — списки ссылок { title, url }
 //   position    — { x, y } на холсте в пикселях; отрицательное значение
 //                 отсчитывается от правого или нижнего края
-//   mobile      — { wave, left, label } — размещение на волнах узкой версии
+//   short       — короткая подпись для узкого холста, если имя не влезает
 
 export const SKILL_SLIDES = [
     [],
@@ -22,7 +22,6 @@ export const SKILL_SLIDES = [
         {
             name: 'HTML',
             icon: '/svg/skills/html.svg',
-            mobile: { wave: 2, left: '50%' },
             experience: 'Больше 3х лет',
             courses: [
                 {
@@ -50,7 +49,6 @@ export const SKILL_SLIDES = [
         {
             name: 'CSS',
             icon: '/svg/skills/css.svg',
-            mobile: { wave: 3, left: '95%' },
             experience: 'Больше 3х лет',
             courses: [
                 {
@@ -78,7 +76,6 @@ export const SKILL_SLIDES = [
         {
             name: 'jQuery',
             icon: '/svg/skills/jquery.svg',
-            mobile: { wave: 7, left: '85%' },
             experience: 'Больше 1 года',
             recommendations: [
                 {
@@ -94,7 +91,7 @@ export const SKILL_SLIDES = [
         {
             name: 'JavaScript',
             icon: '/svg/skills/javascript.svg',
-            mobile: { wave: 5, left: '65%', label: 'JS' },
+            short: 'JS',
             experience: 'Больше 2х лет',
             example: 'https://dontraffic.ru/market',
             courses: [
@@ -129,7 +126,6 @@ export const SKILL_SLIDES = [
         {
             name: 'Canvas',
             icon: '/svg/skills/canvas.svg',
-            mobile: { wave: 10, left: '45%' },
             experience: 'Больше 3х лет',
             recommendations: [
                 {
@@ -145,7 +141,6 @@ export const SKILL_SLIDES = [
         {
             name: 'VUE',
             icon: '/svg/skills/vue.svg',
-            mobile: { wave: 11, left: '70%' },
             experience: 'Больше 1 года',
             recommendations: [
                 {
@@ -161,7 +156,6 @@ export const SKILL_SLIDES = [
         {
             name: 'NUXT',
             icon: '/svg/skills/nuxt.svg',
-            mobile: { wave: 13, left: '95%' },
             experience: 'Больше 2х лет',
             example: 'https://dontraffic.ru/market',
             recommendations: [
@@ -185,6 +179,3 @@ export const SKILL_SLIDES_COUNT = SKILL_SLIDES.length
 export const ALL_SKILLS = SKILL_SLIDES.flatMap(
     (skills, slide) => skills.map(skill => ({ skill, slide })),
 )
-
-/** Сколько слоёв волн рисует узкая версия карточки. */
-export const MOBILE_WAVE_COUNT = 16

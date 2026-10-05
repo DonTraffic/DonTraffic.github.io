@@ -1,4 +1,4 @@
-import { fitCanvas } from '~/composables/useCanvas'
+import { fitCanvas, createSprite } from '~/composables/useCanvas'
 import { SKILL_SLIDES, SKILL_SLIDES_COUNT } from '~/data/skills'
 import { ROCK_SEAWEEDS, ROCK_SEAWEEDS_INSIDE } from '~/data/seaScene'
 
@@ -9,11 +9,23 @@ import { ROCK_SEAWEEDS, ROCK_SEAWEEDS_INSIDE } from '~/data/seaScene'
  * Сцена — обычный модуль без Vue: получает холст, размеры и обратный вызов
  * на смену слайда, а дальше живёт сама. Компоненту остаётся отдать ей
  * события ввода и раз в кадр попросить нарисоваться.
+ *
+ * Всё, что не меняет форму, отрисовано заранее в холсты в памяти: солнце
+ * с его свечением, силуэты четырёх слоёв волн, контур скалы и рыбы каждого
+ * размера. В кадре от них остаётся по одному drawImage, поэтому размытие
+ * тени и длинные цепочки кривых не попадают на горячий путь — именно они
+ * и съедали кадр на слабом железе.
  */
 
 const COLOR_DARK = 'rgb(15, 15, 15)'
 const COLOR_LIGHT = 'rgb(235, 235, 235)'
-const BLOCK_FONT = '24px "Open Sans", system-ui, sans-serif'
+const FONT_FAMILY = '"Open Sans", system-ui, sans-serif'
+
+/** Холст уже этого считаем узким: меняется раскладка и количество мелочей */
+const NARROW_SCENE = 560
+
+/** Авторские координаты блоков рассчитаны на карточку такой ширины */
+const DESIGN_WIDTH = 700
 
 /** Пикселей за кадр при переезде между слайдами */
 const SCROLL_SPEED = 8
@@ -23,29 +35,38 @@ const PARALLAX_DAMPING = 15
 
 // Волны
 const WAVE_LENGTH = 150
-const WAVE_OFFSET_LEFT = 300
 const WAVE_MAX_HEIGHT = 4
 const WAVE_LAYER_OFFSET = 10
-const WAVE_SEGMENTS = 13
+const WAVE_GLOW = 10
 /** Стартовый сдвиг каждого слоя: слои не должны совпадать фазами */
-const WAVE_LAYER_START = [0, 0, 51, 154, 0]
+const WAVE_LAYER_START = [0, 51, 154, 0]
 
 // Блики на поверхности воды
-const BLICK_COUNT = 20
 const BLICK_LIMIT = 20
 
 // Блоки с названиями навыков
-const BLOCK_HEIGHT = 30
-const BLOCK_RADIUS = 10
 const BLOCK_HIGHLIGHT_STEP = 5
 const BLOCK_TONE_DARK = 15
 const BLOCK_TONE_LIGHT = 235
 
-const FISH_PER_SLIDE = 5
+// Солнце
+const SUN_RADIUS = 100
+const SUN_GLOW = 50
+/** Отступ центра от правого верхнего угла, в радиусах */
+const SUN_INSET = 1.45
 
-// Подсказка «крути колесо»
-const WHEEL_HINT_MAX = 10
-const WHEEL_HINT_PAUSE_MS = 2000
+// Рыбы
+const FISH_HALF_WIDTH = 78
+const FISH_HALF_HEIGHT = 24
+
+// Скала
+const ROCK_WIDTH = 124
+const ROCK_HEIGHT = 742
+const ROCK_PAD = 4
+
+// Подсказка о прокрутке
+const HINT_MAX = 10
+const HINT_PAUSE_MS = 2000
 
 const randomInteger = (min, max) => Math.floor(min + Math.random() * (max + 1 - min))
 
@@ -54,9 +75,10 @@ const randomInteger = (min, max) => Math.floor(min + Math.random() * (max + 1 - 
 
 /**
  * @param size    объект вида { width, height } в CSS-пикселях
- * @param options { onSlideChange } — вызывается при смене слайда
+ * @param options onSlideChange — вызывается при смене слайда;
+ *                touch — подсказка рисуется свайпом, а не колесом мыши
  * @returns объект со свойствами:
- *   draw()             — нарисовать кадр
+ *   draw(step)         — нарисовать кадр; step — доля кадра при 60 Гц
  *   setPointer(x, y)   — положение курсора в координатах холста
  *   scroll(down)       — прокрутка на слайд вниз (true) или вверх (false)
  *   goToSlide(slide)   — мгновенный переход, без проезда
@@ -64,25 +86,41 @@ const randomInteger = (min, max) => Math.floor(min + Math.random() * (max + 1 - 
  *   ...либо null, если холст не дал контекст.
  */
 export function createSeaScene(canvas, size, options = {}) {
-    const context = fitCanvas(canvas, size)
-    if (!context) return null
+    // Холст лежит на чёрной подложке карточки, так что альфа-канал ему не нужен:
+    // без него браузер не смешивает каждый кадр со страницей
+    const fitted = fitCanvas(canvas, size, { opaque: true })
+    if (!fitted) return null
 
+    const { context, ratio } = fitted
     const { width, height } = size
+
+    const narrow = width < NARROW_SCENE
+    const scale = Math.min(1, width / DESIGN_WIDTH)
+
+    const blockFontSize = Math.max(15, Math.round(24 * scale))
+    const blockHeight = Math.max(22, Math.round(30 * scale))
+    const blockRadius = Math.max(7, Math.round(10 * scale))
+
+    const blickCount = narrow ? 10 : 20
+    const fishPerSlide = narrow ? 3 : 5
+
+    const sunRadius = Math.round(SUN_RADIUS * scale)
+    const sunGlow = SUN_GLOW * scale
+    const sunX = width - sunRadius * SUN_INSET
+    const sunY = sunRadius * SUN_INSET
 
     context.fillStyle = COLOR_DARK
     context.strokeStyle = COLOR_LIGHT
     context.lineWidth = 1
-    context.shadowColor = COLOR_LIGHT
-    // Шрифт нужен ещё до первого кадра: по нему считается ширина блока,
-    // а значит и область, в которой ловится клик по навыку
-    context.font = BLOCK_FONT
+    context.font = `${blockFontSize}px ${FONT_FAMILY}`
     context.textAlign = 'center'
 
     const waveTopOffset = height / 2
 
     // ── Состояние ────────────────────────────────────────────
-    let pointerX = 0
-    let pointerY = 0
+    // Далеко за пределами холста: пока мышь не двигалась, подсветка не ловится
+    let pointerX = -9999
+    let pointerY = -9999
     let parallaxX = 0
     let parallaxY = 0
 
@@ -93,10 +131,10 @@ export function createSeaScene(canvas, size, options = {}) {
     let scrollDirection = 0
 
     // 'grow' | 'shrink' | 'pause'
-    let wheelHintPhase = 'grow'
-    let wheelHintValue = 1
+    let hintPhase = 'grow'
+    let hintValue = 1
 
-    const wavePositions = [...WAVE_LAYER_START]
+    const waveDrift = [...WAVE_LAYER_START]
     const blicks = new Map()
     const fishes = new Map()
     /** Яркость подсветки блока: это состояние наведения, а не часть данных о навыке */
@@ -114,6 +152,261 @@ export function createSeaScene(canvas, size, options = {}) {
     const isVisible = slide =>
         slide === activeSlide || (scrollDirection !== 0 && slide === previousSlide)
 
+    // ── Раскладка блоков ─────────────────────────────────────
+    /**
+     * Координаты и подпись каждого блока. На широком холсте берутся авторские
+     * значения (отрицательные отсчитываются от правого и нижнего края),
+     * на узком блоки раскладываются колонкой с чередующимся отступом:
+     * исходные координаты рассчитаны на пропорции карточки и за край не влезают.
+     */
+    const layout = new Map()
+
+    for (let slide = 1; slide < SKILL_SLIDES_COUNT; slide++) {
+        const list = SKILL_SLIDES[slide]
+        const gap = height / (list.length + 1)
+
+        list.forEach((skill, index) => {
+            const label = narrow ? (skill.short ?? skill.name) : skill.name
+
+            const place = narrow
+                ? {
+                    x: index % 2 ? width * .5 : width * .12,
+                    y: gap * (index + 1) - blockHeight / 2,
+                }
+                : {
+                    x: skill.position.x < 0 ? width + skill.position.x : skill.position.x,
+                    y: skill.position.y < 0 ? height + skill.position.y : skill.position.y,
+                }
+
+            layout.set(skill, {
+                ...place,
+                label,
+                width: context.measureText(label).width + blockRadius,
+            })
+        })
+    }
+
+    // ── Заранее отрисованные куски ───────────────────────────
+    function buildSun() {
+        const pad = sunGlow + 4
+        const sprite = createSprite((sunRadius + pad) * 2, (sunRadius + pad) * 2, ratio)
+        const center = sunRadius + pad
+
+        sprite.context.fillStyle = COLOR_LIGHT
+        sprite.context.strokeStyle = COLOR_LIGHT
+        sprite.context.lineWidth = 1
+        sprite.context.shadowColor = COLOR_LIGHT
+        sprite.context.shadowBlur = sunGlow
+
+        sprite.context.beginPath()
+        sprite.context.arc(center, center, sunRadius, 0, Math.PI * 2, true)
+        sprite.context.closePath()
+        sprite.context.stroke()
+        sprite.context.fill()
+
+        return { sprite, offset: center }
+    }
+
+    /**
+     * Полоса с волнистым краем на всю ширину холста плюс запас по периоду.
+     * Слой смещается только по горизонтали, поэтому в кадре достаточно
+     * сдвинуть эту полосу и залить прямоугольником воду под ней.
+     */
+    function buildWave(layer) {
+        const amplitude = WAVE_MAX_HEIGHT + 6 * layer
+        const period = WAVE_LENGTH * 2
+        const stripWidth = width + period * 2
+        const baseline = WAVE_GLOW + amplitude
+        const stripHeight = baseline + amplitude + WAVE_GLOW + 2
+
+        const sprite = createSprite(stripWidth, stripHeight, ratio)
+        const { context: sc } = sprite
+
+        sc.fillStyle = COLOR_DARK
+        sc.strokeStyle = COLOR_LIGHT
+        sc.lineWidth = 1
+        sc.shadowColor = COLOR_LIGHT
+        sc.shadowBlur = WAVE_GLOW
+
+        sc.beginPath()
+        sc.moveTo(0, baseline)
+
+        for (let x = 0; x < stripWidth; x += WAVE_LENGTH) {
+            // Гребни и впадины чередуются, дальние слои волнуются сильнее
+            const crest = (x / WAVE_LENGTH) % 2 ? amplitude : -amplitude
+
+            sc.bezierCurveTo(
+                x, baseline,
+                x + WAVE_LENGTH / 2, baseline + crest,
+                x + WAVE_LENGTH, baseline,
+            )
+        }
+
+        sc.lineTo(stripWidth, stripHeight)
+        sc.lineTo(0, stripHeight)
+        sc.closePath()
+        sc.stroke()
+        sc.fill()
+
+        return { sprite, baseline, period, height: stripHeight }
+    }
+
+    function buildRock() {
+        const sprite = createSprite(ROCK_WIDTH, ROCK_HEIGHT, ratio)
+        const { context: sc } = sprite
+        const ox = ROCK_PAD
+        const oy = ROCK_PAD
+
+        sc.fillStyle = COLOR_DARK
+        sc.strokeStyle = COLOR_LIGHT
+        sc.lineWidth = 1
+
+        const crack = points => {
+            sc.beginPath()
+            sc.moveTo(ox + points[0][0], oy + points[0][1])
+            for (let index = 1; index < points.length; index++) {
+                sc.lineTo(ox + points[index][0], oy + points[index][1])
+            }
+            sc.stroke()
+        }
+
+        // Контур скалы
+        sc.beginPath()
+        sc.moveTo(ox + 43, oy + 11)
+        sc.bezierCurveTo(ox + 36, oy + 3, ox + 19, oy, ox + 1, oy)
+        sc.lineTo(ox + 1, oy + 733)
+        sc.bezierCurveTo(ox + 37, oy + 715, ox + 46, oy + 669, ox + 46, oy + 648)
+        sc.bezierCurveTo(ox + 80, oy + 589, ox + 85, oy + 481, ox + 82, oy + 430)
+        sc.bezierCurveTo(ox + 95, oy + 399, ox + 103, oy + 359, ox + 108, oy + 322)
+        sc.bezierCurveTo(ox + 112, oy + 287, ox + 114, oy + 254, ox + 114, oy + 233)
+        sc.bezierCurveTo(ox + 103, oy + 235, ox + 84, oy + 221, ox + 88, oy + 152)
+        sc.bezierCurveTo(ox + 91, oy + 83, ox + 77, oy + 65, ox + 70, oy + 65)
+        sc.bezierCurveTo(ox + 67, oy + 66, ox + 63, oy + 65, ox + 59, oy + 63)
+        sc.bezierCurveTo(ox + 53, oy + 59, ox + 48, oy + 50, ox + 49, oy + 31)
+        sc.bezierCurveTo(ox + 49, oy + 22, ox + 47, oy + 15, ox + 43, oy + 11)
+        sc.closePath()
+        sc.fill()
+        sc.stroke()
+
+        // Трещины в верхней части
+        crack([[20, 40], [25, 65], [40, 75]])
+        crack([[45, 110], [55, 115], [60, 135]])
+        crack([[25, 150], [40, 170], [30, 195]])
+
+        // Нижняя часть: на верхних слайдах она всё равно далеко за кадром
+        crack([[65, 230], [75, 250], [90, 255]])
+        crack([[30, 310], [50, 360], [70, 370]])
+
+        // Цветок на уступе
+        sc.beginPath()
+        sc.moveTo(ox + 50, oy + 360)
+        sc.bezierCurveTo(ox + 60, oy + 340, ox + 40, oy + 340, ox + 50, oy + 360)
+        sc.bezierCurveTo(ox + 50, oy + 340, ox + 75, oy + 345, ox + 50, oy + 360)
+        sc.bezierCurveTo(ox + 60, oy + 345, ox + 80, oy + 355, ox + 50, oy + 360)
+        sc.bezierCurveTo(ox + 70, oy + 370, ox + 80, oy + 350, ox + 50, oy + 360)
+        sc.stroke()
+
+        sc.beginPath()
+        sc.moveTo(ox + 82, oy + 430)
+        sc.bezierCurveTo(ox + 80, oy + 435, ox + 70, oy + 445, ox + 70, oy + 450)
+        sc.stroke()
+
+        crack([[0, 470], [30, 500], [50, 500]])
+        crack([[60, 560], [50, 580]])
+
+        return sprite
+    }
+
+    /** Рыбы различаются только размером и направлением — силуэтов выходит немного */
+    const fishSprites = new Map()
+
+    function fishSprite(fishSize, forward) {
+        const key = `${fishSize}|${forward ? 1 : 0}`
+        const cached = fishSprites.get(key)
+        if (cached) return cached
+
+        const sprite = createSprite(FISH_HALF_WIDTH * 2, FISH_HALF_HEIGHT * 2, ratio)
+        const { context: sc } = sprite
+        const x = FISH_HALF_WIDTH
+        const y = FISH_HALF_HEIGHT
+        const s = fishSize
+        // Направление задаёт знак всех смещений — рыба рисуется зеркально
+        const way = forward ? -1 : 1
+
+        sc.fillStyle = COLOR_DARK
+        sc.strokeStyle = COLOR_LIGHT
+        sc.lineWidth = 1
+
+        sc.beginPath()
+
+        // Туловище
+        sc.moveTo(x + way * s, y)
+        sc.bezierCurveTo(
+            x + way * (5 + s), y - 15 + s,
+            x + way * (35 - s), y - 15 + s,
+            x + way * (50 - s), y,
+        )
+        sc.bezierCurveTo(
+            x + way * (35 - s), y + 15 - s,
+            x + way * 5, y + 15 - s,
+            x + way * s, y,
+        )
+        sc.fill()
+
+        // Хвост
+        sc.moveTo(x + way * (50 - s), y)
+        sc.bezierCurveTo(
+            x + way * (65 - s), y - 15 + s,
+            x + way * (70 - s), y - 15 + s,
+            x + way * (60 - s), y,
+        )
+        sc.bezierCurveTo(
+            x + way * (70 - s), y + 15 - s,
+            x + way * (65 - s), y + 15 - s,
+            x + way * (50 - s), y,
+        )
+        sc.fill()
+
+        // Глаз: чем крупнее рыба, тем меньше зрачок относительно тела
+        const eyeX = x + way * (13 + s / 4)
+        const eyeY = y - 3 + s / 4
+        sc.moveTo(eyeX + 3, eyeY)
+        sc.arc(eyeX, eyeY, 3 - s / 10, 0, Math.PI * 2, true)
+
+        // Жабры
+        sc.moveTo(x + way * 22, y - 6 + s / 3)
+        sc.bezierCurveTo(
+            x + way * 25, y - 2,
+            x + way * 25, y + 2,
+            x + way * 22, y + 6 - s / 3,
+        )
+
+        // Верхний плавник
+        sc.moveTo(x + way * 18, y - 12 + s)
+        sc.bezierCurveTo(
+            x + way * 24, y - 20 + s,
+            x + way * 24, y - 20 + s,
+            x + way * 25, y - 12 + s,
+        )
+
+        // Нижний плавник
+        sc.moveTo(x + way * 28, y + 10 - s / 1.5)
+        sc.bezierCurveTo(
+            x + way * 36, y + 18 - s / 1.5,
+            x + way * 36, y + 18 - s / 1.5,
+            x + way * 35, y + 8 - s / 1.5,
+        )
+
+        sc.stroke()
+
+        fishSprites.set(key, sprite)
+        return sprite
+    }
+
+    const sun = buildSun()
+    const waves = [1, 2, 3, 4].map(buildWave)
+    const rock = buildRock()
+
     // ── Рыбы ─────────────────────────────────────────────────
     function spawnFish(slide, initial) {
         const forward = Math.random() < .5
@@ -130,10 +423,10 @@ export function createSeaScene(canvas, size, options = {}) {
     }
 
     for (let slide = 1; slide < SKILL_SLIDES_COUNT; slide++) {
-        fishes.set(slide, Array.from({ length: FISH_PER_SLIDE }, () => spawnFish(slide, true)))
+        fishes.set(slide, Array.from({ length: fishPerSlide }, () => spawnFish(slide, true)))
     }
 
-    function drawFish(school, slide, index) {
+    function drawFish(school, slide, index, step) {
         const fish = school[index]
 
         // Уплывшую за край рыбу заменяем новой у противоположного края
@@ -144,73 +437,15 @@ export function createSeaScene(canvas, size, options = {}) {
 
         const y = scrollOffsetY + fish.y - parallaxY / 2
         const x = fish.x - parallaxX / 2
-        const { size } = fish
-        // Направление задаёт знак всех смещений — рыба рисуется зеркально
-        const way = fish.forward ? -1 : 1
 
-        fish.x += fish.forward ? fish.speed / 100 : -fish.speed / 100
+        fish.x += (fish.forward ? fish.speed / 100 : -fish.speed / 100) * step
 
-        context.beginPath()
-
-        // Туловище
-        context.moveTo(x + way * size, y)
-        context.bezierCurveTo(
-            x + way * (5 + size), y - 15 + size,
-            x + way * (35 - size), y - 15 + size,
-            x + way * (50 - size), y,
+        const sprite = fishSprite(fish.size, fish.forward)
+        context.drawImage(
+            sprite.canvas,
+            x - FISH_HALF_WIDTH, y - FISH_HALF_HEIGHT,
+            sprite.width, sprite.height,
         )
-        context.bezierCurveTo(
-            x + way * (35 - size), y + 15 - size,
-            x + way * 5, y + 15 - size,
-            x + way * size, y,
-        )
-        context.fill()
-
-        // Хвост
-        context.moveTo(x + way * (50 - size), y)
-        context.bezierCurveTo(
-            x + way * (65 - size), y - 15 + size,
-            x + way * (70 - size), y - 15 + size,
-            x + way * (60 - size), y,
-        )
-        context.bezierCurveTo(
-            x + way * (70 - size), y + 15 - size,
-            x + way * (65 - size), y + 15 - size,
-            x + way * (50 - size), y,
-        )
-        context.fill()
-
-        // Глаз: чем крупнее рыба, тем меньше зрачок относительно тела
-        const eyeX = x + way * (13 + size / 4)
-        const eyeY = y - 3 + size / 4
-        context.moveTo(eyeX + 3, eyeY)
-        context.arc(eyeX, eyeY, 3 - size / 10, 0, Math.PI * 2, true)
-
-        // Жабры
-        context.moveTo(x + way * 22, y - 6 + size / 3)
-        context.bezierCurveTo(
-            x + way * 25, y - 2,
-            x + way * 25, y + 2,
-            x + way * 22, y + 6 - size / 3,
-        )
-
-        // Верхний плавник
-        context.moveTo(x + way * 18, y - 12 + size)
-        context.bezierCurveTo(
-            x + way * 24, y - 20 + size,
-            x + way * 24, y - 20 + size,
-            x + way * 25, y - 12 + size,
-        )
-
-        // Нижний плавник
-        context.moveTo(x + way * 28, y + 10 - size / 1.5)
-        context.bezierCurveTo(
-            x + way * 36, y + 18 - size / 1.5,
-            x + way * 36, y + 18 - size / 1.5,
-            x + way * 35, y + 8 - size / 1.5,
-        )
-
-        context.stroke()
     }
 
     // ── Блики ────────────────────────────────────────────────
@@ -223,25 +458,28 @@ export function createSeaScene(canvas, size, options = {}) {
         }
     }
 
-    function drawBlicks(slide) {
+    /** Все блики слайда — один контур и одна обводка вместо двадцати */
+    function drawBlicks(slide, step) {
         // На заставке блики держатся у горизонта, на слайдах — по всей глубине
         const from = slide === 0 ? (height / 4.8) * 3 : height * slide
 
         let list = blicks.get(slide)
         if (!list) {
-            list = Array.from({ length: BLICK_COUNT }, () => spawnBlick(slide, from))
+            list = Array.from({ length: blickCount }, () => spawnBlick(slide, from))
             blicks.set(slide, list)
         }
+
+        context.beginPath()
 
         for (let index = 0; index < list.length; index++) {
             const blick = list[index]
 
-            if (blick.delay !== 0) {
-                blick.delay--
+            if (blick.delay > 0) {
+                blick.delay -= step
                 continue
             }
 
-            blick.progress += .6
+            blick.progress += .6 * step
             if (blick.progress > BLICK_LIMIT * 2) {
                 list[index] = spawnBlick(slide, from)
                 continue
@@ -253,98 +491,84 @@ export function createSeaScene(canvas, size, options = {}) {
             const tail = blick.progress >= BLICK_LIMIT ? blick.progress - BLICK_LIMIT : 0
             const head = Math.min(blick.progress, BLICK_LIMIT)
 
-            context.beginPath()
             context.moveTo(x + tail, y)
             context.lineTo(x + head, y)
-            context.stroke()
         }
+
+        context.stroke()
     }
 
     // ── Небо и вода ──────────────────────────────────────────
     function drawSun() {
-        context.fillStyle = COLOR_LIGHT
-        context.shadowBlur = 50
+        const x = sunX - parallaxX / 7
+        const y = sunY - parallaxY / 7
 
-        context.beginPath()
-        context.arc(width - 145 - parallaxX / 7, 145 - parallaxY / 7, 100, 0, Math.PI * 2, true)
-        context.closePath()
-        context.stroke()
-        context.fill()
-
-        context.fillStyle = COLOR_DARK
-        context.shadowBlur = 0
+        context.drawImage(
+            sun.sprite.canvas,
+            x - sun.offset, y - sun.offset,
+            sun.sprite.width, sun.sprite.height,
+        )
     }
 
-    function drawWaves() {
-        context.shadowBlur = 10
+    function drawWaves(step) {
+        for (let index = 0; index < waves.length; index++) {
+            const layer = index + 1
+            const wave = waves[index]
 
-        // Нулевой слой — неподвижный фон, остальные плывут с разной скоростью
-        for (let layer = 1; layer < wavePositions.length; layer++) {
-            wavePositions[layer] += .15 + (.1 * layer)
+            // Смещение заворачивается по периоду рисунка, поэтому подмены не видно
+            waveDrift[index] = (waveDrift[index] + (.15 + .1 * layer) * step) % wave.period
 
             const layerParallaxX = -parallaxX * (layer / 3)
             const layerParallaxY = -parallaxY * (layer / 3)
-            const layerY = waveTopOffset + WAVE_LAYER_OFFSET * layer + layerParallaxY + scrollOffsetY
+            const lineY = waveTopOffset + WAVE_LAYER_OFFSET * layer + layerParallaxY + scrollOffsetY
 
-            context.beginPath()
-            context.moveTo(-WAVE_OFFSET_LEFT + layerParallaxX + wavePositions[layer], layerY)
+            const stripY = lineY - wave.baseline
+            context.drawImage(
+                wave.sprite.canvas,
+                -wave.period + waveDrift[index] + layerParallaxX, stripY,
+                wave.sprite.width, wave.sprite.height,
+            )
 
-            for (let segment = 0; segment < WAVE_SEGMENTS; segment++) {
-                const startX = WAVE_LENGTH * segment - WAVE_OFFSET_LEFT + layerParallaxX
-                const middleX = startX + WAVE_LENGTH / 2
-                const endX = startX + WAVE_LENGTH
-
-                // Уплыв на две длины волны, слой отматывается назад: рисунок
-                // периодический, поэтому подмены не видно
-                if (startX + wavePositions[layer] > WAVE_LENGTH * WAVE_SEGMENTS - WAVE_OFFSET_LEFT) {
-                    wavePositions[layer] -= WAVE_LENGTH * 2
-                }
-
-                // Гребни и впадины чередуются, дальние слои волнуются сильнее
-                const crest = segment % 2
-                    ? WAVE_MAX_HEIGHT + 6 * layer
-                    : -WAVE_MAX_HEIGHT - 6 * layer
-
-                context.bezierCurveTo(
-                    startX + wavePositions[layer], layerY,
-                    middleX + wavePositions[layer], layerY + crest,
-                    endX + wavePositions[layer], layerY,
-                )
-            }
-
-            // Замыкаем контур ниже холста, чтобы слой залился сплошной толщей
-            const closeRight = WAVE_LENGTH * WAVE_SEGMENTS - WAVE_LENGTH + wavePositions[layer] + layerParallaxX
-            const closeLeft = wavePositions[layer] - WAVE_LENGTH + layerParallaxX
-            context.lineTo(closeRight, height + 10)
-            context.lineTo(closeLeft, height + 10)
-
-            context.closePath()
-            context.stroke()
-            context.fill()
+            // Толща воды под полосой: заливка дешевле, чем замыкать контур кривыми
+            const bodyY = stripY + wave.height
+            if (bodyY < height) context.fillRect(0, bodyY, width, height - bodyY + 10)
         }
-
-        context.shadowBlur = 0
     }
 
-    /** Подсказка о прокрутке: колёсико мыши с бегающей внутри точкой */
-    function drawWheelHint() {
-        switch (wheelHintPhase) {
+    /** Подсказка о прокрутке: колесо мыши либо свайп пальцем */
+    function drawHint(step) {
+        switch (hintPhase) {
             case 'grow':
-                wheelHintValue += .5
-                if (wheelHintValue >= WHEEL_HINT_MAX) wheelHintPhase = 'shrink'
+                hintValue += .5 * step
+                if (hintValue >= HINT_MAX) hintPhase = 'shrink'
                 break
 
             case 'shrink':
-                wheelHintValue -= .2
-                if (wheelHintValue <= 0) {
-                    wheelHintPhase = 'pause'
-                    setTimeout(() => { wheelHintPhase = 'grow' }, WHEEL_HINT_PAUSE_MS)
+                hintValue -= .2 * step
+                if (hintValue <= 0) {
+                    hintPhase = 'pause'
+                    setTimeout(() => { hintPhase = 'grow' }, HINT_PAUSE_MS)
                 }
                 break
         }
 
         const centerX = width / 2
         const bottom = height + scrollOffsetY
+
+        if (options.touch) {
+            // Два шеврона, съезжающих вниз
+            const top = bottom - 56 + hintValue
+
+            for (const offset of [0, 10]) {
+                context.beginPath()
+                context.moveTo(centerX - 9, top + offset)
+                context.lineTo(centerX, top + offset + 8)
+                context.lineTo(centerX + 9, top + offset)
+                context.stroke()
+            }
+
+            return
+        }
 
         // Корпус
         context.beginPath()
@@ -356,63 +580,67 @@ export function createSeaScene(canvas, size, options = {}) {
 
         // Точка, съезжающая вниз
         context.beginPath()
-        context.arc(centerX, bottom - 45 + wheelHintValue, 1, 0, Math.PI, true)
-        context.arc(centerX, bottom - 40 + wheelHintValue, 1, Math.PI, 0, true)
+        context.arc(centerX, bottom - 45 + hintValue, 1, 0, Math.PI, true)
+        context.arc(centerX, bottom - 40 + hintValue, 1, Math.PI, 0, true)
         context.closePath()
         context.stroke()
     }
 
     // ── Блоки навыков ────────────────────────────────────────
-    /** Прямоугольник блока на экране. Отрицательная позиция отсчитывается от края. */
+    /** Прямоугольник блока на экране с учётом слайда и параллакса */
     function blockRect(skill, slide) {
-        const x = (skill.position.x < 0 ? width + skill.position.x : skill.position.x) - parallaxX / 4
-        const y = (skill.position.y < 0 ? height + skill.position.y : skill.position.y)
-            - parallaxY / 4 + height * slide + scrollOffsetY
+        const place = layout.get(skill)
 
-        return { x, y, width: context.measureText(skill.name).width + BLOCK_RADIUS }
+        return {
+            x: place.x - parallaxX / 4,
+            y: place.y - parallaxY / 4 + height * slide + scrollOffsetY,
+            width: place.width,
+            label: place.label,
+        }
     }
 
-    function drawBlock(skill, slide) {
+    function drawBlock(skill, slide, step) {
         const rect = blockRect(skill, slide)
 
         // Под курсором блок наливается светом, вне — гаснет обратно
         const hovered =
-            rect.x - BLOCK_RADIUS < pointerX && pointerX < rect.x + rect.width + BLOCK_RADIUS &&
-            rect.y - BLOCK_RADIUS < pointerY && pointerY < rect.y + BLOCK_HEIGHT + BLOCK_RADIUS
+            rect.x - blockRadius < pointerX && pointerX < rect.x + rect.width + blockRadius &&
+            rect.y - blockRadius < pointerY && pointerY < rect.y + blockHeight + blockRadius
 
         const current = blockHighlight.get(skill.name) ?? BLOCK_TONE_DARK
         const tone = hovered
-            ? Math.min(BLOCK_TONE_LIGHT, current + BLOCK_HIGHLIGHT_STEP)
-            : Math.max(BLOCK_TONE_DARK, current - BLOCK_HIGHLIGHT_STEP)
+            ? Math.min(BLOCK_TONE_LIGHT, current + BLOCK_HIGHLIGHT_STEP * step)
+            : Math.max(BLOCK_TONE_DARK, current - BLOCK_HIGHLIGHT_STEP * step)
         blockHighlight.set(skill.name, tone)
 
-        // Негодную строку цвета canvas молча игнорирует, оставляя предыдущую заливку
-        context.fillStyle = `rgb(${tone}, ${tone}, ${tone})`
+        const fill = Math.round(tone)
+        context.fillStyle = `rgb(${fill}, ${fill}, ${fill})`
 
         // Скруглённый прямоугольник вокруг подписи
         context.beginPath()
-        context.arc(rect.x, rect.y, BLOCK_RADIUS, Math.PI, -Math.PI / 2, false)
-        context.lineTo(rect.x, rect.y - BLOCK_RADIUS)
-        context.arc(rect.x + rect.width, rect.y, BLOCK_RADIUS, -Math.PI / 2, 0, false)
-        context.lineTo(rect.x + rect.width + BLOCK_RADIUS, rect.y + BLOCK_HEIGHT)
-        context.arc(rect.x + rect.width, rect.y + BLOCK_HEIGHT, BLOCK_RADIUS, 0, Math.PI / 2, false)
-        context.lineTo(rect.x + rect.width, rect.y + BLOCK_HEIGHT + BLOCK_RADIUS)
-        context.arc(rect.x, rect.y + BLOCK_HEIGHT, BLOCK_RADIUS, Math.PI / 2, Math.PI, false)
-        context.lineTo(rect.x - BLOCK_RADIUS, rect.y)
+        context.arc(rect.x, rect.y, blockRadius, Math.PI, -Math.PI / 2, false)
+        context.lineTo(rect.x, rect.y - blockRadius)
+        context.arc(rect.x + rect.width, rect.y, blockRadius, -Math.PI / 2, 0, false)
+        context.lineTo(rect.x + rect.width + blockRadius, rect.y + blockHeight)
+        context.arc(rect.x + rect.width, rect.y + blockHeight, blockRadius, 0, Math.PI / 2, false)
+        context.lineTo(rect.x + rect.width, rect.y + blockHeight + blockRadius)
+        context.arc(rect.x, rect.y + blockHeight, blockRadius, Math.PI / 2, Math.PI, false)
+        context.lineTo(rect.x - blockRadius, rect.y)
         context.closePath()
         context.fill()
         context.stroke()
 
         // Подпись всегда контрастна подложке
-        const textTone = BLOCK_TONE_LIGHT - tone
+        const textTone = BLOCK_TONE_LIGHT - fill
         context.fillStyle = `rgb(${textTone}, ${textTone}, ${textTone})`
-        context.fillText(skill.name, rect.x + rect.width / 2, rect.y + BLOCK_HEIGHT / 2 + BLOCK_RADIUS)
+        context.fillText(rect.label, rect.x + rect.width / 2, rect.y + blockHeight / 2 + blockRadius)
 
         context.fillStyle = COLOR_DARK
     }
 
     // ── Скала ────────────────────────────────────────────────
-    function drawSeaweed(baseX, baseY, group) {
+    /** Стебли одной группы собираются в общий контур: обводка одна на всех */
+    function addSeaweed(baseX, baseY, group, step) {
         if (!isVisible(group.slide)) return
 
         let x = baseX + group.position.x
@@ -426,103 +654,51 @@ export function createSeaScene(canvas, size, options = {}) {
             if (weed.deviation <= -weed.deviationMax || weed.deviation >= weed.deviationMax) {
                 weed.deviationDirection = !weed.deviationDirection
             }
-            weed.deviation += weed.deviationDirection ? .02 : -.02
+            weed.deviation += (weed.deviationDirection ? .02 : -.02) * step
 
             if (weed.rotate <= -weed.rotateMax || weed.rotate >= weed.rotateMax) {
                 weed.rotateDirection = !weed.rotateDirection
             }
-            weed.rotate += weed.rotateDirection ? .02 : -.02
+            weed.rotate += (weed.rotateDirection ? .02 : -.02) * step
 
             const { deviation, rotate } = weed
-            const step = weed.height / 6
+            const stem = weed.height / 6
 
-            context.beginPath()
             context.moveTo(x, y)
             context.bezierCurveTo(
-                x + rotate / 6, y - step,
-                x + deviation + rotate / 5, y - step * 2,
-                x + rotate / 4, y - step * 3,
+                x + rotate / 6, y - stem,
+                x + deviation + rotate / 5, y - stem * 2,
+                x + rotate / 4, y - stem * 3,
             )
             context.bezierCurveTo(
-                x - deviation + rotate / 3, y - step * 4,
-                x - deviation + rotate / 2, y - step * 5,
-                x + rotate, y - step * 6,
+                x - deviation + rotate / 3, y - stem * 4,
+                x - deviation + rotate / 2, y - stem * 5,
+                x + rotate, y - stem * 6,
             )
-            context.stroke()
         })
     }
 
-    function drawRock() {
+    function drawRock(step) {
         const baseX = -10 + (-parallaxX / 8)
         const baseY = height - 50 + scrollOffsetY + (height / 4) * 3 + (-parallaxY / 8)
 
-        // Каждый штрих начинает свой путь: иначе линии копятся в одном контуре
-        // и обводятся заново на каждом stroke()
-        const crack = points => {
-            context.beginPath()
-            context.moveTo(baseX + points[0][0], baseY + points[0][1])
-            for (let index = 1; index < points.length; index++) {
-                context.lineTo(baseX + points[index][0], baseY + points[index][1])
-            }
-            context.stroke()
-        }
-
-        for (const group of seaweedsOutside) drawSeaweed(baseX, baseY, group)
-
-        // Контур скалы
+        // Водоросли снаружи уходят под камень, внутренние лежат поверх
         context.beginPath()
-        context.moveTo(baseX + 43, baseY + 11)
-        context.bezierCurveTo(baseX + 36, baseY + 3, baseX + 19, baseY, baseX + 1, baseY)
-        context.lineTo(baseX + 1, baseY + 733)
-        context.bezierCurveTo(baseX + 37, baseY + 715, baseX + 46, baseY + 669, baseX + 46, baseY + 648)
-        context.bezierCurveTo(baseX + 80, baseY + 589, baseX + 85, baseY + 481, baseX + 82, baseY + 430)
-        context.bezierCurveTo(baseX + 95, baseY + 399, baseX + 103, baseY + 359, baseX + 108, baseY + 322)
-        context.bezierCurveTo(baseX + 112, baseY + 287, baseX + 114, baseY + 254, baseX + 114, baseY + 233)
-        context.bezierCurveTo(baseX + 103, baseY + 235, baseX + 84, baseY + 221, baseX + 88, baseY + 152)
-        context.bezierCurveTo(baseX + 91, baseY + 83, baseX + 77, baseY + 65, baseX + 70, baseY + 65)
-        context.bezierCurveTo(baseX + 67, baseY + 66, baseX + 63, baseY + 65, baseX + 59, baseY + 63)
-        context.bezierCurveTo(baseX + 53, baseY + 59, baseX + 48, baseY + 50, baseX + 49, baseY + 31)
-        context.bezierCurveTo(baseX + 49, baseY + 22, baseX + 47, baseY + 15, baseX + 43, baseY + 11)
-        context.closePath()
-        context.fill()
+        for (const group of seaweedsOutside) addSeaweed(baseX, baseY, group, step)
         context.stroke()
 
-        // Трещины в верхней части
-        crack([[20, 40], [25, 65], [40, 75]])
-        crack([[45, 110], [55, 115], [60, 135]])
-        crack([[25, 150], [40, 170], [30, 195]])
-
-        // Нижняя часть скалы попадает в кадр только на последнем слайде
-        if (!isVisible(SKILL_SLIDES_COUNT - 1)) return
-
-        crack([[65, 230], [75, 250], [90, 255]])
-        crack([[30, 310], [50, 360], [70, 370]])
-
-        // Цветок на уступе
-        context.beginPath()
-        context.moveTo(baseX + 50, baseY + 360)
-        context.bezierCurveTo(baseX + 60, baseY + 340, baseX + 40, baseY + 340, baseX + 50, baseY + 360)
-        context.bezierCurveTo(baseX + 50, baseY + 340, baseX + 75, baseY + 345, baseX + 50, baseY + 360)
-        context.bezierCurveTo(baseX + 60, baseY + 345, baseX + 80, baseY + 355, baseX + 50, baseY + 360)
-        context.bezierCurveTo(baseX + 70, baseY + 370, baseX + 80, baseY + 350, baseX + 50, baseY + 360)
-        context.stroke()
+        context.drawImage(rock.canvas, baseX - ROCK_PAD, baseY - ROCK_PAD, rock.width, rock.height)
 
         context.beginPath()
-        context.moveTo(baseX + 82, baseY + 430)
-        context.bezierCurveTo(baseX + 80, baseY + 435, baseX + 70, baseY + 445, baseX + 70, baseY + 450)
+        for (const group of seaweedsInside) addSeaweed(baseX, baseY, group, step)
         context.stroke()
-
-        crack([[0, 470], [30, 500], [50, 500]])
-        crack([[60, 560], [50, 580]])
-
-        for (const group of seaweedsInside) drawSeaweed(baseX, baseY, group)
     }
 
     // ── Кадр ─────────────────────────────────────────────────
-    function advanceScroll() {
+    function advanceScroll(step) {
         if (scrollDirection === 0) return
 
-        scrollOffsetY += scrollDirection > 0 ? SCROLL_SPEED : -SCROLL_SPEED
+        scrollOffsetY += (scrollDirection > 0 ? SCROLL_SPEED : -SCROLL_SPEED) * step
 
         const target = -activeSlide * height
         const arrived = scrollDirection > 0 ? scrollOffsetY >= target : scrollOffsetY <= target
@@ -536,19 +712,21 @@ export function createSeaScene(canvas, size, options = {}) {
     }
 
     return {
-        draw() {
-            context.clearRect(0, 0, width, height)
+        draw(step = 1) {
+            // Холст без альфа-канала нечем «очистить» в цвет фона — заливаем сами
+            context.fillStyle = COLOR_DARK
+            context.fillRect(0, 0, width, height)
 
-            parallaxX = (pointerX - width / 2) / PARALLAX_DAMPING
-            parallaxY = (pointerY - height / 2) / PARALLAX_DAMPING
+            parallaxX = pointerX < 0 ? 0 : (pointerX - width / 2) / PARALLAX_DAMPING
+            parallaxY = pointerX < 0 ? 0 : (pointerY - height / 2) / PARALLAX_DAMPING
 
-            advanceScroll()
+            advanceScroll(step)
 
             if (isVisible(0)) {
                 drawSun()
-                drawWaves()
-                drawBlicks(0)
-                drawWheelHint()
+                drawWaves(step)
+                drawBlicks(0, step)
+                drawHint(step)
             }
 
             for (let slide = 1; slide < SKILL_SLIDES_COUNT; slide++) {
@@ -556,14 +734,16 @@ export function createSeaScene(canvas, size, options = {}) {
 
                 const school = fishes.get(slide)
                 if (school) {
-                    for (let index = 0; index < school.length; index++) drawFish(school, slide, index)
+                    for (let index = 0; index < school.length; index++) {
+                        drawFish(school, slide, index, step)
+                    }
                 }
 
-                drawBlicks(slide)
-                for (const skill of SKILL_SLIDES[slide]) drawBlock(skill, slide)
+                drawBlicks(slide, step)
+                for (const skill of SKILL_SLIDES[slide]) drawBlock(skill, slide, step)
             }
 
-            drawRock()
+            drawRock(step)
         },
 
         setPointer(x, y) {
@@ -599,8 +779,8 @@ export function createSeaScene(canvas, size, options = {}) {
                 const rect = blockRect(skill, activeSlide)
 
                 if (
-                    rect.x - BLOCK_RADIUS < x && x < rect.x + rect.width + BLOCK_RADIUS &&
-                    rect.y - BLOCK_RADIUS < y && y < rect.y + BLOCK_HEIGHT + BLOCK_RADIUS
+                    rect.x - blockRadius < x && x < rect.x + rect.width + blockRadius &&
+                    rect.y - blockRadius < y && y < rect.y + blockHeight + blockRadius
                 ) return skill
             }
 
