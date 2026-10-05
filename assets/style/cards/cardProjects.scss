@@ -1,165 +1,21 @@
 @use '../core' as *;
 
-.card-projects {
+.card-projects{
     z-index: 3;
-    // Перебивает `display: flex` базовой .card за счёт порядка
-    // подключения в DonTraffic.scss
-    display: grid;
-    grid-template-columns: 1fr 1px 1fr;
 
-    @include tablet {
-        grid-template-columns: 1fr;
-        grid-template-rows: 1fr 1px 1fr;
-    }
+    &__canvas{
+        position: absolute;
+        top: 0;
+        left: 0;
 
-    &__preview {
-        min-height: 100%;
-        position: relative;
-        overflow: hidden;
-        pointer-events: none;
-
-        &-svg {
-            position: absolute;
-            bottom: 0;
-            right: -70px;
-
-            width: 300px;
-            object-fit: cover;
-        }
-
-        &-sun {
-            position: absolute;
-            left: 16px;
-            top: 16px;
-        }
-
-        &-container {
-            overflow: hidden;
-            position: relative;
-            height: 100%;
-        }
-
-        &-viewport {
-            height: 100%;
-            transition: translate $card-transition ease;
-
-            display: flex;
-            // Превью едет вверх, текст вниз — навстречу друг другу
-            flex-direction: column-reverse;
-        }
-    }
-
-    &__line {
-        background-color: color-white();
+        width: 100%;
         height: 100%;
-    }
 
-    &__content {
-        height: 100%;
-        padding: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-direction: column;
+        border-radius: 6px;
+        touch-action: none;
 
-        &-container {
-            overflow: hidden;
-            position: relative;
-            height: 100%;
-        }
-
-        &-viewport {
-            height: 100%;
-            transition: translate $card-transition ease;
-        }
-
-        &-logo {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            &-icon {
-                margin: 10px 8px 0 0;
-                fill: color-white();
-                height: 35px;
-                width: 35px;
-            }
-
-            &-title {
-                text-decoration: none;
-                text-transform: capitalize;
-                font-size: $font-size-title;
-                font-weight: 400;
-                // Прозрачная граница держит высоту строки, чтобы текст
-                // не подпрыгивал при наведении
-                border-bottom: 1px solid transparent;
-                transition: border-color $transition;
-
-                @include hover {
-                    border-bottom-color: color-white();
-                }
-            }
-        }
-
-        &-desc {
-            text-align: center;
-            font-size: $font-size-base;
-            font-weight: 400;
-            margin-bottom: 16px;
-        }
-
-        &-btn {
-            transition: background-color $transition, color $transition;
-            padding: 8px 24px;
-            border: 1px solid color-white();
-            background-color: transparent;
-            border-radius: $radius;
-            font-size: $font-size-base;
-            font-weight: 400;
-            color: color-white();
-
-            @include hover {
-                background-color: color-white();
-                color: color-black();
-            }
-        }
-
-        &-controll {
-            transition: background-color $transition;
-            width: 40px;
-            height: 40px;
-
-            background-color: color-black();
-            border: 1px solid color-white();
-            border-radius: $radius;
-
-            padding: 8px;
-
-            position: absolute;
-            top: 16px;
-
-            left: 50%;
-            translate: -50% 0;
-
-            @include hover {
-                background-color: color-white();
-
-                .card-projects__content-controll-icon { fill: color-black(); }
-            }
-
-            &--bottom {
-                top: auto;
-                bottom: 16px;
-
-                .card-projects__content-controll-icon { rotate: 180deg; }
-            }
-
-            &-icon {
-                transition: fill $transition;
-                width: 100%;
-                height: 100%;
-                fill: color-white();
-            }
+        @include tablet{
+            border-radius: 0px;
         }
     }
 }

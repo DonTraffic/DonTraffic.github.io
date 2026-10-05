@@ -76,14 +76,6 @@ $card-offscreen: calc(100vw + 55%);
     }
 }
 
-.icon-sun {
-    width: 150px;
-    height: 150px;
-    background: color-white();
-    box-shadow: 0 0 40px color-white();
-    border-radius: 50%;
-}
-
 // Обводка текста, чтобы светлые буквы читались поверх светлого декора
 .text-shadow {
     text-shadow:
