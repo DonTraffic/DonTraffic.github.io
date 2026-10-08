@@ -73,11 +73,13 @@ export const PROJECTS = [
         tags: ['JavaScript', 'jQuery', 'Nuxt3', 'SCSS', 'Figma', 'Git'],
     },
     {
-        // Иконок пока нет: запись нужна микроразметке worksFor на главной
+        // Превью пока нет: карточке хватает логотипа, а запись нужна
+        // ещё и микроразметке worksFor на главной
         id: 'nanosoft',
         title: 'nanosoft',
         link: 'https://nanosoft.team/',
         description: 'Сайт компании: дизайн и разработка целиком, от макета до сервера',
+        logoIcon: '/svg/projects/nanosoft-logo.svg',
         company: {
             name: 'Нанософт',
             link: 'https://www.nanocad.ru/',
@@ -86,7 +88,7 @@ export const PROJECTS = [
             name: 'Программист 1С / Интегратор',
             link: RESUME_URL,
         },
-        experience: { from: '2024-11', to: 'actual' },
+        experience: { from: '2024-11', to: '2026-10' },
         duties: [
             'Настройка и создание интеграций с внешними сервисами',
             'Доработка и создание печатных форм, внешних обработок и функционала по требованиям',
@@ -104,7 +106,7 @@ export const PROJECTS = [
 export const CONTACTS = {
     name: 'Уханов Дмитрий',
     role: 'Middle Frontend разработчик',
-    telegram: 'https://t.me/KaeruYami',
+    telegram: 'https://t.me/ANobodyAndANothing',
     resume: RESUME_URL,
     phone: '+79210638647',
     phoneLabel: '+7 (921) 063-86-47',

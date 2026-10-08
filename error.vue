@@ -23,7 +23,7 @@ const message = computed(() =>
         : 'Что-то пошло не так',
 )
 
-useHead({ title: `${props.error?.statusCode ?? 500} — DonTraffic` })
+useHead({ title: `${props.error?.statusCode ?? 500} — ANobodyAndANothing` })
 </script>
 
 <style lang="scss">

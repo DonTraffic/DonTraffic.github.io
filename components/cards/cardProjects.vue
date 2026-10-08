@@ -129,7 +129,7 @@ const projectsData = [
 
         experience: {
             from: '2024-11',
-            before: 'actual'
+            before: '2026-10'
         },
 
         duties: {
