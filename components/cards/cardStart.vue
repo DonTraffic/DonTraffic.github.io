@@ -165,22 +165,60 @@ const canvas = useTemplateRef('canvas')
 const scene = shallowRef(null)
 
 useAnimationFrame(
-    () => scene.value?.draw(),
+    step => scene.value?.draw(step),
     () => Boolean(scene.value) && isOnScreen('cardStart'),
 )
 
-onMounted(async () => {
-    // Узкие экраны довольствуются фоновой картинкой: тяжёлая сцена там не видна
-    if (!isDesktop.value) return
+// Размеры холста заданы в пикселях, поэтому сцену нужно собирать заново
+// на каждое изменение размера карточки. Запоминаем, на чём она собрана,
+// чтобы не пересобирать её впустую.
+let builtWidth = 0
+let builtHeight = 0
+let observer
+let resizeTimer
 
-    await nextTick()
+function buildScene() {
     const element = canvas.value
     const card = element?.closest('.card')
     if (!element || !card) return
 
-    scene.value = createGrassScene(element, {
-        width: card.clientWidth,
-        height: card.clientHeight,
+    // Узкие экраны довольствуются фоновой картинкой: тяжёлая сцена там не видна.
+    // Сцену при этом снимаем: окно могли сузить уже после того, как она собралась.
+    if (!isDesktop.value) {
+        scene.value = null
+        builtWidth = 0
+        builtHeight = 0
+        return
+    }
+
+    const width = card.clientWidth
+    const height = card.clientHeight
+    if (!width || !height || (width === builtWidth && height === builtHeight)) return
+
+    builtWidth = width
+    builtHeight = height
+
+    scene.value = createGrassScene(element, { width, height })
+}
+
+onMounted(async () => {
+    await nextTick()
+    buildScene()
+
+    const card = canvas.value?.closest('.card')
+    if (!card) return
+
+    // С задержкой: на телефоне адресная строка дёргает высоту на каждой
+    // прокрутке, а пересборка заново раскладывает всё поле травы
+    observer = new ResizeObserver(() => {
+        clearTimeout(resizeTimer)
+        resizeTimer = setTimeout(buildScene, 200)
     })
+    observer.observe(card)
+})
+
+onBeforeUnmount(() => {
+    clearTimeout(resizeTimer)
+    observer?.disconnect()
 })
 </script>

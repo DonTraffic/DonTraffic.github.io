@@ -5,6 +5,10 @@ import { fitCanvas } from '~/composables/useCanvas'
  *
  * Сцена владеет своим состоянием и ничего не знает ни о Vue, ни о документе:
  * компонент отдаёт ей холст с размерами и раз в кадр просит нарисовать себя.
+ *
+ * Всё, что движется, умножается на шаг времени: иначе на экране 120 Гц трава
+ * качается, а солнце садится вдвое быстрее, чем на 60 Гц, а при просадке
+ * кадров сцена уходит в слоумо.
  */
 
 const COLOR = 'rgb(235, 235, 235)'
@@ -26,10 +30,12 @@ const BLADE_SWAY_MAX = 10
 const BLADE_SWAY_SPEED = 0.025
 
 // Травинка: { x, height, sway, swayForward }, где swayForward — клонится ли вправо.
+// sway — вещественный: округление развело бы 108 травинок всего по десяти
+// стартовым фазам, и они качались бы заметными группами в унисон.
 
 /**
  * @param size объект вида { width, height } в CSS-пикселях
- * @returns объект с методом draw() или null, если холст не дал контекст
+ * @returns объект с методом draw(step) или null, если холст не дал контекст
  */
 export function createGrassScene(canvas, size) {
     const fitted = fitCanvas(canvas, size)
@@ -47,16 +53,16 @@ export function createGrassScene(canvas, size) {
     const blades = Array.from({ length: bladeCount }, (_, index) => ({
         x: index * (BLADE_WIDTH - 1) + Math.floor(Math.random() * 5) + BLADE_WIDTH - 20,
         height: Math.random() * BLADE_HEIGHT_SPREAD + BLADE_MAX_HEIGHT - BLADE_HEIGHT_SPREAD,
-        sway: Math.round(Math.random() * (BLADE_SWAY_MAX - 1)),
+        sway: (Math.random() * 2 - 1) * BLADE_SWAY_MAX,
         swayForward: Math.random() < .5,
     }))
 
     let sunAngle = SUN_START_ANGLE
     let sunSpeed = SUN_START_SPEED
 
-    function drawSun() {
-        if (sunSpeed > 0.000001 && sunAngle > SUN_SLOWDOWN_FROM) sunSpeed -= 0.00002
-        if (sunAngle < SUN_END_ANGLE) sunAngle += Math.PI * sunSpeed
+    function drawSun(step) {
+        if (sunSpeed > 0.000001 && sunAngle > SUN_SLOWDOWN_FROM) sunSpeed -= 0.00002 * step
+        if (sunAngle < SUN_END_ANGLE) sunAngle += Math.PI * sunSpeed * step
 
         context.beginPath()
         context.arc(
@@ -68,16 +74,28 @@ export function createGrassScene(canvas, size) {
         context.fill()
     }
 
-    function drawBlade(blade) {
-        // Дойдя до предела наклона, травинка начинает клониться в другую сторону
-        if (blade.sway >= BLADE_SWAY_MAX || blade.sway <= -BLADE_SWAY_MAX) {
-            blade.swayForward = !blade.swayForward
+    function drawBlade(blade, step) {
+        blade.sway += (blade.swayForward ? BLADE_SWAY_SPEED : -BLADE_SWAY_SPEED) * step
+
+        // Дойдя до предела наклона, травинка клонится в другую сторону.
+        // Предел проверяем после шага и подрезаем по нему: шаг зависит от
+        // длины кадра, и на длинном кадре травинка перескочила бы предел
+        // и застряла бы за ним, качаясь вокруг чужой точки.
+        if (blade.sway > BLADE_SWAY_MAX) {
+            blade.sway = BLADE_SWAY_MAX
+            blade.swayForward = false
+        } else if (blade.sway < -BLADE_SWAY_MAX) {
+            blade.sway = -BLADE_SWAY_MAX
+            blade.swayForward = true
         }
-        blade.sway += blade.swayForward ? BLADE_SWAY_SPEED : -BLADE_SWAY_SPEED
 
         const { x, height, sway } = blade
 
         context.beginPath()
+        // moveTo здесь не обязателен — первая кривая и так открыла бы подпуть
+        // в своей первой контрольной точке, — но без него строка читается
+        // как опечатка
+        context.moveTo(x, 0)
         context.bezierCurveTo(
             x, 0,
             x + 3, height / 1.2,
@@ -94,10 +112,11 @@ export function createGrassScene(canvas, size) {
     }
 
     return {
-        draw() {
+        /** @param step доля кадра при 60 Гц: 1 — обычный кадр, 2 — вдвое более долгий */
+        draw(step = 1) {
             context.clearRect(0, 0, size.width, size.height)
-            for (const blade of blades) drawBlade(blade)
-            drawSun()
+            for (const blade of blades) drawBlade(blade, step)
+            drawSun(step)
         },
     }
 }
