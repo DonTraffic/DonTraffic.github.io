@@ -13,11 +13,23 @@ import { fitCanvas } from '~/composables/useCanvas'
 
 const COLOR = 'rgb(235, 235, 235)'
 
-// Солнце садится по дуге и у горизонта притормаживает
+// Солнце садится по дуге и у горизонта притормаживает.
+//
+// Останавливает его не SUN_END_ANGLE, а затухание скорости: от
+// SUN_SLOWDOWN_FROM солнце проходит ещё около .18 рад и встаёт, не доехав
+// до предела, — тот работает страховкой. Поэтому точку остановки двигают
+// обе границы сразу: от одного SUN_END_ANGLE не изменится ничего.
 const SUN_START_ANGLE = 2.6
-const SUN_END_ANGLE = 4.7
-const SUN_SLOWDOWN_FROM = 4.5
+const SUN_END_ANGLE = 4.84
+const SUN_SLOWDOWN_FROM = 4.64
 const SUN_START_SPEED = 0.0015
+const SUN_SLOWDOWN_RATE = 0.00002
+
+// Солнце идёт вдвое быстрее травы. Множитель стоит на шаге времени, а не
+// на стартовой скорости: торможение начинается с фиксированного угла, и
+// разогнанное солнце проскочило бы по дуге дальше — изменился бы путь,
+// а не темп.
+const SUN_SPEED_SCALE = 2
 const SUN_RADIUS = 70
 const SUN_ORBIT_X = 400
 const SUN_ORBIT_Y = 300
@@ -61,8 +73,13 @@ export function createGrassScene(canvas, size) {
     let sunSpeed = SUN_START_SPEED
 
     function drawSun(step) {
-        if (sunSpeed > 0.000001 && sunAngle > SUN_SLOWDOWN_FROM) sunSpeed -= 0.00002 * step
-        if (sunAngle < SUN_END_ANGLE) sunAngle += Math.PI * sunSpeed * step
+        const sunStep = step * SUN_SPEED_SCALE
+
+        // Ниже нуля скорость опускать нельзя: шаг зависит от длины кадра и
+        // нацело в неё не укладывается, так что последний перелетел бы через
+        // ноль в минус — и солнце, доехав, поползло бы назад по дуге.
+        if (sunAngle > SUN_SLOWDOWN_FROM) sunSpeed = Math.max(0, sunSpeed - SUN_SLOWDOWN_RATE * sunStep)
+        if (sunAngle < SUN_END_ANGLE) sunAngle += Math.PI * sunSpeed * sunStep
 
         context.beginPath()
         context.arc(
